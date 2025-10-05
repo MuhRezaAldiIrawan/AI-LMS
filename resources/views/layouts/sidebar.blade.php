@@ -11,7 +11,7 @@
 
     <a href="index.html"
         class="sidebar__logo text-center p-20 position-sticky inset-block-start-0 bg-white w-100 z-1 pb-10">
-        <img src="assets/images/bg/b-learninglogo.webp" alt="Logo">
+        <img src="{{asset('assets/images/bg/b-learninglogo.webp')}}" alt="Logo">
     </a>
 
     <div class="sidebar-menu-wrapper overflow-y-auto scroll-sm">
@@ -22,6 +22,13 @@
                     <a href="dashboard" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-squares-four"></i></span>
                         <span class="text">Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-menu__item">
+                    <a href="{{ route('users')}}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-users-three"></i></span>
+                        <span class="text">Users</span>
                     </a>
                 </li>
 

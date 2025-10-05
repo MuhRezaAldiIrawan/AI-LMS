@@ -11,7 +11,7 @@
                 <div class="row gy-4">
                     <div class="col-sm-7">
                         <div class="grettings-box__content py-xl-4">
-                            <h2 class="text-white mb-0">Hello, Mohib! </h2>
+                            <h2 class="text-white mb-0">Hello, {{ Auth::user()->name}} </h2>
                             <p class="text-15 fw-light mt-4 text-white">Let’s learning something today</p>
                             <p class="text-lg fw-light mt-24 text-white">Set your study plan and growth with
                                 community</p>
@@ -173,7 +173,7 @@
                                 <img src="assets/images/thumbs/setting-profile-img.jpg" alt=""
                                     class="w-120 h-120 rounded-circle border border-white">
                                 <div>
-                                    <h4 class="mb-8">Mohid Khan</h4>
+                                    <h4 class="mb-8">{{ Auth::user()->name}}</h4>
                                     <div class="setting-profile__infos flex-align flex-wrap gap-16">
                                         <div class="flex-align gap-6">
                                             <span class="text-gray-600 d-flex text-lg"><i

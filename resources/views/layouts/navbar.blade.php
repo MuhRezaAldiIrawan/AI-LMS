@@ -20,7 +20,7 @@
     <div class="flex-align gap-16">
         <div class="flex-align gap-8">
             <!-- Notification Start -->
-            <div class="dropdown">
+            {{-- <div class="dropdown">
                 <button
                     class="dropdown-btn shaking-animation text-gray-500 w-40 h-40 bg-main-50 hover-bg-main-100 transition-2 rounded-circle text-xl flex-center"
                     type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -130,7 +130,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
             <!-- Notification Start -->
         </div>
 
@@ -141,7 +141,7 @@
                 class="users arrow-down-icon border border-gray-200 rounded-pill p-4 d-inline-block pe-40 position-relative"
                 type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="position-relative">
-                    <img src="assets/images/thumbs/user-img.png" alt="Image"
+                    <img src="{{asset('assets/images/thumbs/user-img.png') }}" alt="Image"
                         class="h-32 w-32 rounded-circle">
                     <span
                         class="activation-badge w-8 h-8 position-absolute inset-block-end-0 inset-inline-end-0"></span>
@@ -151,7 +151,7 @@
                 <div class="card border border-gray-100 rounded-12 box-shadow-custom">
                     <div class="card-body">
                         <div class="flex-align gap-8 mb-20 pb-20 border-bottom border-gray-100">
-                            <img src="assets/images/thumbs/user-img.png" alt=""
+                            <img src="{{asset('assets/images/thumbs/user-img.png') }}" alt=""
                                 class="w-54 h-54 rounded-circle">
                             <div class="">
                                 <h4 class="mb-0">{{ Auth::user()->name }}</h4>
@@ -170,7 +170,7 @@
                             <li class="pt-8 border-top border-gray-100">
                                 <form action="{{route('logout')}}" method="POST">
                                     @csrf
-                                    <button type="button" class="py-12 text-15 px-20 hover-bg-danger-50 text-gray-300 hover-text-danger-600 rounded-8 flex-align gap-8 fw-medium text-15">
+                                    <button class="py-12 text-15 px-20 hover-bg-danger-50 text-gray-300 hover-text-danger-600 rounded-8 flex-align gap-8 fw-medium text-15">
                                         <span class="text-2xl text-danger-600 d-flex"><i
                                             class="ph ph-sign-out"></i></span>
                                         <span class="text">Log Out</span>
