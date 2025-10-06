@@ -22,7 +22,7 @@
 @section('content')
     <div class="card">
         <div class="card-header border-bottom border-gray-100 flex-align gap-8">
-            <h5 class="mb-0">Buat User Baru</h5>
+            <h5 class="mb-0">{{ $action === 'create' ? 'Tambah User' : 'Edit User' }}</h5>
             <button type="button" class="text-main-600 text-md d-flex" data-bs-toggle="tooltip" data-bs-placement="top"
                 data-bs-title="Course Details">
                 <i class="ph-fill ph-question"></i>
@@ -30,73 +30,86 @@
         </div>
         <div class="card-body">
             <div class="row gy-20">
-                <form id="createUserForm" enctype="multipart/form-data">
+                <form id="{{ $action === 'create' ? 'createUserForm' : 'editUserForm' }}" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-20">
+                        <input type="hidden" name="userid" id="userid" value="{{ $user->id ?? '' }}">
                         <div class="col-sm-6">
-                            <label for="name" class="h5 mb-8 fw-semibold font-heading">Nama Lengkap
-                            </label>
+                            <label for="name" class="h5 mb-8 fw-semibold font-heading">Nama Lengkap</label>
                             <div class="position-relative">
-                                <input type="text" name="name" id="name" class="form-control py-9">
+                                <input type="text" name="name" id="name" class="form-control py-9"
+                                    value="{{ old('name', $user->name) }}">
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <label for="nik" class="h5 mb-8 fw-semibold font-heading">NIK (Nomor Induk
                                 Karyawan)</label>
                             <div class="position-relative">
-                                <input type="text" name="nik" id="nik" class="form-control py-9">
+                                <input type="text" name="nik" id="nik" class="form-control py-9"
+                                    value="{{ old('nik', $user->nik) }}">
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <label for="courseTime" class="h5 mb-8 fw-semibold font-heading">Email</label>
                             <div class="position-relative">
-                                <input type="text" name="email" id="email" class="form-control py-9">
+                                <input type="text" name="email" id="email" class="form-control py-9"
+                                    value="{{ old('email', $user->email) }}">
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <label for="join_date" class="h5 mb-8 fw-semibold font-heading">Tanggal Bergabung</label>
                             <div class="position-relative">
-                                <input type="text" name="join_date" id="join_date" class="join_date form-control py-9">
+                                <input type="text" name="join_date" id="join_date" class="join_date form-control py-9"
+                                    value="{{ old('join_date', $user->join_date) }}">
                             </div>
                         </div>
-                        <div class="col-sm-6">
-                            <label for="password" class="h5 mb-8 fw-semibold font-heading">Password</label>
-                            <div class="position-relative">
-                                <input type="password" name="password" id="password" class="form-control py-9">
+                        @if ($action === 'create')
+                            <div class="col-sm-6">
+                                <label for="password" class="h5 mb-8 fw-semibold font-heading">Password</label>
+                                <div class="position-relative">
+                                    <input type="password" name="password" id="password" class="form-control py-9">
+                                </div>
                             </div>
-                        </div>
+                        @endif
                         <div class="col-sm-6">
                             <label for="position" class="h5 mb-8 fw-semibold font-heading">Posisi / Jabatan</label>
                             <div class="position-relative">
-                                <input type="text" name="position" id="position" class="form-control py-9">
+                                <input type="text" name="position" id="position" class="form-control py-9"
+                                    value="{{ old('position', $user->position) }}">
                             </div>
                         </div>
                         <div class="col-sm-6">
                             <label for="role" class="h5 mb-8 fw-semibold font-heading">Role</label>
                             <div class="position-relative">
                                 <select id="role" name="role" class="form-select py-9 placeholder-13 text-15"">
-                                    <option value="" disabled selected>Pilih Role</option>
+                                    <option value="" disabled
+                                        {{ old('role', $userRole ?? '') == '' ? 'selected' : '' }}>Pilih Role</option>
                                     @foreach ($roles as $role)
                                         <option value="{{ $role->name }}"
-                                            @if (old('role') == $role->name) selected @endif>{{ $role->name }}</option>
+                                            {{ old('role', $userRole ?? '') == $role->name ? 'selected' : '' }}>
+                                            {{ $role->name }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
                         </div>
-                        <div class="col-sm-6">
+                        <div class="{{ $action === 'edit' ? 'col-sm-12' : 'col-sm-6' }}">
                             <label for="division" class="h5 mb-8 fw-semibold font-heading">Devisi</label>
                             <div class="position-relative">
-                                <input type="text" name="division" id="division" class="form-control py-9">
+                                <input type="text" name="division" id="division" class="form-control py-9"
+                                    value="{{ old('division', $user->division) }}">
                             </div>
                         </div>
                         <div class="col-sm-12">
                             <label for="location_id" class="h5 mb-8 fw-semibold font-heading">Lokasi</label>
                             <div class="position-relative">
-                                <select id="location_id" class="form-select py-9 placeholder-13 text-15" name="location_id">
-                                    <option value="1" disabled selected>Pilih Lokasi</option>
+                                <select id="location_id" class="form-select py-9 placeholder-13 text-15"
+                                    name="location_id">
+                                    <option value="" disabled selected>Pilih Lokasi</option>
                                     @foreach ($locations as $location)
                                         <option value="{{ $location->id }}"
-                                            @if (old('location_id') == $location->id) selected @endif>{{ $location->name }}
+                                            @if (old('location_id', $user->location_id ?? '') == $location->id) selected @endif>
+                                            {{ $location->name }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -104,10 +117,13 @@
                         </div>
                         <div class="col-sm-12">
                             <label class="h5 fw-semibold font-heading mb-0">Foto Profile</label>
-                            <div id="fileUpload" class="fileUpload image-upload" name="photo"></div>
+                            <div id="fileUpload" class="fileUpload image-upload" name="photo"
+                                data-preview="{{ !empty($user->profile_photo_path) ? asset('storage/' . $user->profile_photo_path) : '' }}">
+                            </div>
                         </div>
+
                     </div>
-                    <div class="flex-align justify-content-end gap-8 mt5">
+                    <div class="flex-align justify-content-end gap-8 mt-16">
                         <a href="{{ route('users') }}" class="btn btn-outline-main rounded-pill py-9">Batal</a>
                         <button class="btn btn-main rounded-pill py-9" type="submit">Simpan</button>
                     </div>
@@ -142,8 +158,9 @@
         });
     </script>
 
-    {{-- Input Validation --}}
+
     <script>
+        // User validation
         $(document).ready(function() {
             $('form').on('submit', function(e) {
                 let isValid = true;
@@ -153,7 +170,7 @@
 
                 const name = $('#name').val().trim();
                 const email = $('#email').val().trim();
-                const password = $('#password').val().trim();
+                const password = $('#password').val();
                 const role = $('#role').val().trim();
                 const location = $('#location_id').val();
 
@@ -196,15 +213,11 @@
         $('#createUserForm').on('submit', function(e) {
             e.preventDefault(); // cegah reload halaman
 
-            // Bersihkan error lama
-            $('.invalid-feedback').text('');
-            $('.form-control').removeClass('is-invalid');
-
             // Ambil data form
             let formData = new FormData(this);
 
             $.ajax({
-                url: "{{ route('users.store') }}", // sesuaikan dengan route kamu
+                url: "{{ route('users.store') }}",
                 method: "POST",
                 data: formData,
                 processData: false,
@@ -249,6 +262,36 @@
                         });
                     }
 
+                }
+            });
+        });
+
+        $('#editUserForm').on('submit', function(e) {
+            e.preventDefault();
+
+            let formData = new FormData(this);
+            let userId = $('#userid').val();
+
+            $.ajax({
+                url: '/users/' + userId,
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                cache: false,
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Data user berhasil disimpan.',
+                        showConfirmButton: false,
+                        timer: 2000
+                    }).then(() => {
+                        window.location.href = '/users';
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr.responseText);
                 }
             });
         });

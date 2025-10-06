@@ -23,7 +23,7 @@ Route::controller(UsersController::class)->group(function(){
     Route::get('users/get-data', 'getUsers')->name('users.get-data');
     Route::get('users/create', 'create')->name('users.create');
     Route::post('users', 'store')->name('users.store');
-    // Route::get('users/{id}/edit', 'edit')->name('users.edit');
-    // Route::put('users/{id}', 'update')->name('users.update');
-    // Route::delete('users/{id}', 'destroy')->name('users.destroy');
+    Route::get('users/{id}', 'edit')->name('users.edit');
+    Route::post('users/{id}', 'update')->name('users.update');
+    Route::delete('users/{id}', 'destroy')->name('users.destroy');
 });

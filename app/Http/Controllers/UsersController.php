@@ -10,37 +10,15 @@ use App\Models\Location;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Hash;
 
+
 class UsersController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
 
-        // dd('hello there');
-        if ($request->ajax()) {
-
-            $data = User::orderBy('created_at', 'desc')->get();
-
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    $btn =
-                        '
-                            <button class="btn btn-icon btn-primary btn-pengguna-edit" data-id="' . $row->id . '" type="button" role="button">
-                                <i class="anticon anticon-edit"></i>
-                            </button>
-
-                            <button class="btn btn-icon btn-danger btn-pengguna-delete" data-id="' . $row->id . '" type="button" role="button">
-                                <i class="anticon anticon-delete"></i>
-                            </button>
-                            ';
-                    return $btn;
-                })
-                ->rawColumns(['action'])
-                ->make(true);
-        }
         return view('pages.users.users');
     }
 
@@ -55,13 +33,14 @@ class UsersController extends Controller
                 ->addColumn('action', function ($row) {
                     $btn =
                         '
-                        <button class="btn btn-icon btn-primary btn-pengguna-edit" data-id="' . $row->id . '" type="button" role="button">
-                            <i class="ph ph-pencil-simple-line"></i>
-                        </button>
+                        <a href="' . route('users.edit', $row->id) . '" class="btn btn-sm btn-icon btn-primary" >
+                            <i class="ph ph-pencil"></i>
+                        </a>
 
                         <button class="btn btn-icon btn-danger btn-pengguna-delete" data-id="' . $row->id . '" type="button" role="button">
-                            <i class="ph ph-trash-simple"></i>
+                            <i class="ph ph-trash"></i>
                         </button>
+
                         ';
                     return $btn;
                 })
@@ -76,9 +55,11 @@ class UsersController extends Controller
      */
     public function create()
     {
+        $action = 'create';
+        $user = new User(); //initial user data and the value is null of course wkwkw
         $roles = Role::all();
         $locations = Location::orderBy('name')->get();
-        return view('pages.users.create', compact('roles', 'locations'));
+        return view('pages.users.create', compact('action', 'user', 'roles', 'locations'));
     }
 
     /**
@@ -87,7 +68,6 @@ class UsersController extends Controller
     public function store(Request $request)
     {
 
-        // dd($request->all());
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
@@ -105,10 +85,11 @@ class UsersController extends Controller
         $userData = $request->only('name', 'email', 'nik', 'join_date', 'position', 'division', 'location_id');
         $userData['password'] = Hash::make($request->password);
 
-        if ($request->hasFile('photo')) {
 
+        if ($request->hasFile('photo')) {
             $file = $request->file('photo');
-            $path = $file->move(public_path('storage/profile-photos'), $file->getClientOriginalName());
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('profile-photos', $fileName, 'public');
             $userData['profile_photo_path'] = $path;
         }
 
@@ -123,7 +104,6 @@ class UsersController extends Controller
      */
     public function show(string $id)
     {
-        //
     }
 
     /**
@@ -131,7 +111,13 @@ class UsersController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $action = 'edit';
+        $user = User::find($id);
+        $roles = Role::all();
+        $userRole = $user->getRoleNames()->first();
+        $locations = Location::orderBy('name')->get();
+
+        return view('pages.users.create', compact('action', 'user', 'roles', 'userRole', 'locations'));
     }
 
     /**
@@ -139,7 +125,25 @@ class UsersController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+
+        $user = User::findOrFail($id);
+
+        $user->fill($request->only([
+            'name', 'email', 'nik', 'join_date', 'position', 'division', 'location_id'
+        ]));
+
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('profile-photos', $fileName, 'public');
+            $user->profile_photo_path = $path;
+        } else {
+            unset($user->profile_photo_path);
+        }
+
+        $user->save();
+
+        return response()->json(['message' => 'User updated successfully']);
     }
 
     /**
@@ -147,6 +151,18 @@ class UsersController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+
+        try {
+            $pengguna = User::findOrFail($id);
+
+            $pengguna->delete();
+
+            return response()->json(['success' => true, 'message' => 'Data berhasil dihapus.']);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus data.',
+            ], 500);
+        }
     }
 }

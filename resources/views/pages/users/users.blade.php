@@ -59,7 +59,7 @@
 
     <div class="card overflow-hidden">
         <div class="card-body p-0 overflow-x-auto">
-            <table id="studentTable" class="table table-hover align-middle">
+            <table id="studentTable" class="table table-hover  align-middle">
                 <thead>
                     <tr>
                         <th class="h6 text-center">No</th>
@@ -79,6 +79,7 @@
 @section('js')
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/2.0.8/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
     <script>
@@ -108,7 +109,7 @@
                 ],
                 searching: false,
                 lengthChange: false,
-                ordering: false,
+                ordering: true,
                 responsive: true,
                 pagingType: "simple_numbers",
                 language: {
@@ -121,5 +122,42 @@
             });
 
         });
+
+        $(document).on('click', '.btn-pengguna-delete', function(e) {
+            e.preventDefault();
+            let id = $(this).data('id');
+
+            let url = "{{ route('users.destroy', ':id') }}";
+            url = url.replace(':id', id);
+
+            Swal.fire({
+                title: 'Apakah kamu ingin menghapus data ini?',
+                text: "data tidak dapat dikembalikan lagi!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Iya, hapus data ini!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url,
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        type: "DELETE",
+                        success: function(data) {
+                            Swal.fire({
+                                title: 'Terhapus!',
+                                text: 'Data User Telah berhasil dihapus.',
+                                icon: 'success',
+                                timer: 2000
+                            });
+                            $('#studentTable').DataTable().ajax.reload();
+                        }
+                    })
+                }
+            })
+        })
     </script>
 @endsection

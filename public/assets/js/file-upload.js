@@ -1,6 +1,3 @@
-// **********************************
-// Modified: Auto-assign input name from parent div attributes
-// **********************************
 (function ($) {
     var fileUploadCount = 0;
 
@@ -8,12 +5,10 @@
         return this.each(function () {
             var fileUploadDiv = $(this);
             var fileUploadId = `fileUpload-${++fileUploadCount}`;
-
-            // Ambil atribut name dari elemen utama (jika ada)
             var inputName =
                 fileUploadDiv.attr("name") || `fileUpload_${fileUploadCount}`;
+            var oldPreview = fileUploadDiv.data("preview"); // ✅ ambil data-preview dari Blade
 
-            // Buat HTML upload box
             var fileDivContent = `
                 <label for="${fileUploadId}" class="file-upload image-upload__box">
                     <div class="image-upload__boxInner">
@@ -27,38 +22,35 @@
 
             fileUploadDiv.html(fileDivContent).addClass("file-container");
 
-            // Fungsi untuk menangani file
             function handleFiles(files) {
                 if (files.length > 0) {
                     var file = files[0];
-
-                    var fileName = file.name;
-                    var fileSize = (file.size / 1024).toFixed(2) + " KB";
                     var fileType = file.type;
+
                     var preview = fileType.startsWith("image")
-                        ? `<img src="${URL.createObjectURL(
-                              file
-                          )}" alt="${fileName}" class="image-upload__image" height="30">`
+                        ? `<img src="${URL.createObjectURL(file)}" alt="${file.name
+                        }" class="image-upload__image">`
                         : `<span class="image-upload__anotherFileIcon"><i class="fas fa-file"></i></span>`;
 
-                    var fileUploadLabel =
-                        fileUploadDiv.find(`label.file-upload`);
-                    fileUploadLabel.find(".image-upload__boxInner").html(`
-                        ${preview}
-                        <button type="button" class="image-upload__deleteBtn"><i class="ph ph-x"></i></button>
-                    `);
-
-                    // Tombol hapus file
-                    fileUploadLabel
-                        .find(".image-upload__deleteBtn")
-                        .click(function () {
-                            fileUploadDiv.html(fileDivContent);
-                            initializeFileUpload();
-                        });
+                    renderPreview(preview);
                 }
             }
 
-            // Inisialisasi event drag/drop dan file change
+            function renderPreview(previewHTML) {
+                var fileUploadLabel = fileUploadDiv.find("label.file-upload");
+                fileUploadLabel.find(".image-upload__boxInner").html(`
+                    ${previewHTML}
+                    <button type="button" class="image-upload__deleteBtn"><i class="ph ph-x"></i></button>
+                `);
+
+                fileUploadLabel
+                    .find(".image-upload__deleteBtn")
+                    .click(function () {
+                        fileUploadDiv.html(fileDivContent);
+                        initializeFileUpload();
+                    });
+            }
+
             function initializeFileUpload() {
                 fileUploadDiv.on({
                     dragover: function (e) {
@@ -75,11 +67,16 @@
                     },
                 });
 
-                fileUploadDiv
-                    .find(`label.file-upload input[type="file"]`)
-                    .change(function () {
-                        handleFiles(this.files);
-                    });
+                fileUploadDiv.find(`input[type="file"]`).change(function () {
+                    handleFiles(this.files);
+                });
+
+                // ✅ tampilkan preview lama jika ada
+                if (oldPreview) {
+                    renderPreview(
+                        `<img src="${oldPreview}" alt="Old Photo" class="image-upload__image">`
+                    );
+                }
             }
 
             initializeFileUpload();
@@ -87,5 +84,4 @@
     };
 })(jQuery);
 
-// Jalankan plugin di semua elemen dengan class "fileUpload"
 $(".fileUpload").fileUpload();
