@@ -33,7 +33,7 @@
         <div class="breadcrumb mb-24">
             <ul class="flex-align gap-4">
                 <li>
-                    <a href="#" class="text-gray-200 fw-normal text-15 hover-text-main-600">
+                    <a href="dashboard" class="text-gray-200 fw-normal text-15 hover-text-main-600">
                         Home
                     </a>
                 </li>
@@ -43,28 +43,28 @@
                     </span>
                 </li>
                 <li>
-                    <span class="text-main-600 fw-normal text-15">Users</span>
+                    <span class="text-main-600 fw-normal text-15">Kategori</span>
                 </li>
             </ul>
         </div>
         <!-- Breadcrumb End -->
 
-        <!-- 🔹 Add User Button -->
+        <!-- 🔹 Add Kategori Button -->
         <div class="add-user-btn">
-            <a href="{{ route('users.create') }}" class="btn btn-primary d-flex align-items-center gap-2">
-                <i class="ph ph-plus-circle text-lg"></i> Tambah User
+            <a href="{{ route('kategori.create') }}" class="btn btn-primary d-flex align-items-center gap-2">
+                <i class="ph ph-plus-circle text-lg"></i> Tambah Kategori
             </a>
         </div>
     </div>
 
     <div class="card overflow-hidden">
         <div class="card-body p-0 overflow-x-auto">
-            <table id="studentTable" class="table table-hover  align-middle">
+            <table id="kategoriTable" class="table table-hover  align-middle">
                 <thead>
                     <tr>
                         <th class="h6 text-center">No</th>
                         <th class="h6 text-center">Nama</th>
-                        <th class="h6 text-center">Email</th>
+                        <th class="h6 text-center">Slug</th>
                         <th class="h6 text-center">Actions</th>
                     </tr>
                 </thead>
@@ -84,10 +84,10 @@
 
     <script>
         $(document).ready(function() {
-            $('#studentTable').DataTable({
+            $('#kategoriTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('users.get-data') }}",
+                ajax: "{{ route('kategori.get-data') }}",
                 columns: [{
                         data: 'DT_RowIndex',
                         name: 'DT_RowIndex'
@@ -97,8 +97,8 @@
                         name: 'name'
                     },
                     {
-                        data: 'email',
-                        name: 'email'
+                        data: 'slug',
+                        name: 'slug'
                     },
                     {
                         data: 'action',
@@ -123,41 +123,41 @@
 
         });
 
-        $(document).on('click', '.btn-pengguna-delete', function(e) {
-            e.preventDefault();
-            let id = $(this).data('id');
+        // $(document).on('click', '.btn-pengguna-delete', function(e) {
+        //     e.preventDefault();
+        //     let id = $(this).data('id');
 
-            let url = "{{ route('users.destroy', ':id') }}";
-            url = url.replace(':id', id);
+        //     let url = "{{ route('users.destroy', ':id') }}";
+        //     url = url.replace(':id', id);
 
-            Swal.fire({
-                title: 'Apakah kamu ingin menghapus data ini?',
-                text: "data tidak dapat dikembalikan lagi!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Iya, hapus data ini!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        url,
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        type: "DELETE",
-                        success: function(data) {
-                            Swal.fire({
-                                title: 'Terhapus!',
-                                text: 'Data User Telah berhasil dihapus.',
-                                icon: 'success',
-                                timer: 2000
-                            });
-                            $('#studentTable').DataTable().ajax.reload();
-                        }
-                    })
-                }
-            })
-        })
+        //     Swal.fire({
+        //         title: 'Apakah kamu ingin menghapus data ini?',
+        //         text: "data tidak dapat dikembalikan lagi!",
+        //         icon: 'warning',
+        //         showCancelButton: true,
+        //         confirmButtonColor: '#3085d6',
+        //         cancelButtonColor: '#d33',
+        //         confirmButtonText: 'Iya, hapus data ini!'
+        //     }).then((result) => {
+        //         if (result.isConfirmed) {
+        //             $.ajax({
+        //                 url,
+        //                 data: {
+        //                     _token: '{{ csrf_token() }}'
+        //                 },
+        //                 type: "DELETE",
+        //                 success: function(data) {
+        //                     Swal.fire({
+        //                         title: 'Terhapus!',
+        //                         text: 'Data User Telah berhasil dihapus.',
+        //                         icon: 'success',
+        //                         timer: 2000
+        //                     });
+        //                     $('#studentTable').DataTable().ajax.reload();
+        //                 }
+        //             })
+        //         }
+        //     })
+        // })
     </script>
 @endsection

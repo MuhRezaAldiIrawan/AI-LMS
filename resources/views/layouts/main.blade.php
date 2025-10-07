@@ -53,8 +53,9 @@
         </div>
     </div>
 
-    <script src="{{ asset('assets/js/phosphor-icon.js') }}"></script>
     <script src="{{ asset('assets/js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ asset('assets/js/boostrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('assets/js/phosphor-icon.js') }}"></script>
 
     @yield('js')
 

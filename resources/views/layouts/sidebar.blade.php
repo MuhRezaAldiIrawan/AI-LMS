@@ -9,7 +9,7 @@
             class="ph ph-x"></i></button>
     <!-- sidebar close btn -->
 
-    <a href="index.html"
+    <a href="index.htm
         class="sidebar__logo text-center p-20 position-sticky inset-block-start-0 bg-white w-100 z-1 pb-10">
         <img src="{{asset('assets/images/bg/b-learninglogo.webp')}}" alt="Logo">
     </a>
@@ -25,10 +25,18 @@
                     </a>
                 </li>
 
-                <li class="sidebar-menu__item">
+                <li class="sidebar-menu__item ">
                     <a href="{{ route('users')}}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-users-three"></i></span>
                         <span class="text">Users</span>
+                    </a>
+                </li>
+
+
+                <li class="sidebar-menu__item ">
+                    <a href="kategori" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-list-bullets"></i></span>
+                        <span class="text">Kategori</span>
                     </a>
                 </li>
 

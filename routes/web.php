@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
+
 
 Route::get('/', function () {
     return view('welcome');
@@ -26,4 +28,12 @@ Route::controller(UsersController::class)->group(function(){
     Route::get('users/{id}', 'edit')->name('users.edit');
     Route::post('users/{id}', 'update')->name('users.update');
     Route::delete('users/{id}', 'destroy')->name('users.destroy');
+});
+
+Route::controller(KategoriController::class)->group(function(){
+    Route::get('kategori', 'index')->name('kategori');
+    Route::get('kategori/get-data', 'getKategori')->name('kategori.get-data');
+    Route::get('kategori/create', 'create')->name('kategori.create');
+    Route::post('kategori', 'store')->name('kategori.store');
+
 });
