@@ -2,36 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CourseType;
 use Illuminate\Http\Request;
-use App\Models\Category;
 use Yajra\DataTables\Facades\DataTables;
 
-class CategoryController extends Controller
+class CourseTypeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return view('pages.category.category');
+        return view('pages.coursetype.coursetype');
     }
 
-
-    public function getKategori(Request $request)
+    public function getCourseType(Request $request)
     {
         if ($request->ajax()) {
-            $data = Category::orderBy('created_at', 'desc')->get();
+            $data = CourseType::orderBy('created_at', 'desc')->get();
 
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     $btn =
                         '
-                        <a href="' . route('category.edit', $row->id) . '" class="btn btn-sm btn-icon btn-primary" >
+                        <a href="' . route('coursetype.edit', $row->id) . '" class="btn btn-sm btn-icon btn-primary" >
                             <i class="ph ph-pencil"></i>
                         </a>
 
-                        <button class="btn btn-icon btn-danger btn-category-delete" data-id="' . $row->id . '" type="button" role="button">
+                        <button class="btn btn-icon btn-danger btn-coursetype-delete" data-id="' . $row->id . '" type="button" role="button">
                             <i class="ph ph-trash"></i>
                         </button>
 
@@ -49,8 +48,8 @@ class CategoryController extends Controller
     public function create()
     {
         $action = 'create';
-        $kategori = new Category();
-        return view('pages.category.create', compact('kategori', 'action'));
+        $coursetype = new CourseType();
+        return view('pages.coursetype.create', compact('coursetype', 'action'));
     }
 
     /**
@@ -58,15 +57,13 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug'],
         ]);
 
-        Category::create($request->all());
+        CourseType::create($request->all());
 
-        return redirect()->route('category');
+        return redirect()->route('coursetype');
     }
 
     /**
@@ -83,8 +80,8 @@ class CategoryController extends Controller
     public function edit(string $id)
     {
         $action = 'edit';
-        $kategori = Category::find($id);
-        return view('pages.category.create', compact('kategori', 'action'));
+        $coursetype = CourseType::find($id);
+        return view('pages.coursetype.create', compact('coursetype', 'action'));
     }
 
     /**
@@ -94,11 +91,12 @@ class CategoryController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug,' . $id],
         ]);
 
-        Category::find($id)->update($request->all());
-        return redirect()->route('category');
+        $coursetype = CourseType::find($id);
+        $coursetype->update($request->all());
+
+        return redirect()->route('coursetype');
     }
 
     /**
@@ -106,17 +104,8 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        try {
-            $kategori = Category::findOrFail($id);
-
-            $kategori->delete();
-
-            return response()->json(['success' => true, 'message' => 'Data berhasil dihapus.']);
-        } catch (\Throwable $th) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menghapus data.',
-            ], 500);
-        }
+        $coursetype = CourseType::find($id);
+        $coursetype->delete();
+        return response()->json(['success' => 'Data berhasil dihapus']);
     }
 }

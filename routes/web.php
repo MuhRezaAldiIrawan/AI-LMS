@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CourseTypeController;
 use App\Http\Controllers\TipeKursusController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,12 @@ Route::controller(CategoryController::class)->group(function(){
 });
 
 
-Route::controller(TipeKursusController::class)->group(function(){
-    Route::get('tipekursus', 'index')->name('tipekursus');
+Route::controller(CourseTypeController::class)->group(function(){
+    Route::get('coursetype', 'index')->name('coursetype');
+    Route::get('coursetype/get-data', 'getCourseType')->name('coursetype.get-data');
+    Route::get('coursetype/create', 'create')->name('coursetype.create');
+    Route::post('coursetype', 'store')->name('coursetype.store');
+    Route::get('coursetype/{id}', 'edit')->name('coursetype.edit');
+    Route::post('coursetype/{id}', 'update')->name('coursetype.update');
+    Route::delete('coursetype/{id}', 'destroy')->name('coursetype.destroy');
 });

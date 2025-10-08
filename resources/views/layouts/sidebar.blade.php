@@ -38,8 +38,8 @@
                     </a>
                 </li>
 
-                <li class="sidebar-menu__item {{ setActive(['tipekursus*']) }}">
-                    <a href="{{ route('tipekursus')}}" class="sidebar-menu__link">
+                <li class="sidebar-menu__item {{ setActive(['coursetype*']) }}">
+                    <a href="{{ route('coursetype')}}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-list-magnifying-glass"></i></span>
                         <span class="text">Tipe Kursus</span>
                     </a>
