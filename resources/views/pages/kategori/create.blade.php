@@ -48,7 +48,8 @@
                         <div class="col-sm-12">
                             <label for="slug" class="h7 mb-8 fw-semibold font-heading">Slug</label>
                             <div class="position-relative">
-                                <input type="text" name="slug" id="slug" class="form-control py-9" readonly>
+                                <input type="text" name="slug" id="slug" class="form-control py-9" readonly
+                                    value="{{ old('slug', $kategori->slug ?? '') }}">
                             </div>
                         </div>
                     </div>
@@ -72,7 +73,7 @@
             const nameInput = document.getElementById("name");
             const slugInput = document.getElementById("slug");
 
-            function generateSlug(text) {
+                function generateSlug(text) {
                 return text
                     .toString()
                     .toLowerCase()
@@ -80,6 +81,10 @@
                     .replace(/\s+/g, "-")
                     .replace(/[^\w\-]+/g, "")
                     .replace(/\-\-+/g, "-");
+            }
+
+            if (nameInput.value && !slugInput.value) {
+                slugInput.value = generateSlug(nameInput.value);
             }
 
             nameInput.addEventListener("input", function() {
@@ -146,34 +151,34 @@
             });
         });
 
-        // $('#editUserForm').on('submit', function(e) {
-        //     e.preventDefault();
+        $('#editKategoriForm').on('submit', function(e) {
+            e.preventDefault();
 
-        //     let formData = new FormData(this);
-        //     let userId = $('#userid').val();
+            let formData = new FormData(this);
+            let id = $('#kategoriid').val();
 
-        //     $.ajax({
-        //         url: '/users/' + userId,
-        //         type: 'POST',
-        //         data: formData,
-        //         contentType: false,
-        //         processData: false,
-        //         cache: false,
-        //         success: function(response) {
-        //             Swal.fire({
-        //                 icon: 'success',
-        //                 title: 'Berhasil!',
-        //                 text: 'Data user berhasil disimpan.',
-        //                 showConfirmButton: false,
-        //                 timer: 2000
-        //             }).then(() => {
-        //                 window.location.href = '/users';
-        //             });
-        //         },
-        //         error: function(xhr) {
-        //             console.error('Error:', xhr.responseText);
-        //         }
-        //     });
-        // });
+            $.ajax({
+                url: '/kategori/' + id,
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                cache: false,
+                success: function(response) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Data Kategori berhasil diupdate.',
+                        showConfirmButton: false,
+                        timer: 2000
+                    }).then(() => {
+                        window.location.href = '/kategori';
+                    });
+                },
+                error: function(xhr) {
+                    console.error('Error:', xhr.responseText);
+                }
+            });
+        });
     </script>
 @endsection

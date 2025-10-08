@@ -27,7 +27,7 @@ class KategoriController extends Controller
                 ->addColumn('action', function ($row) {
                     $btn =
                         '
-                        <a href="#" class="btn btn-sm btn-icon btn-primary" >
+                        <a href="' . route('kategori.edit', $row->id) . '" class="btn btn-sm btn-icon btn-primary" >
                             <i class="ph ph-pencil"></i>
                         </a>
 
@@ -84,7 +84,9 @@ class KategoriController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $action = 'edit';
+        $kategori = Category::find($id);
+        return view('pages.kategori.create', compact('kategori', 'action'));
     }
 
     /**
@@ -92,7 +94,13 @@ class KategoriController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'slug' => ['required', 'string', 'max:255', 'unique:categories,slug,' . $id],
+        ]);
+
+        Category::find($id)->update($request->all());
+        return redirect()->route('kategori');
     }
 
     /**
@@ -100,6 +108,17 @@ class KategoriController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $kategori = Category::findOrFail($id);
+
+            $kategori->delete();
+
+            return response()->json(['success' => true, 'message' => 'Data berhasil dihapus.']);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus data.',
+            ], 500);
+        }
     }
 }

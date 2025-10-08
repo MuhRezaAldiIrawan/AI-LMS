@@ -35,5 +35,8 @@ Route::controller(KategoriController::class)->group(function(){
     Route::get('kategori/get-data', 'getKategori')->name('kategori.get-data');
     Route::get('kategori/create', 'create')->name('kategori.create');
     Route::post('kategori', 'store')->name('kategori.store');
+    Route::get('kategori/{id}', 'edit')->name('kategori.edit');
+    Route::post('kategori/{id}', 'update')->name('kategori.update');
+    Route::delete('kategori/{id}', 'destroy')->name('kategori.destroy');
 
 });

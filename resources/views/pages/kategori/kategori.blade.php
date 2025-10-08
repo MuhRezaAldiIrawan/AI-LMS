@@ -123,41 +123,41 @@
 
         });
 
-        // $(document).on('click', '.btn-pengguna-delete', function(e) {
-        //     e.preventDefault();
-        //     let id = $(this).data('id');
+        $(document).on('click', '.btn-kategori-delete', function(e) {
+            e.preventDefault();
+            let id = $(this).data('id');
 
-        //     let url = "{{ route('users.destroy', ':id') }}";
-        //     url = url.replace(':id', id);
+            let url = "{{ route('kategori.destroy', ':id') }}";
+            url = url.replace(':id', id);
 
-        //     Swal.fire({
-        //         title: 'Apakah kamu ingin menghapus data ini?',
-        //         text: "data tidak dapat dikembalikan lagi!",
-        //         icon: 'warning',
-        //         showCancelButton: true,
-        //         confirmButtonColor: '#3085d6',
-        //         cancelButtonColor: '#d33',
-        //         confirmButtonText: 'Iya, hapus data ini!'
-        //     }).then((result) => {
-        //         if (result.isConfirmed) {
-        //             $.ajax({
-        //                 url,
-        //                 data: {
-        //                     _token: '{{ csrf_token() }}'
-        //                 },
-        //                 type: "DELETE",
-        //                 success: function(data) {
-        //                     Swal.fire({
-        //                         title: 'Terhapus!',
-        //                         text: 'Data User Telah berhasil dihapus.',
-        //                         icon: 'success',
-        //                         timer: 2000
-        //                     });
-        //                     $('#studentTable').DataTable().ajax.reload();
-        //                 }
-        //             })
-        //         }
-        //     })
-        // })
+            Swal.fire({
+                title: 'Apakah kamu ingin menghapus data ini?',
+                text: "data tidak dapat dikembalikan lagi!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Iya, hapus data ini!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url,
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        type: "DELETE",
+                        success: function(data) {
+                            Swal.fire({
+                                title: 'Terhapus!',
+                                text: 'Data Kategori Telah berhasil dihapus.',
+                                icon: 'success',
+                                timer: 2000
+                            });
+                            $('#kategoriTable').DataTable().ajax.reload();
+                        }
+                    })
+                }
+            })
+        })
     </script>
 @endsection
