@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CourseTypeController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\RewardsController;
 use App\Http\Controllers\TipeKursusController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
@@ -63,4 +64,14 @@ Route::controller(LocationController::class)->group(function(){
     Route::get('location/{id}', 'edit')->name('location.edit');
     Route::post('location/{id}', 'update')->name('location.update');
     Route::delete('location/{id}', 'destroy')->name('location.destroy');
+});
+
+Route::controller(RewardsController::class)->group(function(){
+    Route::get('rewards', 'index')->name('rewards');
+    Route::get('rewards/get-data', 'getRewards')->name('rewards.get-data');
+    Route::get('rewards/create', 'create')->name('rewards.create');
+    Route::post('rewards', 'store')->name('rewards.store');
+    Route::get('rewards/{id}', 'edit')->name('rewards.edit');
+    Route::post('rewards/{id}', 'update')->name('rewards.update');
+    Route::delete('rewards/{id}', 'destroy')->name('rewards.destroy');
 });
