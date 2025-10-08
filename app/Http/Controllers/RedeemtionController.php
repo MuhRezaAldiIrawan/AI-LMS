@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\RewardRedemption;
+use Yajra\DataTables\Facades\DataTables;
 
 class RedeemtionController extends Controller
 {
@@ -13,6 +15,27 @@ class RedeemtionController extends Controller
     {
         return view('pages.redeemtion.redeemtion');
     }
+
+    public function getRedeemData(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = RewardRedemption::with('user', 'reward')->orderBy('created_at', 'desc')->get();
+
+            if ($request->status && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('action', function($row) {
+                    return '<button class="btn btn-sm btn-info">Detail</button>';
+                })
+                ->rawColumns(['action'])
+                ->make(true);
+        }
+    }
+
+
 
     /**
      * Show the form for creating a new resource.
