@@ -1,7 +1,5 @@
 <div class="side-overlay"></div>
 
-
-
 <aside class="sidebar">
     <!-- sidebar close btn -->
     <button type="button"
@@ -18,14 +16,14 @@
         <div class="p-20 pt-10">
             <ul class="sidebar-menu">
 
-                <li class="sidebar-menu__item">
-                    <a href="dashboard" class="sidebar-menu__link">
+                <li class="sidebar-menu__item {{ setActive('dashboard.*') }}">
+                    <a href="{{ route('dashboard.index')}}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-squares-four"></i></span>
                         <span class="text">Dashboard</span>
                     </a>
                 </li>
 
-                <li class="sidebar-menu__item ">
+                <li class="sidebar-menu__item {{ setActive(['users*']) }}"">
                     <a href="{{ route('users')}}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-users-three"></i></span>
                         <span class="text">Users</span>
@@ -33,8 +31,8 @@
                 </li>
 
 
-                <li class="sidebar-menu__item ">
-                    <a href="kategori" class="sidebar-menu__link">
+                <li class="sidebar-menu__item {{ setActive(['kategori*']) }}">
+                    <a href="{{ route('kategori')}}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-list-bullets"></i></span>
                         <span class="text">Kategori</span>
                     </a>
