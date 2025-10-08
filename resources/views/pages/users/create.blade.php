@@ -4,7 +4,6 @@
     <link rel="stylesheet" href="{{ asset('assets/css/file-upload.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/plyr.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         .input-error {
             border-color: #dc3545 !important;

@@ -49,7 +49,7 @@
         </div>
         <!-- Breadcrumb End -->
 
-        <!-- 🔹 Add Kategori Button -->
+        <!-- 🔹 Add Tipe kursus Button -->
         <div class="add-user-btn">
             <a href="{{ route('coursetype.create') }}" class="btn btn-primary d-flex align-items-center gap-2">
                 <i class="ph ph-plus-circle text-lg"></i> Tambah Tipe Kursus

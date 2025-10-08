@@ -1,24 +1,5 @@
 @extends('layouts.main')
 
-@section('css')
-    <link rel="stylesheet" href="{{ asset('assets/css/file-upload.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/plyr.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <style>
-        .input-error {
-            border-color: #dc3545 !important;
-            box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
-        }
-
-        .error-message {
-            color: #dc3545;
-            font-size: 13px;
-            margin-top: 4px;
-        }
-    </style>
-@endsection
-
 @section('content')
     <div class="card">
         <div class="card-header border-bottom border-gray-100 flex-align gap-8">
