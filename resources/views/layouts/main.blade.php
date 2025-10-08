@@ -13,6 +13,33 @@
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/main.css') }}">
 
+    <style>
+        .sidebar-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin: 16px 0;
+        }
+
+        .sidebar-divider::before,
+        .sidebar-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .sidebar-divider:not(:empty)::before {
+            margin-right: .75em;
+        }
+
+        .sidebar-divider:not(:empty)::after {
+            margin-left: .75em;
+        }
+    </style>
+
     @yield('css')
 </head>
 

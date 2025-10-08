@@ -16,11 +16,19 @@
         <div class="p-20 pt-10">
             <ul class="sidebar-menu">
 
+                <li class="sidebar-divider">
+                    <span>Dashboard</span>
+                </li>
+
                 <li class="sidebar-menu__item {{ setActive('dashboard.*') }}">
                     <a href="{{ route('dashboard.index')}}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-squares-four"></i></span>
                         <span class="text">Dashboard</span>
                     </a>
+                </li>
+
+                <li class="sidebar-divider">
+                    <span>Users</span>
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive(['users*']) }}"">
@@ -30,6 +38,21 @@
                     </a>
                 </li>
 
+                <li class="sidebar-divider">
+                    <span>Rewards</span>
+                </li>
+
+                <li class="sidebar-menu__item {{ setActive(['rewards*']) }}">
+                    <a href="{{ route('rewards')}}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-treasure-chest"></i></span>
+                        <span class="text">Rewards</span>
+                    </a>
+                </li>
+
+
+                <li class="sidebar-divider">
+                    <span>Settings</span>
+                </li>
 
                 <li class="sidebar-menu__item {{ setActive(['category*']) }}">
                     <a href="{{ route('category')}}" class="sidebar-menu__link">
