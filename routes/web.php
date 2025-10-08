@@ -1,7 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\KategoriController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\TipeKursusController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,13 +31,18 @@ Route::controller(UsersController::class)->group(function(){
     Route::delete('users/{id}', 'destroy')->name('users.destroy');
 });
 
-Route::controller(KategoriController::class)->group(function(){
-    Route::get('kategori', 'index')->name('kategori');
-    Route::get('kategori/get-data', 'getKategori')->name('kategori.get-data');
-    Route::get('kategori/create', 'create')->name('kategori.create');
-    Route::post('kategori', 'store')->name('kategori.store');
-    Route::get('kategori/{id}', 'edit')->name('kategori.edit');
-    Route::post('kategori/{id}', 'update')->name('kategori.update');
-    Route::delete('kategori/{id}', 'destroy')->name('kategori.destroy');
+Route::controller(CategoryController::class)->group(function(){
+    Route::get('category', 'index')->name('category');
+    Route::get('category/get-data', 'getKategori')->name('category.get-data');
+    Route::get('category/create', 'create')->name('category.create');
+    Route::post('category', 'store')->name('category.store');
+    Route::get('category/{id}', 'edit')->name('category.edit');
+    Route::post('category/{id}', 'update')->name('category.update');
+    Route::delete('category/{id}', 'destroy')->name('category.destroy');
 
+});
+
+
+Route::controller(TipeKursusController::class)->group(function(){
+    Route::get('tipekursus', 'index')->name('tipekursus');
 });

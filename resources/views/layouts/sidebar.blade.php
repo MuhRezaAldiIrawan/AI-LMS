@@ -31,10 +31,17 @@
                 </li>
 
 
-                <li class="sidebar-menu__item {{ setActive(['kategori*']) }}">
-                    <a href="{{ route('kategori')}}" class="sidebar-menu__link">
+                <li class="sidebar-menu__item {{ setActive(['category*']) }}">
+                    <a href="{{ route('category')}}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-list-bullets"></i></span>
                         <span class="text">Kategori</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-menu__item {{ setActive(['tipekursus*']) }}">
+                    <a href="{{ route('tipekursus')}}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-list-magnifying-glass"></i></span>
+                        <span class="text">Tipe Kursus</span>
                     </a>
                 </li>
 

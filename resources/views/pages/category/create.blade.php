@@ -55,7 +55,7 @@
                     </div>
 
                     <div class="flex-align justify-content-end gap-8 mt-16">
-                        <a href="{{ route('kategori') }}" class="btn btn-outline-main rounded-pill py-9">Batal</a>
+                        <a href="{{ route('category') }}" class="btn btn-outline-main rounded-pill py-9">Batal</a>
                         <button class="btn btn-main rounded-pill py-9" type="submit">Simpan</button>
                     </div>
                 </form>
@@ -104,7 +104,7 @@
             let formData = new FormData(this);
 
             $.ajax({
-                url: "{{ route('kategori.store') }}",
+                url: "{{ route('category.store') }}",
                 method: "POST",
                 data: formData,
                 processData: false,
@@ -117,7 +117,7 @@
                         showConfirmButton: false,
                         timer: 2000
                     }).then(() => {
-                        window.location.href = '/kategori';
+                        window.location.href = '/category';
                     });
                 },
                 error: function(xhr) {
@@ -158,7 +158,7 @@
             let id = $('#kategoriid').val();
 
             $.ajax({
-                url: '/kategori/' + id,
+                url: '/category/' + id,
                 type: 'POST',
                 data: formData,
                 contentType: false,
@@ -172,7 +172,7 @@
                         showConfirmButton: false,
                         timer: 2000
                     }).then(() => {
-                        window.location.href = '/kategori';
+                        window.location.href = '/category';
                     });
                 },
                 error: function(xhr) {

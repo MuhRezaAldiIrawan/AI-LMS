@@ -33,7 +33,7 @@
         <div class="breadcrumb mb-24">
             <ul class="flex-align gap-4">
                 <li>
-                    <a href="dashboard" class="text-gray-200 fw-normal text-15 hover-text-main-600">
+                    <a href="{{ route('dashboard.index') }}" class="text-gray-200 fw-normal text-15 hover-text-main-600">
                         Home
                     </a>
                 </li>
@@ -51,7 +51,7 @@
 
         <!-- 🔹 Add Kategori Button -->
         <div class="add-user-btn">
-            <a href="{{ route('kategori.create') }}" class="btn btn-primary d-flex align-items-center gap-2">
+            <a href="{{ route('category.create') }}" class="btn btn-primary d-flex align-items-center gap-2">
                 <i class="ph ph-plus-circle text-lg"></i> Tambah Kategori
             </a>
         </div>
@@ -87,7 +87,7 @@
             $('#kategoriTable').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('kategori.get-data') }}",
+                ajax: "{{ route('category.get-data') }}",
                 columns: [{
                         data: 'DT_RowIndex',
                         name: 'DT_RowIndex'
@@ -123,11 +123,11 @@
 
         });
 
-        $(document).on('click', '.btn-kategori-delete', function(e) {
+        $(document).on('click', '.btn-category-delete', function(e) {
             e.preventDefault();
             let id = $(this).data('id');
 
-            let url = "{{ route('kategori.destroy', ':id') }}";
+            let url = "{{ route('category.destroy', ':id') }}";
             url = url.replace(':id', id);
 
             Swal.fire({

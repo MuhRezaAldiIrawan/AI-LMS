@@ -6,14 +6,14 @@ use Illuminate\Http\Request;
 use App\Models\Category;
 use Yajra\DataTables\Facades\DataTables;
 
-class KategoriController extends Controller
+class CategoryController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return view('pages.kategori.kategori');
+        return view('pages.category.category');
     }
 
 
@@ -27,11 +27,11 @@ class KategoriController extends Controller
                 ->addColumn('action', function ($row) {
                     $btn =
                         '
-                        <a href="' . route('kategori.edit', $row->id) . '" class="btn btn-sm btn-icon btn-primary" >
+                        <a href="' . route('category.edit', $row->id) . '" class="btn btn-sm btn-icon btn-primary" >
                             <i class="ph ph-pencil"></i>
                         </a>
 
-                        <button class="btn btn-icon btn-danger btn-kategori-delete" data-id="' . $row->id . '" type="button" role="button">
+                        <button class="btn btn-icon btn-danger btn-category-delete" data-id="' . $row->id . '" type="button" role="button">
                             <i class="ph ph-trash"></i>
                         </button>
 
@@ -50,7 +50,7 @@ class KategoriController extends Controller
     {
         $action = 'create';
         $kategori = new Category();
-        return view('pages.kategori.create', compact('kategori', 'action'));
+        return view('pages.category.create', compact('kategori', 'action'));
     }
 
     /**
@@ -68,7 +68,7 @@ class KategoriController extends Controller
         Category::create($request->all());
 
 
-        return redirect()->route('kategori');
+        return redirect()->route('category');
     }
 
     /**
@@ -86,7 +86,7 @@ class KategoriController extends Controller
     {
         $action = 'edit';
         $kategori = Category::find($id);
-        return view('pages.kategori.create', compact('kategori', 'action'));
+        return view('pages.category.create', compact('kategori', 'action'));
     }
 
     /**
@@ -100,7 +100,7 @@ class KategoriController extends Controller
         ]);
 
         Category::find($id)->update($request->all());
-        return redirect()->route('kategori');
+        return redirect()->route('category');
     }
 
     /**
