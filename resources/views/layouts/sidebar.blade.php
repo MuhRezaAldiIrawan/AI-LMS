@@ -49,6 +49,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
+                    <a href="{{ route('redeemtion')}}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-swap"></i></span>
+                        <span class="text">Penukaran Reward</span>
+                    </a>
+                </li>
+
 
                 <li class="sidebar-divider">
                     <span>Settings</span>

@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CourseTypeController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\RedeemtionController;
 use App\Http\Controllers\RewardsController;
 use App\Http\Controllers\TipeKursusController;
 use App\Http\Controllers\UsersController;
@@ -74,4 +75,8 @@ Route::controller(RewardsController::class)->group(function(){
     Route::get('rewards/{id}', 'edit')->name('rewards.edit');
     Route::post('rewards/{id}', 'update')->name('rewards.update');
     Route::delete('rewards/{id}', 'destroy')->name('rewards.destroy');
+});
+
+Route::controller(RedeemtionController::class)->group(function(){
+    Route::get('redeemtion', 'index')->name('redeemtion');
 });
