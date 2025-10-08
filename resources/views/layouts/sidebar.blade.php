@@ -45,6 +45,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu__item {{ setActive(['location*']) }}">
+                    <a href="{{ route('location')}}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-map-pin-line"></i></span>
+                        <span class="text">Lokasi</span>
+                    </a>
+                </li>
+
             </ul>
         </div>
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CourseTypeController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\TipeKursusController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
@@ -52,4 +53,14 @@ Route::controller(CourseTypeController::class)->group(function(){
     Route::get('coursetype/{id}', 'edit')->name('coursetype.edit');
     Route::post('coursetype/{id}', 'update')->name('coursetype.update');
     Route::delete('coursetype/{id}', 'destroy')->name('coursetype.destroy');
+});
+
+Route::controller(LocationController::class)->group(function(){
+    Route::get('location', 'index')->name('location');
+    Route::get('location/get-data', 'getLocation')->name('location.get-data');
+    Route::get('location/create', 'create')->name('location.create');
+    Route::post('location', 'store')->name('location.store');
+    Route::get('location/{id}', 'edit')->name('location.edit');
+    Route::post('location/{id}', 'update')->name('location.update');
+    Route::delete('location/{id}', 'destroy')->name('location.destroy');
 });
