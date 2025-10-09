@@ -8,8 +8,9 @@
     <!-- sidebar close btn -->
 
     <a href="index.htm
-        class="sidebar__logo text-center p-20 position-sticky inset-block-start-0 bg-white w-100 z-1 pb-10">
-        <img src="{{asset('assets/images/bg/b-learninglogo.webp')}}" alt="Logo">
+        class="sidebar__logo text-center p-20 position-sticky inset-block-start-0 bg-white w-100
+        z-1 pb-10">
+        <img src="{{ asset('assets/images/bg/b-learninglogo.webp') }}" alt="Logo">
     </a>
 
     <div class="sidebar-menu-wrapper overflow-y-auto scroll-sm">
@@ -21,7 +22,7 @@
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive('dashboard.*') }}">
-                    <a href="{{ route('dashboard.index')}}" class="sidebar-menu__link">
+                    <a href="{{ route('dashboard.index') }}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-squares-four"></i></span>
                         <span class="text">Dashboard</span>
                     </a>
@@ -32,9 +33,20 @@
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive(['users*']) }}"">
-                    <a href="{{ route('users')}}" class="sidebar-menu__link">
+                    <a href="{{ route('users') }}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-users-three"></i></span>
                         <span class="text">Users</span>
+                    </a>
+                </li>
+
+                <li class="sidebar-divider">
+                    <span>Kursus</span>
+                </li>
+
+                <li class="sidebar-menu__item {{ setActive(['course*']) }}">
+                    <a href="{{ route('course') }}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-books"></i></span>
+                        <span class="text">Kursus</span>
                     </a>
                 </li>
 
@@ -43,14 +55,14 @@
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive(['rewards*']) }}">
-                    <a href="{{ route('rewards')}}" class="sidebar-menu__link">
+                    <a href="{{ route('rewards') }}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-treasure-chest"></i></span>
                         <span class="text">Rewards</span>
                     </a>
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
-                    <a href="{{ route('redeemtion')}}" class="sidebar-menu__link">
+                    <a href="{{ route('redeemtion') }}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-swap"></i></span>
                         <span class="text">Penukaran Reward</span>
                     </a>
@@ -58,25 +70,25 @@
 
 
                 <li class="sidebar-divider">
-                    <span>Settings</span>
+                    <span>Pengaturan</span>
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive(['category*']) }}">
-                    <a href="{{ route('category')}}" class="sidebar-menu__link">
+                    <a href="{{ route('category') }}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-list-bullets"></i></span>
                         <span class="text">Kategori</span>
                     </a>
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive(['coursetype*']) }}">
-                    <a href="{{ route('coursetype')}}" class="sidebar-menu__link">
+                    <a href="{{ route('coursetype') }}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-list-magnifying-glass"></i></span>
                         <span class="text">Tipe Kursus</span>
                     </a>
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive(['location*']) }}">
-                    <a href="{{ route('location')}}" class="sidebar-menu__link">
+                    <a href="{{ route('location') }}" class="sidebar-menu__link">
                         <span class="icon"><i class="ph ph-map-pin-line"></i></span>
                         <span class="text">Lokasi</span>
                     </a>

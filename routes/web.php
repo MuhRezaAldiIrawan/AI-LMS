@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CourseTypeController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\RedeemtionController;
@@ -80,5 +81,14 @@ Route::controller(RewardsController::class)->group(function(){
 Route::controller(RedeemtionController::class)->group(function(){
     Route::get('redeemtion', 'index')->name('redeemtion');
     Route::get('redeemtion/get-data', 'getRedeemData')->name('redeemtion.getData');
+});
 
+Route::controller(CourseController::class)->group(function(){
+    Route::get('course', 'index')->name('course');
+    Route::get('course/create', 'create')->name('course.create');
+    Route::post('course', 'store')->name('course.store');
+    Route::get('course/{id}', 'show')->name('course.show');
+    // Route::get('course/{id}', 'edit')->name('course.edit');
+    // Route::post('course/{id}', 'update')->name('course.update');
+    // Route::delete('course/{id}', 'destroy')->name('course.destroy');
 });
