@@ -47,13 +47,11 @@ class CourseController extends Controller
      */
     public function create()
     {
-        $action = 'create';
         $course = new Course();
-
         $categories = Category::all();
         $courseType = CourseType::all();
 
-        return view('pages.course.create', compact('action', 'course', 'categories', 'courseType'));
+        return view('pages.course.create', compact('course', 'categories', 'courseType'));
     }
 
     /**
@@ -92,7 +90,11 @@ class CourseController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $course = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])->findOrFail($id);
+        $categories = Category::all();
+        $courseType = CourseType::all();
+
+        return view('pages.course.show', compact('course', 'categories', 'courseType'));
     }
 
     /**
@@ -108,7 +110,30 @@ class CourseController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+
+        $validatedData = $request->validate([
+            'title' => 'required|string|max:255|unique:courses',
+            'description' => 'nullable|string',
+            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
+            'category_id' => 'required|exists:categories,id',
+            'course_type_id' => 'required|exists:course_types,id',
+        ]);
+
+        $dataToStore = $validatedData;
+        $dataToStore['slug'] = Str::slug($request->title);
+
+        if ($request->hasFile('thumbnail')) {
+            $file = $request->file('thumbnail');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+
+            $path = $file->storeAs('thumbnails', $fileName, 'public');
+
+            $dataToStore['thumbnail'] = $path;
+        }
+
+        Course::where('id', $id)->update($dataToStore);
+
+        return redirect()->route('course');
     }
 
     /**

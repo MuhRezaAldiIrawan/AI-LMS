@@ -16,7 +16,7 @@
         </div>
         <div class="card-body">
             <div class="row gy-20">
-                <form id="{{ $action === 'create' ? 'createCourseForm' : 'editCourseForm' }}" enctype="multipart/form-data">
+                <form id="createCourseForm" enctype="multipart/form-data">
                     @csrf
                     <div class="row g-20">
                         <input type="hidden" name="kursusid" id="kursusid" value="{{ $course->id ?? '' }}">
@@ -108,9 +108,8 @@
     <script>
 
         $('#createCourseForm').on('submit', function(e) {
-            e.preventDefault(); // cegah reload halaman
+            e.preventDefault();
 
-            // Ambil data form
             let formData = new FormData(this);
 
             $.ajax({
