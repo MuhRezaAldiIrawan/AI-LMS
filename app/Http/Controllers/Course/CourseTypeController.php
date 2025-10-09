@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Course;
+use App\Http\Controllers\Controller;
 
 use App\Models\CourseType;
 use Illuminate\Http\Request;

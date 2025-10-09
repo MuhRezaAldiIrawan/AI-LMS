@@ -2,13 +2,14 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\CourseController;
-use App\Http\Controllers\CourseTypeController;
+use App\Http\Controllers\Course\CourseController;
+use App\Http\Controllers\Course\CourseTypeController;
+use App\Http\Controllers\Course\ModuleController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\RedeemtionController;
 use App\Http\Controllers\RewardsController;
-use App\Http\Controllers\TipeKursusController;
 use App\Http\Controllers\UsersController;
+use App\Models\Module;
 use Illuminate\Support\Facades\Route;
 
 
@@ -89,5 +90,10 @@ Route::controller(CourseController::class)->group(function(){
     Route::post('course', 'store')->name('course.store');
     Route::get('course/{id}', 'show')->name('course.show');
     Route::post('course/{id}', 'update')->name('course.update');
-    // Route::delete('course/{id}', 'destroy')->name('course.destroy');
 });
+
+Route::controller(ModuleController::class)->group(function(){
+    Route::post('module', 'store')->name('module.store');
+});
+
+

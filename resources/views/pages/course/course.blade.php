@@ -136,8 +136,6 @@
                     <div class="mt-10 d-flex justify-content-center">
                         {{ $myCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
                     </div>
-
-
                 </div>
             </div>
 
