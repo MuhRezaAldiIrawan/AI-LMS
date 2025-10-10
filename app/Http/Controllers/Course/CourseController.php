@@ -95,6 +95,8 @@ class CourseController extends Controller
         $categories = Category::all();
         $courseType = CourseType::all();
 
+        // dd($course);
+
         return view('pages.course.show', compact('course', 'categories', 'courseType'));
     }
 

@@ -63,7 +63,10 @@ class ModuleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate(['title' => 'required|string|max:255']);
+        $module = Module::findOrFail($id);
+        $module->update(['title' => $request->title]);
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -71,6 +74,21 @@ class ModuleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        try {
+            $module = Module::findOrFail($id);
+
+            // Delete the module (lessons will be deleted due to cascade)
+            $module->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Module berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus module'
+            ], 500);
+        }
     }
 }

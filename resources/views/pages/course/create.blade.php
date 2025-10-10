@@ -106,7 +106,6 @@
     </script>
 
     <script>
-
         $('#createCourseForm').on('submit', function(e) {
             e.preventDefault();
 

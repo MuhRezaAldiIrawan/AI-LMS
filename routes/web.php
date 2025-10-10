@@ -5,6 +5,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\Course\CourseController;
 use App\Http\Controllers\Course\CourseTypeController;
 use App\Http\Controllers\Course\ModuleController;
+use App\Http\Controllers\Course\LessonController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\RedeemtionController;
 use App\Http\Controllers\RewardsController;
@@ -94,6 +95,15 @@ Route::controller(CourseController::class)->group(function(){
 
 Route::controller(ModuleController::class)->group(function(){
     Route::post('module', 'store')->name('module.store');
+    Route::put('module/{id}', 'update')->name('module.update');
+    Route::delete('module/{id}', 'destroy')->name('module.destroy');
+});
+
+Route::controller(LessonController::class)->group(function(){
+    Route::post('lesson', 'store')->name('lesson.store');
+    Route::get('lesson/{id}', 'show')->name('lesson.show');
+    Route::put('lesson/{id}', 'update')->name('lesson.update');
+    Route::delete('lesson/{id}', 'destroy')->name('lesson.destroy');
 });
 
 
