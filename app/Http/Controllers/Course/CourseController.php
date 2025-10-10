@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Course;
 use App\Models\Category;
 use App\Models\CourseType;
+use App\Models\User;
 
 class CourseController extends Controller
 {
@@ -94,10 +95,9 @@ class CourseController extends Controller
         $course = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])->findOrFail($id);
         $categories = Category::all();
         $courseType = CourseType::all();
+        $users = User::all();
 
-        // dd($course);
-
-        return view('pages.course.show', compact('course', 'categories', 'courseType'));
+        return view('pages.course.show', compact('course', 'categories', 'courseType', 'users'));
     }
 
     /**
@@ -145,5 +145,47 @@ class CourseController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+
+    public function updateParticipants(Request $request, $course)
+    {
+        $request->validate([
+            'participants' => 'nullable|array',
+            'participants.*' => 'exists:users,id'
+        ]);
+
+        try {
+            $course = Course::findOrFail($course);
+            $participantIds = $request->input('participants', []);
+
+            // Sync the enrolled users
+            $course->enrolledUsers()->sync($participantIds);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Peserta kursus berhasil diperbarui.',
+                    'data' => [
+                        'enrolled_count' => count($participantIds),
+                        'course_id' => $course->id
+                    ]
+                ]);
+            }
+
+            return redirect()->route('course.show', $course->id)
+                ->with('success', 'Peserta kursus berhasil diperbarui.');
+
+        } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal memperbarui peserta kursus.'
+                ], 500);
+            }
+
+            return redirect()->back()
+                ->with('error', 'Gagal memperbarui peserta kursus.');
+        }
     }
 }

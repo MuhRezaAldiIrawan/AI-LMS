@@ -93,6 +93,7 @@ Route::controller(CourseController::class)->group(function(){
     Route::post('course', 'store')->name('course.store');
     Route::get('course/{id}', 'show')->name('course.show');
     Route::post('course/{id}', 'update')->name('course.update');
+    Route::post('course/{course}/update-participants', 'updateParticipants')->name('course.update-participants');
 });
 
 Route::controller(ModuleController::class)->group(function(){
