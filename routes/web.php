@@ -6,6 +6,8 @@ use App\Http\Controllers\Course\CourseController;
 use App\Http\Controllers\Course\CourseTypeController;
 use App\Http\Controllers\Course\ModuleController;
 use App\Http\Controllers\Course\LessonController;
+use App\Http\Controllers\Course\QuizController;
+use App\Http\Controllers\Course\QuestionController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\RedeemtionController;
 use App\Http\Controllers\RewardsController;
@@ -104,6 +106,20 @@ Route::controller(LessonController::class)->group(function(){
     Route::get('lesson/{id}', 'show')->name('lesson.show');
     Route::put('lesson/{id}', 'update')->name('lesson.update');
     Route::delete('lesson/{id}', 'destroy')->name('lesson.destroy');
+});
+
+Route::controller(QuizController::class)->group(function(){
+    Route::post('quiz', 'store')->name('quiz.store');
+    Route::get('quiz/{id}', 'show')->name('quiz.show');
+    Route::put('quiz/{id}', 'update')->name('quiz.update');
+    Route::delete('quiz/{id}', 'destroy')->name('quiz.destroy');
+    Route::get('quiz/{id}/manage', 'manage')->name('quiz.manage');
+});
+
+Route::controller(QuestionController::class)->group(function(){
+    Route::post('question', 'store')->name('question.store');
+    Route::put('question/{id}', 'update')->name('question.update');
+    Route::delete('question/{id}', 'destroy')->name('question.destroy');
 });
 
 

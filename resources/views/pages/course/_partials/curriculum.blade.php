@@ -116,7 +116,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <ul class="sub-comment-list mt-24">
+                                                    <ul class="mt-10">
                                                         @forelse($module->lessons as $lesson)
                                                             <li>
                                                                 <div
@@ -128,8 +128,7 @@
                                                                             <div class="flex-align flex-wrap gap-8">
                                                                                 <h6 class="text-15 fw-bold mb-0">
                                                                                     {{ $lesson->title }}</h6>
-                                                                                <span
-                                                                                    class="py-2 px-3 bg-primary text-white rounded text-13">{{ $lesson->duration_in_minutes }}
+                                                                                <span class="py-0 px-8 bg-main-50 text-main-600 rounded-4 text-15 fw-medium h5 mb-0 fw-bold">{{ $lesson->duration_in_minutes }}
                                                                                     menit</span>
                                                                             </div>
                                                                             <div class="flex-align gap-8">
@@ -167,28 +166,30 @@
                                             @if ($module->quiz)
                                                 <!-- Quiz Section -->
                                                 <div class="mt-24 pt-24 border-top">
-                                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3" style="padding: 10px">
                                                         <h6 class="text-15 fw-bold mb-0">Kuis</h6>
                                                         <button class="text-15 fw-bold p-0 mb-0 border-0 bg-transparent"
                                                             style="color: #3b82f6; text-decoration: none;"
-                                                            data-quiz-id="{{ $module->quiz->id }}">Edit Kuis</button>
+                                                            data-bs-toggle="modal" data-bs-target="#quizModal"
+                                                            data-quiz-id="{{ $module->quiz->id }}">Edit</button>
                                                     </div>
                                                     <div class="bg-white rounded shadow-sm border py-4 px-4">
-                                                        <div class="d-flex justify-content-between align-items-center">
+                                                        <div class="d-flex justify-content-between align-items-center" style="padding: 10px">
                                                             <div class="flex-align flex-wrap gap-8">
                                                                 <h6 class="text-15 fw-bold mb-0">
                                                                     {{ $module->quiz->title }}</h6>
-                                                                <span
-                                                                    class="py-1 px-2 bg-warning text-dark rounded text-13">{{ $module->quiz->duration_in_minutes }}
+                                                                <span class="py-0 px-8 bg-main-50 text-main-600 rounded-4 text-15 fw-medium h5 mb-0 fw-bold">{{ $module->quiz->duration_in_minutes }}
                                                                     menit</span>
-                                                                <span
-                                                                    class="py-1 px-2 bg-success text-white rounded text-13">Passing:
+                                                                <span class="py-0 px-8 bg-success text-white rounded-4 text-15 fw-medium h5 mb-0 fw-bold">Passing:
                                                                     {{ $module->quiz->passing_score }}%</span>
                                                             </div>
                                                             <div class="flex-align gap-8">
-                                                                <a href="#" style="color: #3b82f6"
-                                                                    data-quiz-id="{{ $module->quiz->id }}">Edit</a>
-                                                                <a href="#" style="color: #ef4444"
+                                                                <a href="{{ route('quiz.manage', $module->quiz->id) }}" 
+                                                                    class="manage-quiz-btn" style="color: #28a745">Kelola</a>
+                                                                <a href="#" class="edit-quiz-btn" style="color: #3b82f6"
+                                                                    data-quiz-id="{{ $module->quiz->id }}"
+                                                                    data-bs-toggle="modal" data-bs-target="#quizModal">Edit</a>
+                                                                <a href="#" class="delete-quiz-btn" style="color: #ef4444"
                                                                     data-quiz-id="{{ $module->quiz->id }}">Hapus</a>
                                                             </div>
                                                         </div>
@@ -202,6 +203,7 @@
                                                         <button
                                                             class="text-15 fw-bold p-0 mb-0 border-0 bg-transparent"
                                                             style="color: #3b82f6; text-decoration: none;"
+                                                            data-bs-toggle="modal" data-bs-target="#quizModal"
                                                             data-module-id="{{ $module->id }}">Tambah Kuis</button>
                                                     </div>
                                                 </div>
@@ -229,7 +231,7 @@
 
 <!-- Modal Lesson (Tambah/Edit) -->
 <div class="modal fade" id="lessonModal" tabindex="-1" aria-labelledby="lessonModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="lessonModalLabel">Tambah Pelajaran Baru</h5>
@@ -279,6 +281,66 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                 <button type="submit" form="lessonForm" class="btn btn-primary" id="lessonSubmitBtn">Tambah
                     Pelajaran</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Quiz (Tambah/Edit) -->
+<div class="modal fade" id="quizModal" tabindex="-1" aria-labelledby="quizModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quizModalLabel">Tambah Kuis Baru</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quizForm">
+                    @csrf
+                    <input type="hidden" id="quizMethod" name="_method" value="POST">
+                    <input type="hidden" id="quizId" name="quiz_id" value="">
+                    <input type="hidden" id="quizModuleId" name="module_id" value="">
+
+                    <div class="mb-3">
+                        <label for="quizTitle" class="form-label">Judul Kuis</label>
+                        <input type="text" class="form-control" id="quizTitle" name="title"
+                            placeholder="Masukkan judul kuis" required>
+                    </div>
+                    <div class="mb-3" style="margin-top: 10px">
+                        <label for="quizDescription" class="form-label">Deskripsi</label>
+                        <textarea class="form-control" id="quizDescription" name="description" rows="3"
+                            placeholder="Deskripsi kuis (opsional)"></textarea>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quizDuration" class="form-label">Durasi Pengerjaan (menit)</label>
+                                <input type="number" class="form-control" id="quizDuration" name="duration_in_minutes"
+                                    placeholder="Durasi dalam menit" min="1" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quizPassingScore" class="form-label">Nilai Minimum Lulus (Contoh 80)</label>
+                                <input type="number" class="form-control" id="quizPassingScore" name="passing_score"
+                                    placeholder="Contoh: 75" min="1" max="100" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="quizMaxAttempts" class="form-label">Maksimal Percobaan (isi 0 jika tidak terbatas)</label>
+                                <input type="number" class="form-control" id="quizMaxAttempts" name="max_attempts"
+                                    placeholder="Contoh: 3" required>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="submit" form="quizForm" class="btn btn-primary" id="quizSubmitBtn">Tambah Kuis</button>
             </div>
         </div>
     </div>
@@ -718,8 +780,6 @@
             });
         });
 
-
-
         $(document).ready(function() {
             const activeTab = sessionStorage.getItem('activeTab');
             const urlHash = window.location.hash;
@@ -854,6 +914,262 @@
                 const moduleId = $(this).closest('.module-edit-form').data('module-id');
                 $(`.module-edit-cancel[data-module-id="${moduleId}"]`).click();
             }
+        });
+
+        // Quiz functionality
+        let selectedQuizModuleId = null;
+        let selectedQuizId = null;
+        let isQuizEditMode = false;
+
+        // Function to setup modal for add quiz mode
+        function setupAddQuizModal(moduleId) {
+            console.log('setupAddQuizModal called with moduleId:', moduleId);
+            isQuizEditMode = false;
+            selectedQuizModuleId = moduleId;
+            selectedQuizId = null;
+
+            // Reset form
+            document.getElementById('quizForm').reset();
+            document.getElementById('quizMethod').value = 'POST';
+            document.getElementById('quizId').value = '';
+            document.getElementById('quizModuleId').value = moduleId;
+
+            console.log('Hidden input quizModuleId set to:', document.getElementById('quizModuleId').value);
+
+            // Update modal title and button
+            document.getElementById('quizModalLabel').textContent = 'Tambah Kuis Baru';
+            document.getElementById('quizSubmitBtn').textContent = 'Tambah Kuis';
+            document.getElementById('quizSubmitBtn').className = 'btn btn-primary';
+        }
+
+        // Function to setup modal for edit quiz mode
+        function setupEditQuizModal(quizId) {
+            isQuizEditMode = true;
+            selectedQuizId = quizId;
+            selectedQuizModuleId = null;
+
+            // Update modal title and button
+            document.getElementById('quizModalLabel').textContent = 'Edit Kuis';
+            document.getElementById('quizSubmitBtn').textContent = 'Update Kuis';
+            document.getElementById('quizSubmitBtn').className = 'btn btn-warning';
+
+            // Set form method and quiz ID
+            document.getElementById('quizMethod').value = 'PUT';
+            document.getElementById('quizId').value = quizId;
+            document.getElementById('quizModuleId').value = ''; // Clear module_id untuk edit mode
+
+            // Load quiz data
+            loadQuizData(quizId);
+        }
+
+        // Handle quiz modal triggers
+        $(document).on('click', '[data-bs-target="#quizModal"]', function(e) {
+            if ($(this).attr('data-module-id')) {
+                // Add quiz mode
+                const moduleId = $(this).attr('data-module-id');
+                console.log('Add quiz for Module ID:', moduleId);
+                setupAddQuizModal(moduleId);
+            } else if ($(this).hasClass('edit-quiz-btn') || $(this).attr('data-quiz-id')) {
+                // Edit quiz mode
+                const quizId = $(this).attr('data-quiz-id');
+                console.log('Edit Quiz ID:', quizId);
+                setupEditQuizModal(quizId);
+            }
+        });
+
+        // Handle delete quiz
+        $(document).on('click', '.delete-quiz-btn', function(e) {
+            e.preventDefault();
+            const quizId = $(this).attr('data-quiz-id');
+            deleteQuiz(quizId);
+        });
+
+        // Function to load quiz data for editing
+        function loadQuizData(quizId) {
+            $.ajax({
+                url: `/quiz/${quizId}`,
+                method: 'GET',
+                success: function(response) {
+                    console.log('Loaded quiz data:', response);
+
+                    // Fill form with quiz data
+                    $('#quizTitle').val(response.title);
+                    $('#quizDescription').val(response.description);
+                    $('#quizDuration').val(response.duration_in_minutes);
+                    $('#quizPassingScore').val(response.passing_score);
+                    $('#quizMaxAttempts').val(response.max_attempts);
+                    $('#quizInstructions').val(response.instructions);
+                },
+                error: function(xhr) {
+                    console.error('Error loading quiz data:', xhr);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: 'Gagal memuat data kuis.',
+                    });
+                }
+            });
+        }
+
+        // Function to delete quiz
+        function deleteQuiz(quizId) {
+            Swal.fire({
+                title: 'Hapus Kuis?',
+                text: 'Apakah Anda yakin ingin menghapus kuis ini?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/quiz/${quizId}`,
+                        method: 'DELETE',
+                        data: {
+                            _token: $('input[name="_token"]').first().val()
+                        },
+                        success: function(response) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Berhasil!',
+                                text: 'Kuis berhasil dihapus.',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                sessionStorage.setItem('activeTab', 'kurikulum');
+                                location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            console.error('Error:', xhr);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Terjadi Kesalahan',
+                                text: 'Gagal menghapus kuis.',
+                                confirmButtonText: 'OK',
+                                confirmButtonColor: '#d33'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // Quiz form submit
+        $('#quizForm').on('submit', function(e) {
+            e.preventDefault();
+
+            console.log('Quiz form submit - isQuizEditMode:', isQuizEditMode);
+            console.log('Quiz form submit - selectedQuizModuleId:', selectedQuizModuleId);
+
+            // Check if it's add mode and module ID is required
+            const hiddenModuleId = document.getElementById('quizModuleId').value;
+            console.log('Quiz form submit - hiddenModuleId:', hiddenModuleId);
+
+            if (!isQuizEditMode && !selectedQuizModuleId && !hiddenModuleId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Module ID tidak ditemukan.',
+                });
+                return;
+            }
+
+            // Check if it's edit mode and quiz ID is required
+            if (isQuizEditMode && !selectedQuizId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'Quiz ID tidak ditemukan.',
+                });
+                return;
+            }
+
+            const submitButton = $('#quizSubmitBtn');
+            const originalText = submitButton.text();
+            const loadingText = isQuizEditMode ? 'Mengupdate...' : 'Menyimpan...';
+            submitButton.prop('disabled', true).text(loadingText);
+
+            let formData = new FormData(this);
+
+            // Prepare request based on mode
+            let ajaxConfig = {
+                processData: false,
+                contentType: false,
+                data: formData
+            };
+
+            if (isQuizEditMode) {
+                // Edit mode
+                ajaxConfig.url = `/quiz/${selectedQuizId}`;
+                ajaxConfig.method = "POST"; // Laravel uses POST with _method=PUT
+            } else {
+                // Add mode
+                const courseId = {{ $course->id }};
+                formData.append('course_id', courseId);
+                // module_id sudah ada dalam hidden input form
+                ajaxConfig.url = "{{ route('quiz.store') }}";
+                ajaxConfig.method = "POST";
+            }
+
+            $.ajax(ajaxConfig).done(function(response) {
+                submitButton.prop('disabled', false).text(originalText);
+
+                $('#quizModal').modal('hide');
+
+                const successText = isQuizEditMode ? 'Data Kuis berhasil diperbarui.' : 'Data Kuis berhasil disimpan.';
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: successText,
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    sessionStorage.setItem('activeTab', 'kurikulum');
+                    location.reload();
+                });
+            }).fail(function(xhr) {
+                submitButton.prop('disabled', false).text(originalText);
+
+                console.error('Error:', xhr);
+
+                if (xhr.status === 422) {
+                    let errors = xhr.responseJSON.errors;
+                    let errorMessages = '';
+
+                    $.each(errors, function(key, value) {
+                        errorMessages += `• ${value[0]}<br>`;
+                    });
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validasi Gagal',
+                        html: errorMessages,
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#d33'
+                    });
+                } else {
+                    $('#quizModal').modal('hide');
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Terjadi Kesalahan',
+                        text: 'Silakan coba lagi nanti.',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#d33'
+                    });
+                }
+            });
+        });
+
+        // Quiz modal reset
+        $('#quizModal').on('hidden.bs.modal', function() {
+            document.getElementById('quizForm').reset();
+            selectedQuizModuleId = null;
+            selectedQuizId = null;
+            isQuizEditMode = false;
         });
     </script>
 @endsection

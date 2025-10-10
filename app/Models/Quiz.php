@@ -12,7 +12,7 @@ class Quiz extends Model
     use HasFactory;
 
     protected $fillable = [
-        'module_id', 'title', 'description', 'passing_score', 'duration_in_minutes','max_attempts'
+        'module_id', 'course_id', 'title', 'description', 'passing_score', 'duration_in_minutes', 'max_attempts'
     ];
 
     public function module(): BelongsTo
