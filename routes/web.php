@@ -94,6 +94,7 @@ Route::controller(CourseController::class)->group(function(){
     Route::get('course/{id}', 'show')->name('course.show');
     Route::post('course/{id}', 'update')->name('course.update');
     Route::post('course/{course}/update-participants', 'updateParticipants')->name('course.update-participants');
+    Route::put('course/{id}', 'update')->name('course.update');
 });
 
 Route::controller(ModuleController::class)->group(function(){

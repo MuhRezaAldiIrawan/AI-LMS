@@ -113,9 +113,46 @@ class CourseController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        if ($request->action === 'toggle_publish') {
+            try {
+                $course = Course::findOrFail($id);
+                $isPublished = $request->boolean('is_published');
+                $newStatus = $isPublished ? 'published' : 'draft';
 
+                $course->update([
+                    'status' => $newStatus
+                ]);
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $isPublished ? 'Kursus berhasil dipublish.' : 'Kursus berhasil di-unpublish.',
+                        'data' => [
+                            'status' => $course->status,
+                            'is_published' => $isPublished
+                        ]
+                    ]);
+                }
+
+                return redirect()->back()
+                    ->with('success', $isPublished ? 'Kursus berhasil dipublish.' : 'Kursus berhasil di-unpublish.');
+
+            } catch (\Exception $e) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Gagal mengubah status kursus.'
+                    ], 500);
+                }
+
+                return redirect()->back()
+                    ->with('error', 'Gagal mengubah status kursus.');
+            }
+        }
+
+        // Handle regular course update
         $validatedData = $request->validate([
-            'title' => 'required|string|max:255|unique:courses',
+            'title' => 'required|string|max:255|unique:courses,title,' . $id,
             'description' => 'nullable|string',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
             'category_id' => 'required|exists:categories,id',

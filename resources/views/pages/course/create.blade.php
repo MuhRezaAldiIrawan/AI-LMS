@@ -8,7 +8,7 @@
 @section('content')
     <div class="card">
         <div class="card-header border-bottom border-gray-100 flex-align gap-8">
-            <h5 class="mb-0">{{ $action === 'create' ? 'Tambah Kursus' : 'Edit Kursus' }}</h5>
+            <h5 class="mb-0">Tambah Kursus</h5>
             <button type="button" class="text-main-600 text-md d-flex" data-bs-toggle="tooltip" data-bs-placement="top"
                 data-bs-title="Course Details">
                 <i class="ph-fill ph-question"></i>
