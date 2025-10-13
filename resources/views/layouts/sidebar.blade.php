@@ -50,6 +50,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu__item {{ setActive(['aiassistant*']) }}">
+                    <a href="{{ route('aiassistant') }}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-wechat-logo"></i></span>
+                        <span class="text">AI Asisten</span>
+                    </a>
+                </li>
+
                 <li class="sidebar-divider">
                     <span>Rewards</span>
                 </li>

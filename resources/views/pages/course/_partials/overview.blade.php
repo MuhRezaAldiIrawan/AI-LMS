@@ -332,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('action', 'toggle_publish');
         formData.append('is_published', publish ? '1' : '0');
 
-        fetch(`/course/${courseId}`, {
+        fetch(`/course/publish/${courseId}`, {
             method: 'POST',
             body: formData,
             headers: {

@@ -12,16 +12,10 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\RedeemtionController;
 use App\Http\Controllers\RewardsController;
 use App\Http\Controllers\UsersController;
-use App\Models\Module;
+use App\Http\Controllers\AiAssistantController;
 use Illuminate\Support\Facades\Route;
 
-
-Route::get('/', function () {
-    return view('welcome');
-});
-
-
-Route::resource('dashboard', App\Http\Controllers\DashboardController::class);
+Route::get('/', [AuthController::class, 'index']);
 
 Route::controller(AuthController::class)->group(function(){
     Route::get('login', 'index');
@@ -29,6 +23,7 @@ Route::controller(AuthController::class)->group(function(){
     Route::post('logout', 'logout')->name('logout');
 });
 
+Route::resource('dashboard', App\Http\Controllers\DashboardController::class);
 
 Route::controller(UsersController::class)->group(function(){
     Route::get('users', 'index')->name('users');
@@ -94,7 +89,7 @@ Route::controller(CourseController::class)->group(function(){
     Route::get('course/{id}', 'show')->name('course.show');
     Route::post('course/{id}', 'update')->name('course.update');
     Route::post('course/{course}/update-participants', 'updateParticipants')->name('course.update-participants');
-    Route::put('course/{id}', 'update')->name('course.update');
+    Route::put('course/publish/{id}', 'update')->name('course.publish.update');
 });
 
 Route::controller(ModuleController::class)->group(function(){
@@ -122,6 +117,14 @@ Route::controller(QuestionController::class)->group(function(){
     Route::post('question', 'store')->name('question.store');
     Route::put('question/{id}', 'update')->name('question.update');
     Route::delete('question/{id}', 'destroy')->name('question.destroy');
+});
+
+Route::middleware('auth')->controller(AiAssistantController::class)->group(function(){
+    Route::get('aiassistant', 'index')->name('aiassistant');
+    Route::post('aiassistant/ask', 'ask')->name('aiassistant.ask');
+    Route::get('aiassistant/history', 'getHistory')->name('aiassistant.history');
+    Route::delete('aiassistant/clear', 'clearHistory')->name('aiassistant.clear');
+    Route::post('aiassistant/new-session', 'newSession')->name('aiassistant.new-session');
 });
 
 

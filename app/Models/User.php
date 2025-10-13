@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\UserPoint;
 use App\Models\PointLog;
 use App\Models\RewardRedemption;
+use App\Models\AiChatHistory;
 use Illuminate\Database\Eloquent\Model;
 
 class User extends Authenticatable
@@ -229,5 +230,43 @@ class User extends Authenticatable
             'points_earned' => $points, 'reason' => $reason,
             'related_type' => get_class($relatedModel), 'related_id' => $relatedModel->id,
         ]);
+    }
+
+    /**
+     * Relasi untuk AI chat history
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function aiChatHistories(): HasMany
+    {
+        return $this->hasMany(AiChatHistory::class);
+    }
+
+    /**
+     * Get current chat session or create new one
+     * @param string|null $sessionId
+     * @return string
+     */
+    public function getCurrentChatSession(?string $sessionId = null): string
+    {
+        // Jika session_id diberikan dan valid, gunakan itu
+        if ($sessionId && $this->aiChatHistories()->forSession($sessionId)->exists()) {
+            return $sessionId;
+        }
+
+        // Cari sesi terakhir (dalam 24 jam terakhir)
+        $lastSession = $this->aiChatHistories()
+            ->where('created_at', '>=', now()->subDay())
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        return $lastSession ? $lastSession->session_id : AiChatHistory::generateSessionId();
+    }
+
+    /**
+     * Cleanup old chat histories for this user
+     */
+    public function cleanupOldChats($keepDays = 30, $maxMessages = 500)
+    {
+        AiChatHistory::cleanupOldChats($this->id, $keepDays, $maxMessages);
     }
 }
