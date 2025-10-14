@@ -126,78 +126,82 @@
                 </div>
             </div>
 
-            {{-- Layout untuk Admin --}}
-            @if(isset($allCourses))
-                <div class="card-section mt-24 p-3">
-                    <div class="card-body">
-                        <h4 class="mb-20">Semua Kursus</h4>
-                        <div class="row g-20" id="courseContainer">
-                            @forelse ($allCourses as $item)
-                                @include('pages.course._partials.course-list', ['course' => $item])
-                            @empty
-                                <div class="text-center w-100 py-4">Belum ada kursus</div>
-                            @endforelse
-                        </div>
-                        <div class="mt-10 d-flex justify-content-center">
-                            {{ $allCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
+            {{-- Course Content Area - Wrapper untuk mencegah conflict dengan dropdown lain --}}
+            <div id="courseContentArea">
+                {{-- Layout untuk Admin --}}
+                @if(isset($allCourses))
+                    <div class="card-section mt-24 p-3">
+                        <div class="card-body">
+                            <h4 class="mb-20">Semua Kursus</h4>
+                            <div class="row g-20" id="courseContainer">
+                                @forelse ($allCourses as $item)
+                                    @include('pages.course._partials.course-list', ['course' => $item])
+                                @empty
+                                    <div class="text-center w-100 py-4">Belum ada kursus</div>
+                                @endforelse
+                            </div>
+                            <div class="mt-10 d-flex justify-content-center">
+                                {{ $allCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endif
+                @endif
 
-            {{-- Layout untuk Pengajar --}}
-            @if(isset($myCourses) && isset($otherCourses))
-                <div class="card-section mt-24 p-3">
-                    <div class="card-body">
-                        <h4 class="mb-20">My Course</h4>
-                        <div class="row g-20" id="courseContainer">
-                            @forelse ($myCourses as $item)
-                                @include('pages.course._partials.course-list', ['course' => $item])
-                            @empty
-                                <div class="text-center w-100 py-4">Belum ada kursus</div>
-                            @endforelse
-                        </div>
-                        <div class="mt-10 d-flex justify-content-center">
-                            {{ $myCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
+                {{-- Layout untuk Pengajar --}}
+                @if(isset($myCourses) && isset($otherCourses))
+                    <div class="card-section mt-24 p-3">
+                        <div class="card-body">
+                            <h4 class="mb-20">My Course</h4>
+                            <div class="row g-20" id="courseContainer">
+                                @forelse ($myCourses as $item)
+                                    @include('pages.course._partials.course-list', ['course' => $item])
+                                @empty
+                                    <div class="text-center w-100 py-4">Belum ada kursus</div>
+                                @endforelse
+                            </div>
+                            <div class="mt-10 d-flex justify-content-center">
+                                {{ $myCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="card-section mt-24 p-3">
-                    <div class="card-body">
-                        <h4 class="mb-20">Course For You</h4>
-                        <div class="row g-20">
-                            @forelse ($otherCourses as $item)
-                                @include('pages.course._partials.course-list', ['course' => $item])
-                            @empty
-                                <div class="text-center w-100 py-4">Belum ada kursus lain</div>
-                            @endforelse
-                        </div>
-                        <div class="mt-10 d-flex justify-content-center">
-                            {{ $otherCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
+                    <div class="card-section mt-24 p-3">
+                        <div class="card-body">
+                            <h4 class="mb-20">Course For You</h4>
+                            <div class="row g-20">
+                                @forelse ($otherCourses as $item)
+                                    @include('pages.course._partials.course-list', ['course' => $item])
+                                @empty
+                                    <div class="text-center w-100 py-4">Belum ada kursus lain</div>
+                                @endforelse
+                            </div>
+                            <div class="mt-10 d-flex justify-content-center">
+                                {{ $otherCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endif
+                @endif
 
-            {{-- Layout untuk Karyawan --}}
-            @if(isset($availableCourses))
-                <div class="card-section mt-24 p-3">
-                    <div class="card-body">
-                        <h4 class="mb-20">Kursus Tersedia</h4>
-                        <div class="row g-20" id="courseContainer">
-                            @forelse ($availableCourses as $item)
-                                @include('pages.course._partials.course-list', ['course' => $item])
-                            @empty
-                                <div class="text-center w-100 py-4">Belum ada kursus tersedia</div>
-                            @endforelse
-                        </div>
-                        <div class="mt-10 d-flex justify-content-center">
-                            {{ $availableCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
+                {{-- Layout untuk Karyawan --}}
+                @if(isset($availableCourses))
+                    <div class="card-section mt-24 p-3">
+                        <div class="card-body">
+                            <h4 class="mb-20">Kursus Tersedia</h4>
+                            <div class="row g-20" id="courseContainer">
+                                @forelse ($availableCourses as $item)
+                                    @include('pages.course._partials.course-list', ['course' => $item])
+                                @empty
+                                    <div class="text-center w-100 py-4">Belum ada kursus tersedia</div>
+                                @endforelse
+                            </div>
+                            <div class="mt-10 d-flex justify-content-center">
+                                {{ $availableCourses->withQueryString()->onEachSide(1)->links('pages.course._partials.pagination') }}
+                            </div>
                         </div>
                     </div>
-                </div>
-            @endif
+                @endif
+            </div>
+            {{-- End Course Content Area --}}
 
         </div>
     </div>
@@ -209,7 +213,7 @@
         let statusFilter = 'all';
         let searchQuery = '';
 
-
+        // Use event delegation for filter tabs
         $(document).on('click', '.filter-tab', function() {
             $('.filter-tab').removeClass('active');
             $(this).addClass('active');
@@ -217,37 +221,73 @@
             loadCourses(1);
         });
 
-        $('#searchInput').on('keyup', function() {
+        // Use debounce for search input
+        let searchTimeout;
+        $(document).on('keyup', '#searchInput', function() {
+            clearTimeout(searchTimeout);
             searchQuery = $(this).val();
-            loadCourses(1);
+            searchTimeout = setTimeout(function() {
+                loadCourses(1);
+            }, 500);
         });
 
-
+        // Use event delegation for pagination
         $(document).on('click', '.pagination a', function(e) {
             e.preventDefault();
-            let page = $(this).attr('href').split('page=')[1];
-            loadCourses(page);
+            let href = $(this).attr('href');
+            if (!href || href === '#') return;
+
+            let page = href.split('page=')[1];
+            if (page) {
+                loadCourses(page);
+            }
         });
 
         function loadCourses(page = 1) {
             $.ajax({
-                url: "{{ route('course') }}" +
-                    "?page=" + page +
-                    "&status=" + statusFilter +
-                    "&search=" + searchQuery,
+                url: "{{ route('course') }}",
                 type: "GET",
+                data: {
+                    page: page,
+                    status: statusFilter,
+                    search: searchQuery
+                },
                 beforeSend: function() {
-                    // Update all course containers
-                    $('.row.g-20').html('<div class="text-center p-5 text-muted">Loading...</div>');
+                    // Show loading on all course sections
+                    $('.card-section .row.g-20').html('<div class="col-12 text-center p-5 text-muted"><i class="ph ph-spinner ph-spin me-2"></i>Loading...</div>');
                 },
                 success: function(response) {
-                    // Replace entire card content to handle different role layouts
-                    let newContent = $(response).find('.card-body').html();
-                    $('.card .card-body').html(newContent);
-                    $("html, body").animate({ scrollTop: 0 }, "fast");
+                    // Parse the response HTML
+                    let $response = $(response);
+
+                    // Find all card-section elements in response
+                    let $newSections = $response.find('.card-section');
+
+                    if ($newSections.length > 0) {
+                        // Remove existing card-sections from main content area only
+                        $('#courseContentArea .card-section').remove();
+
+                        // Append new sections to main content area specifically
+                        $('#courseContentArea').append($newSections);
+
+                        // Re-bind filter active state (important after AJAX reload)
+                        $('.filter-tab').removeClass('active');
+                        $('.filter-tab[data-status="' + statusFilter + '"]').addClass('active');
+                    } else {
+                        // Fallback: show empty state
+                        $('#courseContentArea .card-section').remove();
+                        $('#courseContentArea').append('<div class="card-section mt-24 p-3"><div class="card-body"><div class="text-center py-5 text-muted">Tidak ada data yang ditemukan</div></div></div>');
+
+                        // Re-bind filter active state
+                        $('.filter-tab').removeClass('active');
+                        $('.filter-tab[data-status="' + statusFilter + '"]').addClass('active');
+                    }
+
+                    // Smooth scroll to top
+                    $("html, body").animate({ scrollTop: 0 }, 300);
                 },
-                error: function() {
-                    $('.row.g-20').html('<div class="text-center p-5 text-danger">Terjadi kesalahan saat memuat data.</div>');
+                error: function(xhr, status, error) {
+                    $('#courseContentArea .card-section .row.g-20').html('<div class="col-12 text-center p-5 text-danger"><i class="ph ph-warning-circle me-2"></i>Terjadi kesalahan saat memuat data.</div>');
                 }
             });
         }

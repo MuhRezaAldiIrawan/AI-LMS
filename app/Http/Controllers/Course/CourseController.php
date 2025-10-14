@@ -27,34 +27,49 @@ class CourseController extends Controller
         if (canAccess('admin')) {
             $coursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz']);
 
-            if ($status && in_array($status, ['draft', 'published'])) {
+            if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
                 $coursesQuery->where('status', $status);
             }
+
             if ($search) {
                 $coursesQuery->where('title', 'like', '%' . $search . '%');
             }
 
             $allCourses = $coursesQuery->latest()->paginate(8, ['*'], 'all_courses_page');
+
             return view('pages.course.course', compact('allCourses'))
                 ->with('userRole', 'admin');
         }
 
-        // Pengajar bisa lihat courses mereka dan courses lain
         if (canAccess('pengajar')) {
+            // My Courses Query
             $myCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
                 ->where('user_id', $userId);
 
-            $otherCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
-                ->where('user_id', '!=', $userId)
-                ->where('status', 'published'); // Pengajar hanya bisa lihat course published dari pengajar lain
+            // Apply status filter to my courses
+            if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
+                $myCoursesQuery->where('status', $status);
+            }
 
-            foreach ([$myCoursesQuery, $otherCoursesQuery] as $query) {
-                if ($status && in_array($status, ['draft', 'published'])) {
-                    $query->where('status', $status);
-                }
-                if ($search) {
-                    $query->where('title', 'like', '%' . $search . '%');
-                }
+            // Apply search filter to my courses
+            if ($search) {
+                $myCoursesQuery->where('title', 'like', '%' . $search . '%');
+            }
+
+            // Other Courses Query
+            $otherCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('user_id', '!=', $userId);
+
+            // Apply status filter to other courses
+            if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
+                $otherCoursesQuery->where('status', $status);
+            }
+            // Jika tidak ada filter status atau status = 'all', tampilkan semua
+            // (tidak perlu filter, biar tampil draft + published dari pengajar lain)
+
+            // Apply search filter to other courses
+            if ($search) {
+                $otherCoursesQuery->where('title', 'like', '%' . $search . '%');
             }
 
             $myCourses = $myCoursesQuery->latest()->paginate(4, ['*'], 'my_courses_page');
@@ -64,10 +79,17 @@ class CourseController extends Controller
                 ->with('userRole', 'pengajar');
         }
 
-        // Karyawan hanya bisa lihat published courses
         if (canAccess('karyawan')) {
-            $coursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
-                ->where('status', 'published');
+            $coursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz']);
+
+            // Apply status filter - karyawan juga bisa filter status
+            if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
+                $coursesQuery->where('status', $status);
+            }
+            // Jika tidak ada filter atau filter = 'all', default ke published saja untuk karyawan
+            elseif (!$status || $status === 'all') {
+                $coursesQuery->where('status', 'published');
+            }
 
             if ($search) {
                 $coursesQuery->where('title', 'like', '%' . $search . '%');
@@ -78,7 +100,6 @@ class CourseController extends Controller
                 ->with('userRole', 'karyawan');
         }
 
-        // Default fallback
         return redirect()->route('dashboard.index');
     }
 
@@ -141,45 +162,39 @@ class CourseController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        // Cek role user - jika karyawan, redirect ke halaman khusus
         if ($user->hasRole('karyawan')) {
             $isEnrolled = $user->isEnrolledIn($course);
             $hasAccess = $user->hasAccessToCourse($course);
             return view('pages.course._partials.employee-course', compact('course', 'isEnrolled', 'hasAccess'));
         }
 
-        // Load data yang dibutuhkan untuk view
+
         $categories = Category::all();
         $courseType = CourseType::all();
         $users = User::all();
 
-        // Cek apakah ada access denied dari middleware
         $accessDenied = $request->get('access_denied', false);
         $userRole = $request->get('user_role');
 
-        // Jika access denied, tampilkan halaman dengan pesan sesuai role
         if ($accessDenied) {
             $enrollmentMessage = '';
             $canEnroll = false;
 
             if ($userRole === 'pengajar') {
                 $enrollmentMessage = 'Anda belum diberikan akses ke kursus ini. Silakan hubungi admin untuk mendapatkan akses.';
-                $canEnroll = false; // Pengajar tidak bisa self-enroll
+                $canEnroll = false;
             } elseif ($userRole === 'karyawan') {
                 $enrollmentMessage = 'Anda perlu mendaftar di kursus ini untuk dapat mengakses konten pembelajaran.';
-                $canEnroll = true; // Karyawan bisa self-enroll
+                $canEnroll = true;
             }
 
             return view('pages.course.show', compact('course', 'categories', 'courseType', 'users', 'enrollmentMessage', 'canEnroll'))
                 ->with('accessDenied', true);
         }
 
-        // User yang punya akses - tampilkan detail lengkap course
 
-        // Cek apakah user adalah pemilik course
         $isOwner = $course->user_id === $user->id;
 
-        // Cek enrollment status
         $isEnrolled = $user->isEnrolledIn($course);
 
         return view('pages.course.show', compact(
@@ -199,15 +214,13 @@ class CourseController extends Controller
     {
         $user = Auth::user();
 
-        // Redirect jika user tidak login
+
         if (!$user) {
             return redirect()->route('login');
         }
 
         /** @var \App\Models\User $user */
-        // $user = Auth::user();
 
-        // Cek apakah user sudah enrolled (enrolled_at tidak NULL)
         if ($user->isEnrolledIn($course)) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -218,7 +231,6 @@ class CourseController extends Controller
             return redirect()->back()->with('info', 'Anda sudah terdaftar di kursus ini.');
         }
 
-        // Cek apakah user memiliki akses ke course (assigned by admin)
         if (!$user->hasAccessToCourse($course)) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -230,7 +242,7 @@ class CourseController extends Controller
         }
 
         try {
-            // Update enrolled_at timestamp pada record yang sudah ada
+
             $user->enrolledCourses()->updateExistingPivot($course->id, [
                 'enrolled_at' => now(),
                 'updated_at' => now()
@@ -317,7 +329,6 @@ class CourseController extends Controller
             }
         }
 
-        // Handle regular course update
         $validatedData = $request->validate([
             'title' => 'required|string|max:255|unique:courses,title,' . $id,
             'description' => 'nullable|string',
@@ -363,7 +374,7 @@ class CourseController extends Controller
             $course = Course::findOrFail($course);
             $participantIds = $request->input('participants', []);
 
-            // Sync the enrolled users
+
             $course->enrolledUsers()->sync($participantIds);
 
             if ($request->expectsJson()) {

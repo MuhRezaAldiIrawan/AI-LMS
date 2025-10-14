@@ -157,6 +157,7 @@ Route::middleware('auth')->group(function () {
         Route::get('aiassistant/history', 'getHistory')->name('aiassistant.history');
         Route::delete('aiassistant/clear', 'clearHistory')->name('aiassistant.clear');
         Route::post('aiassistant/new-session', 'newSession')->name('aiassistant.new-session');
+        Route::post('aiassistant/lesson-chat', 'lessonChat')->name('aiassistant.lesson-chat');
     });
 });
 

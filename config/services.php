@@ -40,4 +40,10 @@ return [
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
     ],
 
+    'pinecone' => [
+        'api_key' => env('PINECONE_API_KEY'),
+        'host' => env('PINECONE_HOST'),
+        'index' => env('PINECONE_INDEX_NAME'),
+    ],
+
 ];
