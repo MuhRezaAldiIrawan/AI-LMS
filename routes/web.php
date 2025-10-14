@@ -117,16 +117,19 @@ Route::middleware('auth')->group(function () {
 
     Route::middleware('role:admin,pengajar')->controller(LessonController::class)->group(function(){
         Route::post('lesson', 'store')->name('lesson.store');
+        Route::get('lesson/{id}/edit', 'edit')->name('lesson.edit');
         Route::put('lesson/{id}', 'update')->name('lesson.update');
         Route::delete('lesson/{id}', 'destroy')->name('lesson.destroy');
     });
 
     Route::controller(LessonController::class)->group(function(){
         Route::middleware('course.access')->get('lesson/{id}', 'show')->name('lesson.show');
+        Route::middleware('course.access')->post('lesson/{id}/complete', 'complete')->name('lesson.complete');
     });
 
     Route::middleware('role:admin,pengajar')->controller(QuizController::class)->group(function(){
         Route::post('quiz', 'store')->name('quiz.store');
+        Route::get('quiz/{id}/edit', 'edit')->name('quiz.edit');
         Route::put('quiz/{id}', 'update')->name('quiz.update');
         Route::delete('quiz/{id}', 'destroy')->name('quiz.destroy');
         Route::get('quiz/{id}/manage', 'manage')->name('quiz.manage');
@@ -136,7 +139,8 @@ Route::middleware('auth')->group(function () {
     Route::controller(QuizController::class)->group(function(){
         Route::middleware('course.access')->get('quiz/{id}', 'show')->name('quiz.show');
         Route::middleware('course.access')->get('quiz/{id}/attempt', 'attempt')->name('quiz.attempt');
-        Route::middleware('course.access')->post('quiz/{id}/submit', 'submit')->name('quiz.submit');
+        Route::middleware('course.access')->post('quiz/{quizId}/attempt/{attemptId}/submit', 'submit')->name('quiz.submit');
+        Route::middleware('course.access')->get('quiz/attempt/{attemptId}/review', 'reviewAttempt')->name('quiz.attempt.review');
     });
 
 

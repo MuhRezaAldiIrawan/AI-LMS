@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Quiz;
 use App\Models\Module;
+use App\Models\QuizAttempt;
 
 class QuizController extends Controller
 {
@@ -71,23 +72,172 @@ class QuizController extends Controller
      */
     public function show(string $id)
     {
-        try {
-            $quiz = Quiz::findOrFail($id);
-            return response()->json($quiz);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Kuis tidak ditemukan'
-            ], 404);
+        $quiz = Quiz::with(['module.course', 'questions.options', 'attempts.user'])->findOrFail($id);
+
+        // Check if user is enrolled
+        $user = auth()->user();
+        $course = $quiz->module->course;
+
+        // Admin dan author course bisa akses tanpa enrollment
+        if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+            abort(403, 'Anda belum terdaftar di kursus ini');
         }
+
+        // Get user's quiz attempts
+        $attempts = $quiz->attempts()->where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+
+        // Calculate statistics
+        $totalAttempts = $attempts->count();
+        $bestScore = $attempts->max('score') ?? 0;
+        $lastScore = $attempts->first()->score ?? 0;
+        $averageScore = $attempts->avg('score') ?? 0;
+        $isPassed = $attempts->where('passed', true)->isNotEmpty();
+        $hasPassedQuiz = $isPassed;
+
+        // Check if can take quiz
+        $canTakeQuiz = $totalAttempts < $quiz->max_attempts;
+        $canAttempt = $canTakeQuiz; // Alias for view compatibility
+        $remainingAttempts = max(0, $quiz->max_attempts - $totalAttempts);
+
+        // Get course completion percentage
+        $completionPercentage = $course->getCompletionPercentage($user);
+
+        // Get all course modules for sidebar
+        $courseModules = $course->modules()->with(['lessons', 'quiz.questions'])->orderBy('order')->get();
+
+        return view('pages.quiz.show', compact(
+            'quiz', 'attempts', 'totalAttempts', 'bestScore',
+            'lastScore', 'averageScore', 'isPassed', 'canTakeQuiz', 'canAttempt',
+            'hasPassedQuiz', 'remainingAttempts', 'completionPercentage', 'courseModules'
+        ));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Start quiz attempt
+     */
+    public function attempt(string $id)
+    {
+        $quiz = Quiz::with(['questions.options'])->findOrFail($id);
+
+        // Check if user is enrolled
+        $user = auth()->user();
+        $course = $quiz->module->course;
+
+        // Admin dan author course bisa akses tanpa enrollment
+        if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+            abort(403, 'Anda belum terdaftar di kursus ini');
+        }
+
+        // Check if user can take quiz
+        $totalAttempts = $quiz->attempts()->where('user_id', $user->id)->count();
+        if ($totalAttempts >= $quiz->max_attempts) {
+            return redirect()->route('quiz.show', $quiz->id)
+                ->with('error', 'Anda telah mencapai batas maksimal percobaan');
+        }
+
+        // Create new attempt
+        $attempt = $quiz->attempts()->create([
+            'user_id' => $user->id,
+            'started_at' => now(),
+            'score' => 0,
+            'passed' => false
+        ]);
+
+        // Shuffle questions if needed
+        $questions = $quiz->questions()->with('options')->get();
+
+        // Get time limit (use duration_in_minutes from quiz)
+        $timeLimit = $quiz->duration_in_minutes ?? 60;
+
+        return view('pages.quiz.attempt', compact('quiz', 'attempt', 'questions', 'timeLimit'));
+    }
+
+    /**
+     * Submit quiz attempt
+     */
+    public function submit(Request $request, string $quizId, string $attemptId)
+    {
+        $quiz = Quiz::with('questions.options')->findOrFail($quizId);
+        $attempt = QuizAttempt::where('id', $attemptId)
+            ->where('user_id', auth()->id())
+            ->where('quiz_id', $quiz->id)
+            ->firstOrFail();
+
+        // Calculate score
+        $answers = $request->input('answers', []);
+        $correctAnswers = 0;
+        $totalQuestions = $quiz->questions->count();
+
+        foreach ($quiz->questions as $question) {
+            $userAnswer = $answers[$question->id] ?? null;
+            $correctOption = $question->options->where('is_correct', true)->first();
+
+            $isCorrect = $correctOption && $userAnswer == $correctOption->id;
+
+            if ($isCorrect) {
+                $correctAnswers++;
+            }
+
+            // Save answer with is_correct value
+            $attempt->answers()->updateOrCreate(
+                ['question_id' => $question->id],
+                [
+                    'option_id' => $userAnswer,
+                    'is_correct' => $isCorrect
+                ]
+            );
+        }
+
+        $score = $totalQuestions > 0 ? round(($correctAnswers / $totalQuestions) * 100, 2) : 0;
+        $isPassed = $score >= $quiz->passing_score;
+
+        // Update attempt
+        $attempt->update([
+            'score' => $score,
+            'passed' => $isPassed,
+            'finished_at' => now()
+        ]);
+
+        // TODO: Award points if passed (when points_awarded column is added)
+        // if ($isPassed && isset($quiz->points_awarded) && $quiz->points_awarded > 0) {
+        //     $user = auth()->user();
+        //     // Check if already got points for this quiz
+        //     $existingPassed = $quiz->attempts()
+        //         ->where('user_id', $user->id)
+        //         ->where('passed', true)
+        //         ->where('id', '!=', $attempt->id)
+        //         ->exists();
+        //
+        //     if (!$existingPassed) {
+        //         $user->addPoints($quiz->points_awarded, "Menyelesaikan kuis: {$quiz->title}", $quiz);
+        //     }
+        // }
+
+        $message = "Kuis selesai! Skor Anda: {$score}% - Jawaban Benar: {$correctAnswers}/{$totalQuestions} " .
+                   ($isPassed ? '✅ (LULUS)' : '❌ (BELUM LULUS)');
+
+        return redirect()->route('quiz.show', $quiz->id)
+            ->with($isPassed ? 'success' : 'warning', $message)
+            ->with('show_review', $attempt->id);
+    }
+
+    /**
+     * Get quiz data for editing (AJAX)
      */
     public function edit(string $id)
     {
-        //
+        $quiz = Quiz::findOrFail($id);
+
+        return response()->json([
+            'id' => $quiz->id,
+            'title' => $quiz->title,
+            'description' => $quiz->description,
+            'duration_in_minutes' => $quiz->duration_in_minutes,
+            'passing_score' => $quiz->passing_score,
+            'max_attempts' => $quiz->max_attempts,
+            'instructions' => $quiz->instructions,
+            'module_id' => $quiz->module_id,
+        ]);
     }
 
     /**
@@ -141,6 +291,44 @@ class QuizController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Kuis tidak ditemukan');
         }
+    }
+
+    /**
+     * Review quiz attempt with answers
+     */
+    public function reviewAttempt(string $attemptId)
+    {
+        $attempt = QuizAttempt::with(['quiz.questions.options', 'answers', 'quiz.module.course'])
+            ->where('id', $attemptId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $quiz = $attempt->quiz;
+        $course = $quiz->module->course;
+
+        // Check if user is enrolled
+        $user = auth()->user();
+        // Admin dan author course bisa akses tanpa enrollment
+        if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+            abort(403, 'Anda belum terdaftar di kursus ini');
+        }
+
+        // Prepare questions with user answers and correct answers
+        $reviewData = [];
+        foreach ($quiz->questions as $question) {
+            $userAnswer = $attempt->answers->where('question_id', $question->id)->first();
+            $correctOption = $question->options->where('is_correct', true)->first();
+            $selectedOption = $userAnswer ? $question->options->where('id', $userAnswer->option_id)->first() : null;
+
+            $reviewData[] = [
+                'question' => $question,
+                'user_answer' => $selectedOption,
+                'correct_answer' => $correctOption,
+                'is_correct' => $selectedOption && $correctOption && $selectedOption->id === $correctOption->id
+            ];
+        }
+
+        return view('pages.quiz.review', compact('attempt', 'quiz', 'reviewData'));
     }
 
     /**

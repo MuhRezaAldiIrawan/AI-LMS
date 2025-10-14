@@ -148,6 +148,11 @@ class CourseController extends Controller
             return view('pages.course._partials.employee-course', compact('course', 'isEnrolled', 'hasAccess'));
         }
 
+        // Load data yang dibutuhkan untuk view
+        $categories = Category::all();
+        $courseType = CourseType::all();
+        $users = User::all();
+
         // Cek apakah ada access denied dari middleware
         $accessDenied = $request->get('access_denied', false);
         $userRole = $request->get('user_role');
@@ -165,14 +170,11 @@ class CourseController extends Controller
                 $canEnroll = true; // Karyawan bisa self-enroll
             }
 
-            return view('pages.course.show', compact('course', 'enrollmentMessage', 'canEnroll'))
+            return view('pages.course.show', compact('course', 'categories', 'courseType', 'users', 'enrollmentMessage', 'canEnroll'))
                 ->with('accessDenied', true);
         }
 
         // User yang punya akses - tampilkan detail lengkap course
-        $categories = Category::all();
-        $courseType = CourseType::all();
-        $users = User::all();
 
         // Cek apakah user adalah pemilik course
         $isOwner = $course->user_id === $user->id;

@@ -57,4 +57,12 @@ class Lesson extends Model
     {
         return $this->belongsToMany(User::class, 'lesson_user')->withTimestamps();
     }
+
+    /**
+     * Check if lesson is completed by user
+     */
+    public function isCompletedByUser(User $user): bool
+    {
+        return $this->completedByUsers()->where('user_id', $user->id)->exists();
+    }
 }

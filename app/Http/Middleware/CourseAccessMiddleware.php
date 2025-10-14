@@ -28,37 +28,54 @@ class CourseAccessMiddleware
             return $next($request);
         }
 
-        // Get course ID from route parameter
-        $courseId = $request->route('id');
+        // Get course based on route context
+        $course = null;
+        $routeName = $request->route()->getName();
 
-        if ($courseId) {
+        if (str_contains($routeName, 'lesson.')) {
+            // For lesson routes, get course through lesson
+            $lessonId = $request->route('id');
+            $lesson = \App\Models\Lesson::find($lessonId);
+            if ($lesson) {
+                $course = $lesson->module->course;
+            }
+        } elseif (str_contains($routeName, 'quiz.')) {
+            // For quiz routes, get course through quiz
+            $quizId = $request->route('id') ?? $request->route('quizId');
+            $quiz = \App\Models\Quiz::find($quizId);
+            if ($quiz) {
+                $course = $quiz->module->course ?? $quiz->course;
+            }
+        } else {
+            // For course routes, get course directly
+            $courseId = $request->route('id');
             $course = Course::find($courseId);
+        }
 
-            if (!$course) {
-                return redirect()->back()->with('error', 'Kursus tidak ditemukan.');
+        if (!$course) {
+            return redirect()->back()->with('error', 'Konten tidak ditemukan.');
+        }
+
+        // Pengajar - akses berdasarkan ownership dan enrollment
+        if (isPengajar()) {
+            // Jika pengajar adalah author course, bisa akses penuh
+            if ($course->user_id === $user->id) {
+                return $next($request);
             }
-
-            // Pengajar - akses berdasarkan ownership dan enrollment
-            if (isPengajar()) {
-                // Jika pengajar adalah author course, bisa akses penuh
-                if ($course->user_id === $user->id) {
-                    return $next($request);
-                }
-                // Pengajar lain harus enrolled untuk mengakses course content
-                if (!$user->isEnrolledIn($course)) {
-                    // Pass course info ke request untuk handling di controller
-                    $request->merge(['access_denied' => true, 'user_role' => 'pengajar']);
-                    return $next($request);
-                }
+            // Pengajar lain harus enrolled untuk mengakses course content
+            if (!$user->isEnrolledIn($course)) {
+                // Pass course info ke request untuk handling di controller
+                $request->merge(['access_denied' => true, 'user_role' => 'pengajar']);
+                return $next($request);
             }
+        }
 
-            // Karyawan harus enrolled di course untuk mengakses
-            if (isKaryawan()) {
-                if (!$user->isEnrolledIn($course)) {
-                    // Pass course info ke request untuk handling di controller
-                    $request->merge(['access_denied' => true, 'user_role' => 'karyawan']);
-                    return $next($request);
-                }
+        // Karyawan harus enrolled di course untuk mengakses
+        if (isKaryawan()) {
+            if (!$user->isEnrolledIn($course)) {
+                // Pass course info ke request untuk handling di controller
+                $request->merge(['access_denied' => true, 'user_role' => 'karyawan']);
+                return $next($request);
             }
         }
 

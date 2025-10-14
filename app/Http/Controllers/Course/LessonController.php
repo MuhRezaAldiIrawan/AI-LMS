@@ -65,16 +65,122 @@ class LessonController extends Controller
      */
     public function show(string $id)
     {
-        $lesson = Lesson::findOrFail($id);
-        return response()->json($lesson);
+        $lesson = Lesson::with(['module.course.modules.lessons', 'module.course.modules.quiz.questions'])->findOrFail($id);
+
+        // Check if user is enrolled and has access
+        $user = auth()->user();
+        $course = $lesson->module->course;
+
+        // Admin dan author course bisa akses tanpa enrollment
+        if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+            abort(403, 'Anda belum terdaftar di kursus ini');
+        }
+
+        // Get completion status
+        $isCompleted = $lesson->isCompletedByUser($user);
+
+        // Get all lessons sorted properly
+        $allLessons = collect();
+        foreach ($course->modules()->orderBy('order')->get() as $module) {
+            foreach ($module->lessons()->orderBy('order')->get() as $lessonItem) {
+                $allLessons->push($lessonItem);
+            }
+        }
+
+        // Re-index collection for proper array access
+        $allLessons = $allLessons->values();
+
+        // Find current lesson index
+        $currentIndex = null;
+        foreach ($allLessons as $index => $lessonItem) {
+            if ($lessonItem->id === $lesson->id) {
+                $currentIndex = $index;
+                break;
+            }
+        }
+
+        // Get previous and next lessons
+        $previousLesson = null;
+        $nextLesson = null;
+
+        if ($currentIndex !== null && is_int($currentIndex)) {
+            $prevIndex = $currentIndex - 1;
+            $nextIndex = $currentIndex + 1;
+
+            if ($prevIndex >= 0 && $allLessons->has($prevIndex)) {
+                $previousLesson = $allLessons->get($prevIndex);
+            }
+
+            if ($nextIndex < $allLessons->count() && $allLessons->has($nextIndex)) {
+                $nextLesson = $allLessons->get($nextIndex);
+            }
+        }
+
+        // Get module quiz if this is the last lesson in the module
+        $moduleQuiz = null;
+        if (!$nextLesson) {
+            $currentModule = $lesson->module;
+            if ($currentModule->quiz) {
+                $moduleQuiz = $currentModule->quiz;
+            }
+        }
+
+        // Calculate course completion percentage
+        $completionPercentage = $course->getCompletionPercentage($user);
+
+        // Get all course modules for sidebar
+        $courseModules = $course->modules()->with(['lessons', 'quiz.questions'])->orderBy('order')->get();
+
+        return view('pages.lesson.show', compact(
+            'lesson', 'isCompleted', 'previousLesson', 'nextLesson',
+            'moduleQuiz', 'completionPercentage', 'courseModules'
+        ));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Mark lesson as completed
+     */
+    public function complete(Request $request, string $id)
+    {
+        $lesson = Lesson::findOrFail($id);
+        $user = auth()->user();
+
+        // Check if user is enrolled
+        if (!$user->isEnrolledIn($lesson->module->course)) {
+            return response()->json(['success' => false, 'message' => 'Tidak memiliki akses'], 403);
+        }
+
+        // Mark as completed
+        if (!$lesson->isCompletedByUser($user)) {
+            $user->completedLessons()->attach($lesson->id, ['completed_at' => now()]);
+
+            // TODO: Add points system for lesson completion if needed
+            // if (isset($lesson->points_awarded) && $lesson->points_awarded > 0) {
+            //     $user->addPoints($lesson->points_awarded, "Menyelesaikan pelajaran: {$lesson->title}", $lesson);
+            // }
+        }
+
+        return response()->json(['success' => true, 'message' => 'Pelajaran berhasil diselesaikan']);
+    }
+
+    /**
+     * Get lesson data for editing (AJAX)
      */
     public function edit(string $id)
     {
-        //
+        $lesson = Lesson::findOrFail($id);
+
+        return response()->json([
+            'id' => $lesson->id,
+            'title' => $lesson->title,
+            'summary' => $lesson->summary,
+            'content_type' => $lesson->content_type,
+            'video_url' => $lesson->video_url,
+            'content_text' => $lesson->content_text,
+            'attachment_path' => $lesson->attachment_path,
+            'duration_in_minutes' => $lesson->duration_in_minutes,
+            'module_id' => $lesson->module_id,
+        ]);
     }
 
     /**

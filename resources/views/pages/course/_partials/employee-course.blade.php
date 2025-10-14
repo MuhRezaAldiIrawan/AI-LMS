@@ -221,20 +221,19 @@
                             </form>
                         </div>
                     @else
-                        <!-- Actually Enrolled - Show Success Message -->
-                        <div class="alert alert-success border-success rounded-16 p-20 mb-20 text-center" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745;">
-                            <div class="mb-12">
-                                <i class="ph ph-check-circle text-success" style="font-size: 48px;"></i>
+                        <!-- Actually Enrolled - Compact Success Indicator -->
+                        <div class="alert alert-success border-success rounded-12 p-12 mb-16" style="background: rgba(212, 237, 218, 0.7); border: 1px solid #28a745;">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="ph ph-check-circle text-success me-2" style="font-size: 20px;"></i>
+                                <span class="text-success fw-medium text-14">✅ Terdaftar - Siap belajar!</span>
                             </div>
-                            <h5 class="text-success mb-8 fw-bold">✅ Selamat! Anda Sudah Terdaftar</h5>
-                            <p class="text-success mb-0">Nikmati pembelajaran dan capai target Anda!</p>
                         </div>
                     @endif
 
                     <!-- Course Thumbnail -->
                     <div class="rounded-16 overflow-hidden">
                         @if($course->thumbnail)
-                            <img src="{{ Storage::url($course->thumbnail) }}" alt="{{ $course->title }}"
+                            <img src="{{ asset('storage' . '/' . $course->thumbnail) }}" alt="{{ $course->title }}"
                                  class="w-100" style="height: 300px; object-fit: cover;">
                         @else
                             <div class="bg-gray-100 d-flex align-items-center justify-content-center" style="height: 300px;">
@@ -397,14 +396,14 @@
                                         <ul class="course-list p-16 pb-0">
                                             @foreach($module->lessons as $lessonIndex => $lesson)
                                                 <li class="course-list__item flex-align gap-8 mb-16">
-                                                    <span class="circle flex-shrink-0 text-32 d-flex text-gray-400">
-                                                        <i class="ph ph-circle"></i>
+                                                    <span class="circle flex-shrink-0 text-32 d-flex text-success-600">
+                                                        <i class="ph ph-play-circle"></i>
                                                     </span>
                                                     <div class="w-100">
-                                                        <a href="#" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                        <a href="{{ route('lesson.show', $lesson->id) }}" class="text-gray-700 fw-medium d-block hover-text-main-600 lesson-link">
                                                             {{ $lessonIndex + 1 }}. {{ $lesson->title }}
-                                                            <span class="text-gray-300 fw-normal d-block">
-                                                                <i class="ph ph-video me-1"></i>Pelajaran
+                                                            <span class="text-gray-500 fw-normal d-block">
+                                                                <i class="ph ph-video me-1"></i>Pelajaran • {{ $lesson->duration_in_minutes ?? 5 }} menit
                                                             </span>
                                                         </a>
                                                     </div>
@@ -414,13 +413,13 @@
                                             @if($module->quiz)
                                                 <li class="course-list__item flex-align gap-8 mb-16">
                                                     <span class="circle flex-shrink-0 text-32 d-flex text-warning-600">
-                                                        <i class="ph ph-question"></i>
+                                                        <i class="ph ph-exam"></i>
                                                     </span>
                                                     <div class="w-100">
-                                                        <a href="#" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                        <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-gray-700 fw-medium d-block hover-text-warning-600 quiz-link">
                                                             Quiz: {{ $module->quiz->title }}
                                                             <span class="text-warning-600 fw-normal d-block">
-                                                                <i class="ph ph-exam me-1"></i>{{ $module->quiz->questions->count() }} Pertanyaan
+                                                                <i class="ph ph-question me-1"></i>{{ $module->quiz->questions->count() }} Pertanyaan
                                                             </span>
                                                         </a>
                                                     </div>
@@ -533,13 +532,14 @@
         .then(data => {
             if (data.success) {
                 Swal.fire({
-                    title: '🎉 Pembelajaran Dimulai!',
-                    text: 'Selamat! Anda sekarang sudah terdaftar dan dapat memulai pembelajaran.',
+                    title: '✅ Berhasil Terdaftar!',
+                    text: 'Selamat belajar!',
                     icon: 'success',
                     confirmButtonColor: '#28a745',
-                    confirmButtonText: 'Mulai Belajar Sekarang',
-                    timer: 3000,
-                    timerProgressBar: true
+                    confirmButtonText: 'Oke',
+                    timer: 1500,
+                    timerProgressBar: true,
+                    showConfirmButton: false
                 }).then(() => {
                     window.location.reload();
                 });

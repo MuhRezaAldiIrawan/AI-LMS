@@ -19,8 +19,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Module $module
+ * @property-read \App\Models\Course|null $course
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Question> $questions
  * @property-read int|null $questions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\QuizAttempt> $attempts
+ * @property-read int|null $attempts_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz query()
@@ -49,8 +52,29 @@ class Quiz extends Model
         return $this->belongsTo(Module::class);
     }
 
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+
     public function questions(): HasMany
     {
         return $this->hasMany(Question::class);
+    }
+
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+
+    /**
+     * Check if user has passed this quiz
+     */
+    public function isPassedByUser(User $user): bool
+    {
+        return $this->attempts()
+            ->where('user_id', $user->id)
+            ->where('passed', true)
+            ->exists();
     }
 }

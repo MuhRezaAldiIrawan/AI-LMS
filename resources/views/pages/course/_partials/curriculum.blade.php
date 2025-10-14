@@ -184,7 +184,7 @@
                                                                     {{ $module->quiz->passing_score }}%</span>
                                                             </div>
                                                             <div class="flex-align gap-8">
-                                                                <a href="{{ route('quiz.manage', $module->quiz->id) }}" 
+                                                                <a href="{{ route('quiz.manage', $module->quiz->id) }}"
                                                                     class="manage-quiz-btn" style="color: #28a745">Kelola</a>
                                                                 <a href="#" class="edit-quiz-btn" style="color: #3b82f6"
                                                                     data-quiz-id="{{ $module->quiz->id }}"
@@ -562,7 +562,7 @@
         // Function to load lesson data for editing
         function loadLessonData(lessonId) {
             $.ajax({
-                url: `/lesson/${lessonId}`,
+                url: `/lesson/${lessonId}/edit`,
                 method: 'GET',
                 success: function(response) {
                     console.log('Loaded lesson data:', response); // Debug log
@@ -987,7 +987,7 @@
         // Function to load quiz data for editing
         function loadQuizData(quizId) {
             $.ajax({
-                url: `/quiz/${quizId}`,
+                url: `/quiz/${quizId}/edit`,
                 method: 'GET',
                 success: function(response) {
                     console.log('Loaded quiz data:', response);
