@@ -165,4 +165,45 @@ class UsersController extends Controller
             ], 500);
         }
     }
+
+    public function profile()
+    {
+        $user = auth()->user();
+        $lokasi = Location::orderBy('name')->get();
+        return view('pages.userprofile.userprofile', compact('user', 'lokasi'));
+    }
+
+    public function updateProfile(Request $request, $id)
+    {
+
+        $user = User::findOrFail($id);
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'photo' => ['nullable', 'image', 'max:1024'],
+            'nik' => ['nullable', 'string', 'max:255', 'unique:users,nik,' . $user->id],
+            'position' => ['nullable', 'string', 'max:255'],
+            'division' => ['nullable', 'string', 'max:255'],
+            'location_id' => ['nullable', 'exists:locations,id'],
+        ]);
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->nik = $request->nik;
+        $user->position = $request->position;
+        $user->division = $request->division;
+        $user->location_id = $request->location_id;
+
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('profile-photos', $fileName, 'public');
+            $user->profile_photo_path = $path;
+        }
+
+        $user->save();
+
+        return response()->json(['message' => 'Profile updated successfully']);
+    }
 }

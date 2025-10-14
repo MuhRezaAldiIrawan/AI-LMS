@@ -159,6 +159,12 @@ Route::middleware('auth')->group(function () {
         Route::post('aiassistant/new-session', 'newSession')->name('aiassistant.new-session');
         Route::post('aiassistant/lesson-chat', 'lessonChat')->name('aiassistant.lesson-chat');
     });
+
+    Route::controller(UsersController::class)->group(function(){
+        Route::get('profile', 'profile')->name('profile');
+        Route::post('profile/{id}', 'updateProfile')->name('users.profile.update');
+
+    });
 });
 
 
