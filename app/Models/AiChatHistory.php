@@ -6,6 +6,37 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Carbon\Carbon;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $session_id
+ * @property string $message_type
+ * @property string $message
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read mixed $formatted_time
+ * @property-read mixed $is_from_ai
+ * @property-read mixed $is_from_user
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory aiMessages()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory forSession($sessionId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory forUser($userId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory recent($days = 30)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory userMessages()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory whereMessage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory whereMessageType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory whereSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AiChatHistory whereUserId($value)
+ * @mixin \Eloquent
+ */
 class AiChatHistory extends Model
 {
     protected $fillable = [

@@ -156,6 +156,21 @@
                             <div class="">
                                 <h4 class="mb-0">{{ Auth::user()->name }}</h4>
                                 <p class="fw-medium text-13 text-gray-200">{{ Auth::user()->email}}</p>
+
+                                {{-- Role Badge --}}
+                                @if(isAdmin())
+                                    <span class="badge bg-danger-600 text-white text-xs px-8 py-4 rounded-pill">
+                                        <i class="ph ph-crown me-1"></i>Administrator
+                                    </span>
+                                @elseif(isPengajar())
+                                    <span class="badge bg-success-600 text-white text-xs px-8 py-4 rounded-pill">
+                                        <i class="ph ph-chalkboard-teacher me-1"></i>Pengajar
+                                    </span>
+                                @elseif(isKaryawan())
+                                    <span class="badge bg-primary-600 text-white text-xs px-8 py-4 rounded-pill">
+                                        <i class="ph ph-user me-1"></i>Karyawan
+                                    </span>
+                                @endif
                             </div>
                         </div>
                         <ul class="max-h-270 overflow-y-auto scroll-sm pe-4">

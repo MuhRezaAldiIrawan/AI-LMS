@@ -28,19 +28,23 @@
                     </a>
                 </li>
 
-                <li class="sidebar-divider">
-                    <span>Users</span>
-                </li>
+                {{-- Admin Only Menu --}}
+                @if(isAdmin())
+                    <li class="sidebar-divider">
+                        <span>Users Management</span>
+                    </li>
 
-                <li class="sidebar-menu__item {{ setActive(['users*']) }}"">
-                    <a href="{{ route('users') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-users-three"></i></span>
-                        <span class="text">Users</span>
-                    </a>
-                </li>
+                    <li class="sidebar-menu__item {{ setActive(['users*']) }}">
+                        <a href="{{ route('users') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-users-three"></i></span>
+                            <span class="text">Users</span>
+                        </a>
+                    </li>
+                @endif
 
+                {{-- Menu Kursus - Semua Role --}}
                 <li class="sidebar-divider">
-                    <span>Kursus</span>
+                    <span>Learning</span>
                 </li>
 
                 <li class="sidebar-menu__item {{ setActive(['course*']) }}">
@@ -50,56 +54,70 @@
                     </a>
                 </li>
 
-                <li class="sidebar-menu__item {{ setActive(['aiassistant*']) }}">
-                    <a href="{{ route('aiassistant') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-wechat-logo"></i></span>
-                        <span class="text">AI Asisten</span>
-                    </a>
-                </li>
+                {{-- AI Assistant - Karyawan, Pengajar, Admin --}}
+                @if(canAccess(['admin', 'karyawan', 'pengajar']))
+                    <li class="sidebar-menu__item {{ setActive(['aiassistant*']) }}">
+                        <a href="{{ route('aiassistant') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-wechat-logo"></i></span>
+                            <span class="text">AI Asisten</span>
+                        </a>
+                    </li>
+                @endif
 
-                <li class="sidebar-divider">
-                    <span>Rewards</span>
-                </li>
+                {{-- Rewards Section - Admin only untuk management, Admin & Karyawan untuk redemption --}}
+                @if(isAdmin() || canAccess(['karyawan']))
+                    <li class="sidebar-divider">
+                        <span>Rewards</span>
+                    </li>
 
-                <li class="sidebar-menu__item {{ setActive(['rewards*']) }}">
-                    <a href="{{ route('rewards') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-treasure-chest"></i></span>
-                        <span class="text">Rewards</span>
-                    </a>
-                </li>
+                    {{-- Rewards Management - Admin Only --}}
+                    @if(isAdmin())
+                        <li class="sidebar-menu__item {{ setActive(['rewards*']) }}">
+                            <a href="{{ route('rewards') }}" class="sidebar-menu__link">
+                                <span class="icon"><i class="ph ph-treasure-chest"></i></span>
+                                <span class="text">Rewards Management</span>
+                            </a>
+                        </li>
+                    @endif
 
-                <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
-                    <a href="{{ route('redeemtion') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-swap"></i></span>
-                        <span class="text">Penukaran Reward</span>
-                    </a>
-                </li>
+                    {{-- Redemption - Admin & Karyawan --}}
+                    @if(canAccess(['admin', 'karyawan']))
+                        <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
+                            <a href="{{ route('redeemtion') }}" class="sidebar-menu__link">
+                                <span class="icon"><i class="ph ph-swap"></i></span>
+                                <span class="text">Penukaran Reward</span>
+                            </a>
+                        </li>
+                    @endif
+                @endif
 
+                {{-- Settings Section - Admin Only --}}
+                @if(isAdmin())
+                    <li class="sidebar-divider">
+                        <span>System Settings</span>
+                    </li>
 
-                <li class="sidebar-divider">
-                    <span>Pengaturan</span>
-                </li>
+                    <li class="sidebar-menu__item {{ setActive(['category*']) }}">
+                        <a href="{{ route('category') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-list-bullets"></i></span>
+                            <span class="text">Kategori</span>
+                        </a>
+                    </li>
 
-                <li class="sidebar-menu__item {{ setActive(['category*']) }}">
-                    <a href="{{ route('category') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-list-bullets"></i></span>
-                        <span class="text">Kategori</span>
-                    </a>
-                </li>
+                    <li class="sidebar-menu__item {{ setActive(['coursetype*']) }}">
+                        <a href="{{ route('coursetype') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-list-magnifying-glass"></i></span>
+                            <span class="text">Tipe Kursus</span>
+                        </a>
+                    </li>
 
-                <li class="sidebar-menu__item {{ setActive(['coursetype*']) }}">
-                    <a href="{{ route('coursetype') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-list-magnifying-glass"></i></span>
-                        <span class="text">Tipe Kursus</span>
-                    </a>
-                </li>
-
-                <li class="sidebar-menu__item {{ setActive(['location*']) }}">
-                    <a href="{{ route('location') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-map-pin-line"></i></span>
-                        <span class="text">Lokasi</span>
-                    </a>
-                </li>
+                    <li class="sidebar-menu__item {{ setActive(['location*']) }}">
+                        <a href="{{ route('location') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-map-pin-line"></i></span>
+                            <span class="text">Lokasi</span>
+                        </a>
+                    </li>
+                @endif
 
             </ul>
         </div>

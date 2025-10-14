@@ -16,8 +16,82 @@ use App\Models\UserPoint;
 use App\Models\PointLog;
 use App\Models\RewardRedemption;
 use App\Models\AiChatHistory;
+use App\Models\Course;
+use App\Models\Lesson;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * User model with role-based permissions and course enrollment functionality
+ *
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property string|null $avatar
+ * @property string|null $phone_number
+ * @property int|null $location_id
+ * @property \Carbon\Carbon|null $created_at
+ * @property \Carbon\Carbon|null $updated_at
+ * @method bool isEnrolledIn(\App\Models\Course $course) Check if user is enrolled in a specific course
+ * @method \Illuminate\Database\Eloquent\Relations\BelongsToMany enrolledCourses() Get courses the user is enrolled in
+ * @method \Illuminate\Database\Eloquent\Relations\BelongsToMany completedLessons() Get lessons completed by user
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany quizAttempts() Get quiz attempts by user
+ * @method \Illuminate\Database\Eloquent\Relations\HasOne userPoint() Get user points
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany pointLogs() Get point transaction logs
+ * @method void addPoints(int $points, \Illuminate\Database\Eloquent\Model $source, string $description) Add points to user
+ * @method void deductPoints(int $points, \Illuminate\Database\Eloquent\Model $source, string $description) Deduct points from user
+ * @property string|null $nik
+ * @property string|null $join_date
+ * @property string|null $position
+ * @property string|null $division
+ * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property string|null $profile_photo_path
+ * @property string|null $remember_token
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, AiChatHistory> $aiChatHistories
+ * @property-read int|null $ai_chat_histories_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Lesson> $completedLessons
+ * @property-read int|null $completed_lessons_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Course> $enrolledCourses
+ * @property-read int|null $enrolled_courses_count
+ * @property-read mixed $profile_photo_url
+ * @property-read \App\Models\Location|null $location
+ * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ * @property-read int|null $notifications_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Permission> $permissions
+ * @property-read int|null $permissions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PointLog> $pointLogs
+ * @property-read int|null $point_logs_count
+ * @property-read UserPoint|null $points
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, QuizAttempt> $quizAttempts
+ * @property-read int|null $quiz_attempts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, RewardRedemption> $rewardRedemptions
+ * @property-read int|null $reward_redemptions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Spatie\Permission\Models\Role> $roles
+ * @property-read int|null $roles_count
+ * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User permission($permissions, $without = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User role($roles, $guard = null, $without = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereDivision($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereJoinDate($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLocationId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereNik($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePosition($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereProfilePhotoPath($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutPermission($permissions)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutRole($roles, $guard = null)
+ * @mixin \Eloquent
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -76,7 +150,7 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-     public function enrolledCourses()
+    public function enrolledCourses(): BelongsToMany
     {
         // [PENTING] Pastikan completed_at ada di withPivot
         return $this->belongsToMany(Course::class, 'course_user')
@@ -94,10 +168,28 @@ class User extends Authenticatable
         return $this->hasMany(QuizAttempt::class);
     }
 
-    public function isEnrolledIn(Course $course): bool
+    public function isEnrolledIn($course): bool
     {
-        // enrolledCourses() adalah relasi yang sudah kita buat sebelumnya
-        return $this->enrolledCourses()->where('course_id', $course->id)->exists();
+        // Jika parameter adalah Course object, ambil ID-nya
+        $courseId = $course instanceof Course ? $course->id : $course;
+
+        // User dianggap enrolled HANYA jika enrolled_at tidak NULL
+        // Ini berarti user sudah aktif menekan tombol "Enroll"
+        return $this->enrolledCourses()
+                    ->where('course_id', $courseId)
+                    ->whereNotNull('enrolled_at')
+                    ->exists();
+    }
+
+    /**
+     * Check if user has access to course (assigned by admin but may not be enrolled yet)
+     */
+    public function hasAccessToCourse($course): bool
+    {
+        $courseId = $course instanceof Course ? $course->id : $course;
+
+        // User memiliki akses jika ada record di course_user (assigned by admin)
+        return $this->enrolledCourses()->where('course_id', $courseId)->exists();
     }
 
     public function getProfilePhotoUrlAttribute()
@@ -268,5 +360,13 @@ class User extends Authenticatable
     public function cleanupOldChats($keepDays = 30, $maxMessages = 500)
     {
         AiChatHistory::cleanupOldChats($this->id, $keepDays, $maxMessages);
+    }
+
+    /**
+     * Check if user has completed a specific lesson
+     */
+    public function hasCompletedLesson($lessonId): bool
+    {
+        return $this->completedLessons()->where('lesson_id', $lessonId)->exists();
     }
 }

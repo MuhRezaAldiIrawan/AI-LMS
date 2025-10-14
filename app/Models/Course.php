@@ -9,7 +9,47 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
+/**
+ * @property int $id
+ * @property string $title
+ * @property string $slug
+ * @property string|null $description
+ * @property string|null $summary
+ * @property string|null $thumbnail
+ * @property string $status
+ * @property int $total_duration
+ * @property int $user_id
+ * @property int $category_id
+ * @property int $course_type_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read User $author
+ * @property-read \App\Models\Category $category
+ * @property-read \App\Models\CourseType $courseType
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, User> $enrolledUsers
+ * @property-read int|null $enrolled_users_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Module> $modules
+ * @property-read int|null $modules_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereCategoryId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereCourseTypeId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereSlug($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereSummary($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereThumbnail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereTotalDuration($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Course whereUserId($value)
+ * @mixin \Eloquent
+ */
 class Course extends Model
 {
     use HasFactory;
@@ -58,6 +98,8 @@ class Course extends Model
                     ->withPivot('enrolled_at', 'completed_at')
                     ->withTimestamps();
     }
+
+
 
     public function getCompletionPercentage(User $user): int
     {
@@ -170,9 +212,7 @@ class Course extends Model
     }
     public function getTotalDurationInHours(): string
     {
-        $totalMinutes = $this->modules->flatMap(function ($module) {
-            return $module->lessons;
-        })->sum('duration_in_minutes');
+        $totalMinutes = $this->modules->flatMap->lessons->sum('duration_in_minutes');
 
         if ($totalMinutes === 0) {
             return '0 Jam';

@@ -59,7 +59,13 @@
                 </div>
 
                 <a href="{{ route('course.show', $course->id) }}"
-                    class="btn btn-outline-main rounded-pill py-9 w-100 mt-24">Kelola Kursus</a>
+                    class="btn btn-outline-main rounded-pill py-9 w-100 mt-24">
+                    @if(canManageCourses())
+                        Kelola Kursus
+                    @else
+                        Detail Kursus
+                    @endif
+                </a>
             </div>
         </div>
     </div>

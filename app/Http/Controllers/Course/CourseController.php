@@ -18,30 +18,68 @@ class CourseController extends Controller
      */
     public function index(Request $request)
     {
-
+        $user = Auth::user();
         $userId = Auth::id();
         $status = $request->query('status');
         $search = $request->query('search');
 
-        $myCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
-            ->where('user_id', $userId);
+        // Admin bisa lihat semua courses
+        if (canAccess('admin')) {
+            $coursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz']);
 
-        $otherCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
-            ->where('user_id', '!=', $userId);
-
-        foreach ([$myCoursesQuery, $otherCoursesQuery] as $query) {
             if ($status && in_array($status, ['draft', 'published'])) {
-                $query->where('status', $status);
+                $coursesQuery->where('status', $status);
             }
             if ($search) {
-                $query->where('title', 'like', '%' . $search . '%');
+                $coursesQuery->where('title', 'like', '%' . $search . '%');
             }
+
+            $allCourses = $coursesQuery->latest()->paginate(8, ['*'], 'all_courses_page');
+            return view('pages.course.course', compact('allCourses'))
+                ->with('userRole', 'admin');
         }
 
-        $myCourses = $myCoursesQuery->latest()->paginate(4, ['*'], 'my_courses_page');
-        $otherCourses = $otherCoursesQuery->latest()->paginate(4, ['*'], 'other_courses_page');
+        // Pengajar bisa lihat courses mereka dan courses lain
+        if (canAccess('pengajar')) {
+            $myCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('user_id', $userId);
 
-        return view('pages.course.course', compact('myCourses', 'otherCourses'));
+            $otherCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('user_id', '!=', $userId)
+                ->where('status', 'published'); // Pengajar hanya bisa lihat course published dari pengajar lain
+
+            foreach ([$myCoursesQuery, $otherCoursesQuery] as $query) {
+                if ($status && in_array($status, ['draft', 'published'])) {
+                    $query->where('status', $status);
+                }
+                if ($search) {
+                    $query->where('title', 'like', '%' . $search . '%');
+                }
+            }
+
+            $myCourses = $myCoursesQuery->latest()->paginate(4, ['*'], 'my_courses_page');
+            $otherCourses = $otherCoursesQuery->latest()->paginate(4, ['*'], 'other_courses_page');
+
+            return view('pages.course.course', compact('myCourses', 'otherCourses'))
+                ->with('userRole', 'pengajar');
+        }
+
+        // Karyawan hanya bisa lihat published courses
+        if (canAccess('karyawan')) {
+            $coursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('status', 'published');
+
+            if ($search) {
+                $coursesQuery->where('title', 'like', '%' . $search . '%');
+            }
+
+            $availableCourses = $coursesQuery->latest()->paginate(8, ['*'], 'available_courses_page');
+            return view('pages.course.course', compact('availableCourses'))
+                ->with('userRole', 'karyawan');
+        }
+
+        // Default fallback
+        return redirect()->route('dashboard.index');
     }
 
     /**
@@ -90,14 +128,141 @@ class CourseController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        $course = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])->findOrFail($id);
+        $course = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz.questions'])->findOrFail($id);
+        $user = Auth::user();
+
+        // Redirect jika user tidak login
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Cek role user - jika karyawan, redirect ke halaman khusus
+        if ($user->hasRole('karyawan')) {
+            $isEnrolled = $user->isEnrolledIn($course);
+            $hasAccess = $user->hasAccessToCourse($course);
+            return view('pages.course._partials.employee-course', compact('course', 'isEnrolled', 'hasAccess'));
+        }
+
+        // Cek apakah ada access denied dari middleware
+        $accessDenied = $request->get('access_denied', false);
+        $userRole = $request->get('user_role');
+
+        // Jika access denied, tampilkan halaman dengan pesan sesuai role
+        if ($accessDenied) {
+            $enrollmentMessage = '';
+            $canEnroll = false;
+
+            if ($userRole === 'pengajar') {
+                $enrollmentMessage = 'Anda belum diberikan akses ke kursus ini. Silakan hubungi admin untuk mendapatkan akses.';
+                $canEnroll = false; // Pengajar tidak bisa self-enroll
+            } elseif ($userRole === 'karyawan') {
+                $enrollmentMessage = 'Anda perlu mendaftar di kursus ini untuk dapat mengakses konten pembelajaran.';
+                $canEnroll = true; // Karyawan bisa self-enroll
+            }
+
+            return view('pages.course.show', compact('course', 'enrollmentMessage', 'canEnroll'))
+                ->with('accessDenied', true);
+        }
+
+        // User yang punya akses - tampilkan detail lengkap course
         $categories = Category::all();
         $courseType = CourseType::all();
         $users = User::all();
 
-        return view('pages.course.show', compact('course', 'categories', 'courseType', 'users'));
+        // Cek apakah user adalah pemilik course
+        $isOwner = $course->user_id === $user->id;
+
+        // Cek enrollment status
+        $isEnrolled = $user->isEnrolledIn($course);
+
+        return view('pages.course.show', compact(
+            'course',
+            'categories',
+            'courseType',
+            'users',
+            'isOwner',
+            'isEnrolled'
+        ))->with('accessDenied', false);
+    }
+
+    /**
+     * Enroll user ke course
+     */
+    public function enroll(Request $request, Course $course)
+    {
+        $user = Auth::user();
+
+        // Redirect jika user tidak login
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        /** @var \App\Models\User $user */
+        // $user = Auth::user();
+
+        // Cek apakah user sudah enrolled (enrolled_at tidak NULL)
+        if ($user->isEnrolledIn($course)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda sudah terdaftar di kursus ini.'
+                ]);
+            }
+            return redirect()->back()->with('info', 'Anda sudah terdaftar di kursus ini.');
+        }
+
+        // Cek apakah user memiliki akses ke course (assigned by admin)
+        if (!$user->hasAccessToCourse($course)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses ke kursus ini. Hubungi admin untuk mendapatkan akses.'
+                ]);
+            }
+            return redirect()->back()->with('error', 'Anda tidak memiliki akses ke kursus ini. Hubungi admin untuk mendapatkan akses.');
+        }
+
+        try {
+            // Update enrolled_at timestamp pada record yang sudah ada
+            $user->enrolledCourses()->updateExistingPivot($course->id, [
+                'enrolled_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            // Log point activity (opsional - bisa ditambahkan nanti)
+            // $user->addPoints(10, $course, 'Mendaftar kursus: ' . $course->title);
+
+            // Response untuk AJAX
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Berhasil mendaftar di kursus ini!',
+                    'redirect_url' => route('course.show', $course->id)
+                ]);
+            }
+
+            return redirect()->route('course.show', $course->id)
+                ->with('success', 'Berhasil mendaftar di kursus ini!');
+
+        } catch (\Exception $e) {
+            \Log::error('Enrollment failed: ' . $e->getMessage());
+
+            // Response untuk AJAX
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mendaftar di kursus ini. Silakan coba lagi.'
+                ], 500);
+            }
+
+            return redirect()->back()
+                ->with('error', 'Gagal mendaftar di kursus ini. Silakan coba lagi.');
+        }
     }
 
     /**

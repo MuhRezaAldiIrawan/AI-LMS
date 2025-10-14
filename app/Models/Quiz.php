@@ -7,6 +7,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $module_id
+ * @property int|null $course_id
+ * @property string $title
+ * @property string|null $description
+ * @property int $passing_score
+ * @property int $duration_in_minutes
+ * @property int $max_attempts
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Module $module
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Question> $questions
+ * @property-read int|null $questions_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereCourseId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereDurationInMinutes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereMaxAttempts($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereModuleId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz wherePassingScore($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereTitle($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Quiz whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class Quiz extends Model
 {
     use HasFactory;
