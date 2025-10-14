@@ -75,6 +75,27 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 15px rgba(0,0,0,0.1);
     }
+
+    .lesson-text-content {
+        line-height: 1.8;
+    }
+
+    .lesson-file-content {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .pdf-viewer iframe {
+        border: none;
+    }
+
+    .image-viewer img {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
 </style>
 @endSection
 
@@ -117,9 +138,10 @@
                     @endif
                 </div>
 
-                <!-- Video/Content Area -->
+                <!-- Content Area Based on Type -->
                 <div class="p-24">
-                    @if($lesson->video_url)
+                    @if($lesson->content_type === 'video' && $lesson->video_url)
+                        <!-- Video Content -->
                         <div class="lesson-video-container mb-24">
                             @if(str_contains($lesson->video_url, 'youtube.com') || str_contains($lesson->video_url, 'youtu.be'))
                                 @php
@@ -134,6 +156,21 @@
                                 @if($video_id)
                                     <iframe src="https://www.youtube.com/embed/{{ $video_id }}?rel=0&modestbranding=1"
                                             frameborder="0" allowfullscreen></iframe>
+                                @else
+                                    <div class="text-center py-64">
+                                        <i class="ph ph-video-camera text-danger-500" style="font-size: 64px;"></i>
+                                        <h5 class="text-gray-500 mt-16 mb-8">Video URL Tidak Valid</h5>
+                                        <p class="text-gray-400">Pastikan URL YouTube sudah benar</p>
+                                    </div>
+                                @endif
+                            @elseif(str_contains($lesson->video_url, 'vimeo.com'))
+                                @php
+                                    preg_match('/vimeo\.com\/(\d+)/', $lesson->video_url, $matches);
+                                    $vimeo_id = $matches[1] ?? '';
+                                @endphp
+                                @if($vimeo_id)
+                                    <iframe src="https://player.vimeo.com/video/{{ $vimeo_id }}"
+                                            frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
                                 @endif
                             @else
                                 <video controls class="w-100">
@@ -142,21 +179,87 @@
                                 </video>
                             @endif
                         </div>
-                    @else
-                        <div class="text-center py-64">
-                            <i class="ph ph-video-camera text-gray-300" style="font-size: 64px;"></i>
-                            <h5 class="text-gray-500 mt-16 mb-8">Video Belum Tersedia</h5>
-                            <p class="text-gray-400">Video pembelajaran akan segera ditambahkan</p>
-                        </div>
-                    @endif
-
-                    <!-- Lesson Content -->
-                    @if($lesson->content)
+                    @elseif($lesson->content_type === 'text' && $lesson->content_text)
+                        <!-- Text Content -->
                         <div class="lesson-text-content">
-                            <h4 class="fw-bold mb-16 text-gray-900">Materi Pembelajaran</h4>
-                            <div class="text-gray-700 line-height-lg">
-                                {!! nl2br(e($lesson->content)) !!}
+                            <div class="bg-gray-50 rounded-12 p-24">
+                                <h4 class="fw-bold mb-20 text-gray-900">
+                                    <i class="ph ph-article me-2 text-primary-600"></i>Materi Pembelajaran
+                                </h4>
+                                <div class="text-gray-700 line-height-lg" style="font-size: 15px;">
+                                    {!! nl2br(e($lesson->content_text)) !!}
+                                </div>
                             </div>
+                        </div>
+                    @elseif($lesson->content_type === 'file' && $lesson->attachment_path)
+                        <!-- File Content -->
+                        <div class="lesson-file-content">
+                            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-12 p-24">
+                                <h4 class="fw-bold mb-20 text-gray-900">
+                                    <i class="ph ph-file-text me-2 text-primary-600"></i>File Materi
+                                </h4>
+
+                                @php
+                                    $file_extension = pathinfo($lesson->attachment_path, PATHINFO_EXTENSION);
+                                    $file_name = basename($lesson->attachment_path);
+                                    $file_url = asset('storage/' . $lesson->attachment_path);
+
+                                    // Determine file type
+                                    $is_pdf = in_array(strtolower($file_extension), ['pdf']);
+                                    $is_image = in_array(strtolower($file_extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    $is_document = in_array(strtolower($file_extension), ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']);
+                                @endphp
+
+                                <div class="d-flex align-items-center justify-content-between bg-white rounded-8 p-20 mb-20">
+                                    <div class="d-flex align-items-center">
+                                        @if($is_pdf)
+                                            <div class="w-48 h-48 d-flex align-items-center justify-content-center bg-danger-50 rounded-8 me-16">
+                                                <i class="ph ph-file-pdf text-danger-600" style="font-size: 24px;"></i>
+                                            </div>
+                                        @elseif($is_image)
+                                            <div class="w-48 h-48 d-flex align-items-center justify-content-center bg-success-50 rounded-8 me-16">
+                                                <i class="ph ph-image text-success-600" style="font-size: 24px;"></i>
+                                            </div>
+                                        @elseif($is_document)
+                                            <div class="w-48 h-48 d-flex align-items-center justify-content-center bg-primary-50 rounded-8 me-16">
+                                                <i class="ph ph-file-doc text-primary-600" style="font-size: 24px;"></i>
+                                            </div>
+                                        @else
+                                            <div class="w-48 h-48 d-flex align-items-center justify-content-center bg-gray-100 rounded-8 me-16">
+                                                <i class="ph ph-file text-gray-600" style="font-size: 24px;"></i>
+                                            </div>
+                                        @endif
+
+                                        <div>
+                                            <h6 class="fw-semibold text-gray-900 mb-4">{{ $lesson->title }}</h6>
+                                            <p class="text-14 text-gray-500 mb-0">{{ strtoupper($file_extension) }} File</p>
+                                        </div>
+                                    </div>
+
+                                    <a href="{{ $file_url }}" download class="btn btn-primary rounded-pill py-8 px-20">
+                                        <i class="ph ph-download me-2"></i>Download
+                                    </a>
+                                </div>
+
+                                @if($is_pdf)
+                                    <!-- PDF Viewer -->
+                                    <div class="pdf-viewer bg-white rounded-8 overflow-hidden" style="height: 600px;">
+                                        <iframe src="{{ $file_url }}" width="100%" height="100%" frameborder="0"></iframe>
+                                    </div>
+                                @elseif($is_image)
+                                    <!-- Image Viewer -->
+                                    <div class="image-viewer text-center bg-white rounded-8 p-20">
+                                        <img src="{{ $file_url }}" alt="{{ $lesson->title }}" class="img-fluid rounded-8" style="max-height: 600px;">
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @else
+                        <!-- No Content -->
+                        <div class="text-center py-64">
+                            <i class="ph ph-file-x text-gray-300" style="font-size: 64px;"></i>
+                            <h5 class="text-gray-500 mt-16 mb-8">Konten Belum Tersedia</h5>
+                            <p class="text-gray-400">Materi pembelajaran akan segera ditambahkan</p>
                         </div>
                     @endif
 
