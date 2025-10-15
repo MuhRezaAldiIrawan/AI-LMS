@@ -203,37 +203,95 @@
             <!-- Point Start -->
             <div class="card mt-24">
                 <div class="card-header border-bottom border-gray-100 flex-between gap-8 flex-wrap">
-                    <h5 class="mb-0">My Learning Point</h5>
-                    <div class="dropdown flex-shrink-0">
-                        <button class="text-gray-400 text-xl d-flex rounded-4" type="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <i class="ph-fill ph-dots-three-outline"></i>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu--md border-0 bg-transparent p-0">
-                            <div class="card border border-gray-100 rounded-12 box-shadow-custom">
-                                <div class="card-body p-12">
-                                    <div class="max-h-200 overflow-y-auto scroll-sm pe-8">
-                                        <ul>
-                                            <li class="mb-0">
-                                                <a href="students.html"
-                                                    class="py-6 text-15 px-8 hover-bg-gray-50 text-gray-300 w-100 rounded-8 fw-normal text-xs d-block text-start">
-                                                    <span class="text"> <i class="ph ph-user me-4"></i>
-                                                        View</span>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
+                    <h5 class="mb-0">My Learning Points</h5>
+                    <span class="badge bg-warning-600 text-white px-12 py-6 rounded-pill">
+                        <i class="ph-fill ph-trophy me-1"></i>
+                        {{ number_format(Auth::user()->getTotalPoints()) }} Points
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Total Points Display -->
+                    <div class="text-center mb-24">
+                        <div class="w-120 h-120 bg-warning-50 rounded-circle mx-auto flex-center mb-16">
+                            <i class="ph-fill ph-trophy text-64 text-warning-600"></i>
+                        </div>
+                        <h2 class="mb-8 text-warning-600">{{ number_format(Auth::user()->getTotalPoints()) }}</h2>
+                        <p class="text-gray-600 mb-0">Total Learning Points</p>
+                    </div>
+
+                    <!-- Point Breakdown -->
+                    <div class="border-top border-gray-100 pt-20">
+                        <h6 class="mb-16 text-gray-900">Point Activities</h6>
+
+                        @php
+                            $user = Auth::user();
+                            $lessonPoints = $user->pointLogs()->where('related_type', 'App\Models\Lesson')->sum('points_earned');
+                            $quizPoints = $user->pointLogs()->where('related_type', 'App\Models\Quiz')->sum('points_earned');
+                            $coursePoints = $user->pointLogs()->where('related_type', 'App\Models\Course')->sum('points_earned');
+                            $totalTransactions = $user->pointLogs()->count();
+                        @endphp
+
+                        <div class="mb-12 flex-between">
+                            <div class="flex-align gap-8">
+                                <span class="w-32 h-32 bg-main-50 rounded-circle flex-center text-main-600">
+                                    <i class="ph-fill ph-book-open"></i>
+                                </span>
+                                <span class="text-gray-600 text-sm">Lessons Completed</span>
+                            </div>
+                            <span class="text-main-600 fw-bold">+{{ number_format($lessonPoints) }}</span>
+                        </div>
+
+                        <div class="mb-12 flex-between">
+                            <div class="flex-align gap-8">
+                                <span class="w-32 h-32 bg-success-50 rounded-circle flex-center text-success-600">
+                                    <i class="ph-fill ph-check-circle"></i>
+                                </span>
+                                <span class="text-gray-600 text-sm">Quizzes Passed</span>
+                            </div>
+                            <span class="text-success-600 fw-bold">+{{ number_format($quizPoints) }}</span>
+                        </div>
+
+                        <div class="mb-12 flex-between">
+                            <div class="flex-align gap-8">
+                                <span class="w-32 h-32 bg-warning-50 rounded-circle flex-center text-warning-600">
+                                    <i class="ph-fill ph-certificate"></i>
+                                </span>
+                                <span class="text-gray-600 text-sm">Courses Completed</span>
+                            </div>
+                            <span class="text-warning-600 fw-bold">+{{ number_format($coursePoints) }}</span>
+                        </div>
+
+                        <div class="border-top border-gray-100 mt-16 pt-16">
+                            <div class="flex-between">
+                                <span class="text-gray-900 fw-semibold">Total Transactions</span>
+                                <span class="badge bg-primary-50 text-primary-600 px-12 py-4 rounded-pill">
+                                    {{ $totalTransactions }}
+                                </span>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="card-body">
-                    <div class="flex-center">
-                        <div id="activityDonutChart" class="w-auto d-inline-block"></div>
-                    </div>
-                    <h2 style="text-align: center">70%</h2>
 
+                    <!-- Point Earning Info -->
+                    <div class="bg-main-50 rounded-8 p-16 mt-20">
+                        <h6 class="text-sm mb-12 text-gray-900">
+                            <i class="ph-fill ph-info text-main-600 me-2"></i>
+                            How to Earn Points
+                        </h6>
+                        <ul class="list-unstyled mb-0 text-13 text-gray-600">
+                            <li class="mb-8">
+                                <i class="ph-fill ph-check-circle text-success-600 me-2"></i>
+                                Complete 1 Lesson = <strong>5 points</strong>
+                            </li>
+                            <li class="mb-8">
+                                <i class="ph-fill ph-check-circle text-success-600 me-2"></i>
+                                Pass 1 Quiz = <strong>10 points</strong>
+                            </li>
+                            <li class="mb-0">
+                                <i class="ph-fill ph-check-circle text-success-600 me-2"></i>
+                                Complete Course = <strong>20 points</strong>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
             <!-- Point End -->

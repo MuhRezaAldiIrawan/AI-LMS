@@ -198,20 +198,22 @@ class QuizController extends Controller
             'finished_at' => now()
         ]);
 
-        // TODO: Award points if passed (when points_awarded column is added)
-        // if ($isPassed && isset($quiz->points_awarded) && $quiz->points_awarded > 0) {
-        //     $user = auth()->user();
-        //     // Check if already got points for this quiz
-        //     $existingPassed = $quiz->attempts()
-        //         ->where('user_id', $user->id)
-        //         ->where('passed', true)
-        //         ->where('id', '!=', $attempt->id)
-        //         ->exists();
-        //
-        //     if (!$existingPassed) {
-        //         $user->addPoints($quiz->points_awarded, "Menyelesaikan kuis: {$quiz->title}", $quiz);
-        //     }
-        // }
+        // Award 10 points if passed quiz
+        if ($isPassed) {
+            $user = auth()->user();
+
+            // Check if user already got points for this quiz before (prevent double points)
+            $existingPassed = $quiz->attempts()
+                ->where('user_id', $user->id)
+                ->where('passed', true)
+                ->where('id', '!=', $attempt->id)
+                ->exists();
+
+            // Only award points if this is first time passing this quiz
+            if (!$existingPassed) {
+                $user->addPoints(10, "Lulus kuis: {$quiz->title}", $quiz);
+            }
+        }
 
         // Check if course is now 100% complete and trigger certificate generation
         if ($isPassed) {

@@ -154,10 +154,8 @@ class LessonController extends Controller
         if (!$lesson->isCompletedByUser($user)) {
             $user->completedLessons()->attach($lesson->id, ['completed_at' => now()]);
 
-            // TODO: Add points system for lesson completion if needed
-            // if (isset($lesson->points_awarded) && $lesson->points_awarded > 0) {
-            //     $user->addPoints($lesson->points_awarded, "Menyelesaikan pelajaran: {$lesson->title}", $lesson);
-            // }
+            // Award 5 points for lesson completion
+            $user->addPoints(5, "Menyelesaikan pelajaran: {$lesson->title}", $lesson);
 
             // Check if course is now 100% complete and trigger certificate generation
             $course = $lesson->module->course;

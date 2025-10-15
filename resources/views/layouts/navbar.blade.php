@@ -19,6 +19,18 @@
 
     <div class="flex-align gap-16">
         <div class="flex-align gap-8">
+            <!-- My Points Display Start -->
+            <div class="flex-align gap-8 px-16 py-8 bg-warning-50 rounded-pill border border-warning-100">
+                <span class="w-32 h-32 bg-warning-600 rounded-circle flex-center text-white">
+                    <i class="ph-fill ph-trophy text-lg"></i>
+                </span>
+                <div class="flex-column">
+                    <span class="text-xs text-gray-600 fw-medium">My Points</span>
+                    <span class="text-lg fw-bold text-warning-600">{{ number_format(Auth::user()->getTotalPoints()) }}</span>
+                </div>
+            </div>
+            <!-- My Points Display End -->
+
             <!-- Notification Start -->
             {{-- <div class="dropdown">
                 <button

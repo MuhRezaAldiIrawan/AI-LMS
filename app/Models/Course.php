@@ -256,10 +256,8 @@ class Course extends Model
                 'completed_at' => now(),
             ]);
 
-            // 2. Berikan poin kursus jika ada
-            if ($this->points_awarded > 0) {
-                $user->addPoints($this->points_awarded, "Menyelesaikan kursus: {$this->title}", $this);
-            }
+            // 2. Award 20 points for completing course and getting certificate
+            $user->addPoints(20, "Menyelesaikan kursus dan mendapat sertifikat: {$this->title}", $this);
 
             // 3. Generate certificate otomatis
             try {

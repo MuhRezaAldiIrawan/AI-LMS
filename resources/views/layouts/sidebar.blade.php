@@ -28,6 +28,16 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu__item {{ setActive('points.*') }}">
+                    <a href="{{ route('points.index') }}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-trophy"></i></span>
+                        <span class="text">My Points</span>
+                        <span class="badge bg-warning-600 text-white rounded-pill ms-auto">
+                            {{ number_format(Auth::user()->getTotalPoints()) }}
+                        </span>
+                    </a>
+                </li>
+
                 {{-- Admin Only Menu --}}
                 @if(isAdmin())
                     <li class="sidebar-divider">

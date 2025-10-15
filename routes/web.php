@@ -28,6 +28,11 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('dashboard', App\Http\Controllers\DashboardController::class);
 
+    // Points History Route - All authenticated users
+    Route::get('points', function () {
+        return view('pages.points.points');
+    })->name('points.index');
+
     // Admin only routes - hanya admin yang bisa akses
     Route::middleware('admin')->group(function () {
         // User Management

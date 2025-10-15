@@ -280,6 +280,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Get user's total points
+     *
+     * @return int
+     */
+    public function getTotalPoints(): int
+    {
+        return $this->points?->total_points ?? 0;
+    }
+
+    /**
      * [FUNGSI BARU] Fungsi terpusat untuk menambahkan poin dan mencatat log.
      */
     public function addPoints(int $points, string $reason, Model $relatedModel)
