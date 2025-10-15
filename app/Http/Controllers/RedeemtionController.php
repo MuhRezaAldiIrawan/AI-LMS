@@ -19,7 +19,7 @@ class RedeemtionController extends Controller
     public function getRedeemData(Request $request)
     {
         if ($request->ajax()) {
-            $query = RewardRedemption::with('user', 'reward')->orderBy('created_at', 'desc')->get();
+            $query = RewardRedemption::with('user', 'reward')->orderBy('created_at', 'desc');
 
             if ($request->status && $request->status !== 'all') {
                 $query->where('status', $request->status);
@@ -27,61 +27,37 @@ class RedeemtionController extends Controller
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->addColumn('user_name', function($row){
+                    return $row->user->name;
+                })
+                ->addColumn('reward_name', function($row){
+                    return $row->reward->name;
+                })
+                ->editColumn('created_at', function($row){
+                    return $row->created_at->format('d F Y H:i');
+                })
                 ->addColumn('action', function($row) {
-                    return '<button class="btn btn-sm btn-info">Detail</button>';
+                    $btn = '<button class="btn btn-sm btn-info me-2" onclick="showDetailModal('.$row->id.')">Detail</button>';
+                    if ($row->status == 'pending') {
+                        $btn .= '<button class="btn btn-sm btn-success" onclick="updateStatus('.$row->id.', \'processed\')">Proses</button>';
+                    } elseif ($row->status == 'processed') {
+                        $btn .= '<button class="btn btn-sm btn-primary" onclick="updateStatus('.$row->id.', \'completed\')">Selesaikan</button>';
+                    }
+                    return $btn;
                 })
                 ->rawColumns(['action'])
                 ->make(true);
         }
     }
 
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function updateStatus(Request $request, RewardRedemption $redeemtion)
     {
-        //
-    }
+        $request->validate([
+            'status' => 'required|in:pending,processed,completed,rejected',
+        ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
+        $redeemtion->update(['status' => $request->status]);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        return response()->json(['success' => true, 'message' => 'Status berhasil diperbarui.']);
     }
 }

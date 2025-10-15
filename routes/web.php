@@ -14,6 +14,8 @@ use App\Http\Controllers\RewardsController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\AiAssistantController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CertificateController;
+use App\Http\Controllers\UserRewardController;
 
 Route::get('/', [AuthController::class, 'index']);
 
@@ -91,12 +93,20 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    Route::middleware('role:admin,karyawan')->group(function () {
+    Route::middleware('role:admin')->group(function () {
         Route::controller(RedeemtionController::class)->group(function(){
             Route::get('redeemtion', 'index')->name('redeemtion');
             Route::get('redeemtion/get-data', 'getRedeemData')->name('redeemtion.getData');
+            Route::post('redeemtion/{redeemtion}/update-status', 'updateStatus')->name('redeemtion.updateStatus');
         });
     });
+
+    // User Rewards Shop
+    Route::controller(UserRewardController::class)->middleware('auth')->group(function () {
+        Route::get('rewards-shop', 'index')->name('rewards.shop');
+        Route::post('rewards-shop/redeem/{reward}', 'redeem')->name('rewards.redeem');
+    });
+
 
     Route::controller(CourseController::class)->group(function(){
         Route::get('course', 'index')->name('course');
@@ -172,7 +182,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Certificate Routes
-    Route::controller(App\Http\Controllers\CertificateController::class)->group(function(){
+    Route::controller(CertificateController::class)->group(function(){
         // Download certificate (user yang memiliki atau admin)
         Route::get('certificate/{id}/download', 'download')->name('certificate.download');
 
@@ -193,6 +203,6 @@ Route::middleware('auth')->group(function () {
 });
 
 // Public certificate verification route (accessible without login)
-Route::get('certificate/verify', [App\Http\Controllers\CertificateController::class, 'verify'])->name('certificate.verify');
+Route::get('certificate/verify', [CertificateController::class, 'verify'])->name('certificate.verify');
 
 

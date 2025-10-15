@@ -19,7 +19,7 @@
             <li><a href="{{ route('dashboard.index') }}" class="text-gray-200 fw-normal text-15 hover-text-main-600">Home</a>
             </li>
             <li> <span class="text-gray-500 fw-normal d-flex"><i class="ph ph-caret-right"></i></span> </li>
-            <li><span class="text-main-600 fw-normal text-15">Penukaran Reward</span></li>
+            <li><span class="text-main-600 fw-normal text-15">Manajemen Penukaran Reward</span></li>
         </ul>
     </div>
     <!-- Breadcrumb End -->
@@ -52,6 +52,7 @@
                     <thead>
                         <tr>
                             <th>No</th>
+                            <th>Nama Pengguna</th>
                             <th>Nama Reward</th>
                             <th>Poin</th>
                             <th>Status</th>
@@ -71,10 +72,11 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        let table;
         $(document).ready(function() {
             let statusFilter = 'all';
 
-            let table = $('#redeemTable').DataTable({
+            table = $('#redeemTable').DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
@@ -85,15 +87,17 @@
                 },
                 columns: [{
                         data: 'DT_RowIndex',
-                        name: 'DT_RowIndex'
+                        name: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
                     },
                     {
-                        data: 'user_id',
-                        name: 'user_id'
+                        data: 'user_name',
+                        name: 'user.name'
                     },
                     {
-                        data: 'reward_id',
-                        name: 'reward_id'
+                        data: 'reward_name',
+                        name: 'reward.name'
                     },
                     {
                         data: 'points_cost',
@@ -104,8 +108,8 @@
                         name: 'status'
                     },
                     {
-                        data: 'admin_notes',
-                        name: 'admin_notes'
+                        data: 'created_at',
+                        name: 'created_at'
                     },
                     {
                         data: 'action',
@@ -114,8 +118,8 @@
                         searchable: false
                     }
                 ],
-                searching: false,
-                lengthChange: false,
+                searching: true,
+                lengthChange: true,
                 ordering: true,
                 responsive: true,
                 pagingType: "simple_numbers",
@@ -136,5 +140,38 @@
                 table.ajax.reload(); // reload DataTable dengan filter baru
             });
         });
+
+        function updateStatus(id, status) {
+            Swal.fire({
+                title: 'Konfirmasi',
+                text: `Apakah Anda yakin ingin mengubah status menjadi ${status}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, ubah!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/redeemtion/${id}/update-status`,
+                        method: 'POST',
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            status: status
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire(
+                                    'Berhasil!',
+                                    response.message,
+                                    'success'
+                                );
+                                table.ajax.reload();
+                            }
+                        }
+                    });
+                }
+            });
+        }
     </script>
 @endsection
