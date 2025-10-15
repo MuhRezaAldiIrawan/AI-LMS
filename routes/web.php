@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
         Route::controller(RedeemtionController::class)->group(function(){
             Route::get('redeemtion', 'index')->name('redeemtion');
             Route::get('redeemtion/get-data', 'getRedeemData')->name('redeemtion.getData');
+            Route::get('redeemtion/{redeemtion}', 'show')->name('redeemtion.show');
             Route::post('redeemtion/{redeemtion}/update-status', 'updateStatus')->name('redeemtion.updateStatus');
         });
     });

@@ -73,6 +73,7 @@
                                 <th>Reward</th>
                                 <th>Poin</th>
                                 <th>Status</th>
+                                <th>Catatan</th>
                                 <th>Tanggal</th>
                             </tr>
                         </thead>
@@ -96,11 +97,12 @@
                                             <span class="badge bg-secondary">{{ $r->status }}</span>
                                         @endif
                                     </td>
+                                    <td style="max-width:260px; white-space:normal; word-wrap:break-word;">{{ $r->admin_notes ? $r->admin_notes : '-' }}</td>
                                     <td>{{ $r->created_at->format('d M Y H:i') }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5">Belum ada riwayat penukaran.</td>
+                                    <td colspan="6">Belum ada riwayat penukaran.</td>
                                 </tr>
                             @endforelse
                         </tbody>

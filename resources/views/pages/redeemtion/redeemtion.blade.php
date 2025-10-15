@@ -142,6 +142,81 @@
         });
 
         function updateStatus(id, status) {
+            // If rejecting, ask for an optional admin note (reason)
+            if (status === 'rejected') {
+                Swal.fire({
+                    title: 'Tolak Penukaran',
+                    input: 'textarea',
+                    inputLabel: 'Alasan penolakan (opsional)',
+                    inputPlaceholder: 'Masukkan alasan, mis. stok habis, data tidak lengkap, dll...',
+                    inputAttributes: {
+                        'aria-label': 'Alasan penolakan'
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Tolak',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#d33',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const adminNotes = result.value || '';
+                        $.ajax({
+                            url: `/redeemtion/${id}/update-status`,
+                            method: 'POST',
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                status: status,
+                                admin_notes: adminNotes,
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire('Berhasil!', response.message, 'success');
+                                    table.ajax.reload();
+                                }
+                            }
+                        });
+                    }
+                });
+                return;
+            }
+
+            // If completing, ask for an optional admin note (e.g. lokasi pengambilan)
+            if (status === 'completed') {
+                Swal.fire({
+                    title: 'Selesaikan Penukaran',
+                    input: 'textarea',
+                    inputLabel: 'Catatan untuk pengguna (opsional)',
+                    inputPlaceholder: 'Contoh: Ambil paket di kantor lantai 2, atas nama Budi, no. ext 123',
+                    inputAttributes: {
+                        'aria-label': 'Catatan untuk pengguna'
+                    },
+                    showCancelButton: true,
+                    confirmButtonText: 'Selesaikan',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#3085d6',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const adminNotes = result.value || '';
+                        $.ajax({
+                            url: `/redeemtion/${id}/update-status`,
+                            method: 'POST',
+                            data: {
+                                _token: "{{ csrf_token() }}",
+                                status: status,
+                                admin_notes: adminNotes,
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire('Berhasil!', response.message, 'success');
+                                    table.ajax.reload();
+                                }
+                            }
+                        });
+                    }
+                });
+                return;
+            }
+
+            // Default confirmation for other status changes
             Swal.fire({
                 title: 'Konfirmasi',
                 text: `Apakah Anda yakin ingin mengubah status menjadi ${status}?`,
@@ -161,15 +236,42 @@
                         },
                         success: function(response) {
                             if (response.success) {
-                                Swal.fire(
-                                    'Berhasil!',
-                                    response.message,
-                                    'success'
-                                );
+                                Swal.fire('Berhasil!', response.message, 'success');
                                 table.ajax.reload();
                             }
                         }
                     });
+                }
+            });
+        }
+    </script>
+    <script>
+        // Fetch and show details in a modal
+        function showDetailModal(id) {
+            $.ajax({
+                url: `/redeemtion/${id}`,
+                method: 'GET',
+                success: function(data) {
+                    let html = `
+                        <div style="text-align:left">
+                            <p><strong>Pengguna:</strong> ${data.user.name} &lt;${data.user.email}&gt;</p>
+                            <p><strong>Reward:</strong> ${data.reward.name}</p>
+                            <p><strong>Poin:</strong> ${data.points_cost}</p>
+                            <p><strong>Status:</strong> ${data.status}</p>
+                            <p><strong>Tanggal:</strong> ${data.created_at}</p>
+                            <p><strong>Catatan Admin:</strong><br>${data.admin_notes ? data.admin_notes : '<em>-</em>'}</p>
+                        </div>
+                    `;
+
+                    Swal.fire({
+                        title: 'Detail Penukaran',
+                        html: html,
+                        width: 600,
+                        confirmButtonText: 'Tutup',
+                    });
+                },
+                error: function() {
+                    Swal.fire('Gagal', 'Tidak dapat mengambil data. Coba lagi.', 'error');
                 }
             });
         }

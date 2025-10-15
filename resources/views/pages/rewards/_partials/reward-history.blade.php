@@ -16,6 +16,7 @@
                 <span class="badge bg-secondary">{{ $r->status }}</span>
             @endif
         </td>
+        <td style="max-width:260px; white-space:normal; word-wrap:break-word;">{{ $r->admin_notes ? $r->admin_notes : '-' }}</td>
         <td>{{ $r->created_at->format('d M Y H:i') }}</td>
     </tr>
 @empty
