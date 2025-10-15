@@ -4,20 +4,21 @@
     <div class="row gy-4">
         <!-- Header Card -->
         <div class="col-12">
-            <div class="card bg-gradient-to-r from-warning-600 to-warning-500 border-0">
-                <div class="card-body py-32">
-                    <div class="flex-between flex-wrap gap-16">
-                        <div>
-                            <h3 class="text-white mb-8">
-                                <i class="ph-fill ph-trophy me-2"></i>
-                                My Learning Points
-                            </h3>
-                            <p class="text-white text-opacity-90 mb-0">Track your learning progress and achievements</p>
-                        </div>
-                        <div class="text-center">
-                            <div class="w-100 h-100 bg-white bg-opacity-20 rounded-circle p-20 backdrop-blur">
-                                <h1 class="text-white mb-0 display-4">{{ number_format(Auth::user()->getTotalPoints()) }}</h1>
-                                <p class="text-white text-opacity-90 mb-0 fw-medium">Total Points</p>
+            <div class="card border-0" style="background: linear-gradient(90deg, rgba(247,247,250,1), rgba(255,255,255,1)); border-radius:12px;">
+                <div class="card-body py-20 px-20 d-flex align-items-center justify-content-between flex-wrap">
+                    <div class="me-3" style="min-width:260px;">
+                        <h3 class="text-main-800 fw-bold mb-2" style="display:flex; align-items:center; gap:8px;">
+                            <i class="ph-fill ph-trophy text-main-600" style="font-size:20px;"></i>
+                            <span>My Learning Points</span>
+                        </h3>
+                        <p class="mb-0 text-main-600">Track your learning progress and achievements</p>
+                    </div>
+
+                    <div class="ms-auto d-flex align-items-center">
+                        <div class="bg-white rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width:96px;height:96px;">
+                            <div class="text-center">
+                                <div class="text-main-800 fw-bold" style="font-size:20px;">{{ number_format(Auth::user()->getTotalPoints()) }}</div>
+                                <div class="text-main-600" style="font-size:12px;">Total Points</div>
                             </div>
                         </div>
                     </div>
