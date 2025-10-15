@@ -52,6 +52,12 @@ class RewardsController extends Controller
         }
     }
 
+    public function redeemPage()
+    {
+        $rewards = Reward::where('is_active', true)->get();
+        return view('pages.rewards.redeem', compact('rewards'));
+    }
+
     /**
      * Show the form for creating a new resource.
      */

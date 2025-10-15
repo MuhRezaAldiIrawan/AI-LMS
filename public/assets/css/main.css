@@ -734,7 +734,11 @@ table.dataTable {
 }
 
 .table-striped > tbody > tr:nth-of-type(odd) > * {
-    --bs-table-color-type: transparent !important;
+    /* Keep text readable on odd rows by using the bootstrap striped color variable
+       (was transparent, causing text to become invisible on some themes) */
+    --bs-table-color-type: var(--bs-table-striped-color) !important;
+    /* If you prefer the subtle striped background, set --bs-table-bg-type to
+       var(--bs-table-striped-bg) instead of transparent. */
     --bs-table-bg-type: transparent !important;
 }
 

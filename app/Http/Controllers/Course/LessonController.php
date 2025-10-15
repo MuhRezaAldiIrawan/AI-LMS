@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Lesson;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth; // Ensure Auth facade is imported
 
 class LessonController extends Controller
 {
@@ -68,7 +69,7 @@ class LessonController extends Controller
         $lesson = Lesson::with(['module.course.modules.lessons', 'module.course.modules.quiz.questions'])->findOrFail($id);
 
         // Check if user is enrolled and has access
-        $user = auth()->user();
+        $user = Auth::user();
         $course = $lesson->module->course;
 
         // Admin dan author course bisa akses tanpa enrollment
@@ -143,7 +144,7 @@ class LessonController extends Controller
     public function complete(Request $request, string $id)
     {
         $lesson = Lesson::findOrFail($id);
-        $user = auth()->user();
+        $user = Auth::user();
 
         // Check if user is enrolled
         if (!$user->isEnrolledIn($lesson->module->course)) {
