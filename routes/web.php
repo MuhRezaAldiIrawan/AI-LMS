@@ -165,6 +165,29 @@ Route::middleware('auth')->group(function () {
         Route::post('profile/{id}', 'updateProfile')->name('users.profile.update');
 
     });
+
+    // Certificate Routes
+    Route::controller(App\Http\Controllers\CertificateController::class)->group(function(){
+        // Download certificate (user yang memiliki atau admin)
+        Route::get('certificate/{id}/download', 'download')->name('certificate.download');
+
+        // Preview certificate (user yang memiliki atau admin)
+        Route::get('certificate/{id}/preview', 'preview')->name('certificate.preview');
+
+        // Get certificate for course (AJAX)
+        Route::get('certificate/course/{courseId}', 'getCertificateForCourse')->name('certificate.for-course');
+
+        // Admin only routes
+        Route::middleware('admin')->group(function () {
+            Route::post('certificate/generate', 'generate')->name('certificate.generate');
+            Route::post('certificate/{id}/regenerate', 'regenerate')->name('certificate.regenerate');
+        });
+    });
+
+    // Public certificate verification (no auth required, moved outside auth middleware)
 });
+
+// Public certificate verification route (accessible without login)
+Route::get('certificate/verify', [App\Http\Controllers\CertificateController::class, 'verify'])->name('certificate.verify');
 
 

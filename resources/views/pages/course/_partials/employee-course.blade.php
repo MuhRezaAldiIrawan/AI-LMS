@@ -221,13 +221,83 @@
                             </form>
                         </div>
                     @else
-                        <!-- Actually Enrolled - Compact Success Indicator -->
-                        <div class="alert alert-success border-success rounded-12 p-12 mb-16" style="background: rgba(212, 237, 218, 0.7); border: 1px solid #28a745;">
-                            <div class="d-flex align-items-center justify-content-center">
-                                <i class="ph ph-check-circle text-success me-2" style="font-size: 20px;"></i>
-                                <span class="text-success fw-medium text-14">✅ Terdaftar - Siap belajar!</span>
+                        <!-- Actually Enrolled - Compact Success Indicator with Progress -->
+                        @php
+                            $enrolledProgressPercentage = $course->getCompletionPercentage(Auth::user());
+                        @endphp
+
+                        <div class="alert alert-success border-success rounded-12 p-16 mb-16" style="background: rgba(212, 237, 218, 0.7); border: 1px solid #28a745;">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <i class="ph ph-check-circle text-success me-2" style="font-size: 24px;"></i>
+                                    <div>
+                                        <span class="text-success fw-bold text-15 d-block">✅ Terdaftar - Siap belajar!</span>
+                                        @if($enrolledProgressPercentage > 0)
+                                            <span class="text-success text-13">Progress: {{ $enrolledProgressPercentage }}% selesai</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                @if($enrolledProgressPercentage === 100)
+                                    <span class="badge bg-warning text-dark py-6 px-12">
+                                        <i class="ph ph-trophy me-1"></i>Selesai!
+                                    </span>
+                                @endif
                             </div>
+                            @if($enrolledProgressPercentage > 0 && $enrolledProgressPercentage < 100)
+                                <div class="progress mt-12" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $enrolledProgressPercentage }}%"></div>
+                                </div>
+                            @endif
                         </div>
+                    @endif
+
+                    <!-- Certificate Section - Tampil jika sudah 100% -->
+                    @if($isEnrolled && $enrolledProgressPercentage === 100)
+                        @php
+                            $certificate = Auth::user()->getCertificateForCourse($course->id);
+                        @endphp
+
+                        @if($certificate)
+                            <div class="alert alert-info border-primary rounded-16 p-20 mb-20" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 2px solid #0ea5e9;">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="d-flex align-items-center">
+                                        <i class="ph ph-certificate text-primary" style="font-size: 48px;"></i>
+                                        <div class="ms-16">
+                                            <h5 class="text-dark mb-4 fw-bold">🎉 Sertifikat Tersedia!</h5>
+                                            <p class="text-dark mb-8 text-14">
+                                                Selamat! Anda telah menyelesaikan kursus ini dengan baik.
+                                            </p>
+                                            <p class="text-muted mb-0 text-13">
+                                                <strong>No. Sertifikat:</strong> {{ $certificate->certificate_number }}<br>
+                                                <strong>Tanggal Terbit:</strong> {{ $certificate->issued_date->format('d F Y') }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-12 mt-16">
+                                    <a href="{{ route('certificate.download', $certificate->id) }}"
+                                       class="btn btn-primary btn-sm rounded-pill py-8 px-20"
+                                       style="box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);">
+                                        <i class="ph ph-download me-2"></i>Download Sertifikat
+                                    </a>
+                                    <a href="{{ route('certificate.preview', $certificate->id) }}"
+                                       class="btn btn-outline-primary btn-sm rounded-pill py-8 px-20"
+                                       target="_blank">
+                                        <i class="ph ph-eye me-2"></i>Preview
+                                    </a>
+                                </div>
+                            </div>
+                        @else
+                            <div class="alert alert-warning border-warning rounded-12 p-16 mb-16">
+                                <div class="d-flex align-items-center">
+                                    <i class="ph ph-hourglass text-warning me-2" style="font-size: 24px;"></i>
+                                    <span class="text-dark text-14">
+                                        Sertifikat sedang diproses. Refresh halaman dalam beberapa saat.
+                                    </span>
+                                </div>
+                            </div>
+                        @endif
                     @endif
 
                     <!-- Course Thumbnail -->
@@ -252,23 +322,53 @@
                         <div class="mb-24 pb-24 border-bottom border-gray-100">
                             <h5 class="mb-12 fw-bold">Progress Pembelajaran</h5>
                             @php
+                                $user = Auth::user();
+
+                                // Hitung total lessons dan quizzes
                                 $totalLessons = $course->modules->sum(fn($module) => $module->lessons->count());
                                 $totalQuizzes = $course->modules->whereNotNull('quiz')->count();
-                                $completedLessons = 0; // Implement actual completion tracking
-                                $passedQuizzes = 0; // Implement actual quiz passing tracking
                                 $totalItems = $totalLessons + $totalQuizzes;
+
+                                // Hitung lessons yang sudah diselesaikan
+                                $completedLessons = $user->completedLessons()
+                                    ->whereIn('lesson_id', $course->modules->flatMap->lessons->pluck('id'))
+                                    ->count();
+
+                                // Hitung quiz yang sudah lulus
+                                $passedQuizzes = 0;
+                                $allQuizzes = $course->modules->map->quiz->filter();
+                                foreach ($allQuizzes as $quiz) {
+                                    if ($user->quizAttempts()->where('quiz_id', $quiz->id)->where('passed', true)->exists()) {
+                                        $passedQuizzes++;
+                                    }
+                                }
+
                                 $completedItems = $completedLessons + $passedQuizzes;
-                                $progressPercentage = $totalItems > 0 ? round(($completedItems / $totalItems) * 100) : 0;
+
+                                // Gunakan method dari Course model untuk konsistensi
+                                $progressPercentage = $course->getCompletionPercentage($user);
                             @endphp
                             <div class="mb-12">
                                 <div class="d-flex justify-content-between mb-8">
-                                    <span class="text-gray-600 text-15">{{ $completedItems }} dari {{ $totalItems }} materi selesai</span>
+                                    <span class="text-gray-600 text-15">
+                                        {{ $completedItems }} dari {{ $totalItems }} materi selesai
+                                        @if($completedItems > 0)
+                                            <span class="text-success-600">({{ $completedLessons }} lesson, {{ $passedQuizzes }} quiz)</span>
+                                        @endif
+                                    </span>
                                     <span class="text-main-600 fw-medium">{{ $progressPercentage }}%</span>
                                 </div>
                                 <div class="progress" style="height: 8px;">
                                     <div class="progress-bar bg-main-600" role="progressbar" style="width: {{ $progressPercentage }}%"></div>
                                 </div>
                             </div>
+
+                            @if($progressPercentage === 100)
+                                <div class="alert alert-success p-12 rounded-8 mt-12">
+                                    <i class="ph ph-check-circle me-2"></i>
+                                    <span class="fw-medium">🎉 Selamat! Anda telah menyelesaikan kursus ini!</span>
+                                </div>
+                            @endif
                         </div>
                         @endif
                         <div class="mb-24 pb-24 border-bottom border-gray-100">

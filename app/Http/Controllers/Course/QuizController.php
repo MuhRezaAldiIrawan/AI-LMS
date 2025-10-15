@@ -213,6 +213,15 @@ class QuizController extends Controller
         //     }
         // }
 
+        // Check if course is now 100% complete and trigger certificate generation
+        if ($isPassed) {
+            $user = auth()->user();
+            $course = $quiz->module->course;
+            if ($course->isCompletedByUser($user)) {
+                $course->markAsCompletedFor($user);
+            }
+        }
+
         $message = "Kuis selesai! Skor Anda: {$score}% - Jawaban Benar: {$correctAnswers}/{$totalQuestions} " .
                    ($isPassed ? '✅ (LULUS)' : '❌ (BELUM LULUS)');
 

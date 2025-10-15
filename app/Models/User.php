@@ -18,6 +18,7 @@ use App\Models\RewardRedemption;
 use App\Models\AiChatHistory;
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\Certificate;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -368,5 +369,21 @@ class User extends Authenticatable
     public function hasCompletedLesson($lessonId): bool
     {
         return $this->completedLessons()->where('lesson_id', $lessonId)->exists();
+    }
+
+    /**
+     * Relasi ke Certificates
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
+    /**
+     * Get certificate for a specific course
+     */
+    public function getCertificateForCourse($courseId)
+    {
+        return $this->certificates()->where('course_id', $courseId)->first();
     }
 }

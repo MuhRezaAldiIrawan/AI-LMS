@@ -141,7 +141,7 @@
                 class="users arrow-down-icon border border-gray-200 rounded-pill p-4 d-inline-block pe-40 position-relative"
                 type="button" data-bs-toggle="dropdown" aria-expanded="false">
                 <span class="position-relative">
-                    <img src="{{ asset('storage' . '/' . Auth::user()->profile_photo_path) }}" alt="Image"
+                    <img src="{{ asset('storage' . '/' . Auth::user()->profile_photo_path) }}" alt="img"
                         class="h-32 w-32 rounded-circle">
                     <span
                         class="activation-badge w-8 h-8 position-absolute inset-block-end-0 inset-inline-end-0"></span>

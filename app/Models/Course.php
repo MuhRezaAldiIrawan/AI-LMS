@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\User;
+use App\Models\Certificate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -97,6 +98,14 @@ class Course extends Model
         return $this->belongsToMany(User::class, 'course_user')
                     ->withPivot('enrolled_at', 'completed_at')
                     ->withTimestamps();
+    }
+
+    /**
+     * Relasi ke Certificates
+     */
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
     }
 
 
@@ -250,6 +259,20 @@ class Course extends Model
             // 2. Berikan poin kursus jika ada
             if ($this->points_awarded > 0) {
                 $user->addPoints($this->points_awarded, "Menyelesaikan kursus: {$this->title}", $this);
+            }
+
+            // 3. Generate certificate otomatis
+            try {
+                $certificateService = app(\App\Services\CertificateService::class);
+                $certificate = $certificateService->generateCertificate($user, $this);
+
+                if ($certificate) {
+                    \Log::info("Certificate auto-generated for user {$user->id} completing course {$this->id}");
+                } else {
+                    \Log::warning("Failed to auto-generate certificate for user {$user->id} completing course {$this->id}");
+                }
+            } catch (\Exception $e) {
+                \Log::error("Error auto-generating certificate: " . $e->getMessage());
             }
         }
     }

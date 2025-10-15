@@ -158,6 +158,12 @@ class LessonController extends Controller
             // if (isset($lesson->points_awarded) && $lesson->points_awarded > 0) {
             //     $user->addPoints($lesson->points_awarded, "Menyelesaikan pelajaran: {$lesson->title}", $lesson);
             // }
+
+            // Check if course is now 100% complete and trigger certificate generation
+            $course = $lesson->module->course;
+            if ($course->isCompletedByUser($user)) {
+                $course->markAsCompletedFor($user);
+            }
         }
 
         return response()->json(['success' => true, 'message' => 'Pelajaran berhasil diselesaikan']);

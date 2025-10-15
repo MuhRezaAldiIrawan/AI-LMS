@@ -151,7 +151,15 @@ class CourseController extends Controller
      */
     public function show(Request $request, string $id)
     {
-        $course = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz.questions'])->findOrFail($id);
+        $course = Course::with([
+            'author',
+            'category',
+            'courseType',
+            'enrolledUsers',
+            'modules.lessons',
+            'modules.quiz.questions'
+        ])->findOrFail($id);
+
         $user = Auth::user();
 
         // Redirect jika user tidak login
@@ -163,6 +171,15 @@ class CourseController extends Controller
         $user = Auth::user();
 
         if ($user->hasRole('karyawan')) {
+            // Load completed lessons untuk menghitung progress dengan efisien
+            $user->load(['completedLessons', 'quizAttempts' => function($query) use ($course) {
+                // Load quiz attempts hanya untuk quiz di course ini
+                $quizIds = $course->modules->map->quiz->filter()->pluck('id');
+                if ($quizIds->isNotEmpty()) {
+                    $query->whereIn('quiz_id', $quizIds)->where('passed', true);
+                }
+            }]);
+
             $isEnrolled = $user->isEnrolledIn($course);
             $hasAccess = $user->hasAccessToCourse($course);
             return view('pages.course._partials.employee-course', compact('course', 'isEnrolled', 'hasAccess'));
