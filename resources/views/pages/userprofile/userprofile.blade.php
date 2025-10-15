@@ -35,18 +35,18 @@
             <div class="setting-profile px-24">
                 <div class="flex-between">
                     <div class="d-flex align-items-end flex-wrap mb-32 gap-24">
-                        <img src="{{ asset('storage' . '/' . $user->profile_photo_path) }}" alt=""
+                        <img src="{{ $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : asset('assets/images/thumbs/setting-profile-img.jpg') }}" alt=""
                             class="w-120 h-120 rounded-circle border border-white">
                         <div>
                             <h4 class="mb-8">{{ $user->name }}</h4>
                             <div class="setting-profile__infos flex-align flex-wrap gap-16">
                                 <div class="flex-align gap-6">
                                     <span class="text-gray-600 d-flex text-lg"><i class="ph ph-swatches"></i></span>
-                                    <span class="text-gray-600 d-flex text-15">{{ $user->position }}</span>
+                                    <span class="text-gray-600 d-flex text-15">{{ $user->position ?? '-' }}</span>
                                 </div>
                                 <div class="flex-align gap-6">
                                     <span class="text-gray-600 d-flex text-lg"><i class="ph ph-map-pin"></i></span>
-                                    <span class="text-gray-600 d-flex text-15">{{ $user->location->name }}</span>
+                                    <span class="text-gray-600 d-flex text-15">{{ optional($user->location)->name ?? '-' }}</span>
                                 </div>
                                 <div class="flex-align gap-6">
                                     <span class="text-gray-600 d-flex text-lg"><i class="ph ph-calendar-dots"></i></span>
