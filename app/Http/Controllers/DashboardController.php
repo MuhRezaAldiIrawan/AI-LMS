@@ -11,7 +11,46 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        return view('pages.dashboard.dashboard');
+        $user = auth()->user();
+
+        // Get completed courses count
+        $completedCoursesCount = $user->getCompletedCourses()->count();
+
+        // Get in progress courses count
+        $inProgressCoursesCount = $user->getOnProgressCourses()->count();
+
+        // Get earned certificates count
+        $earnedCertificatesCount = $user->certificates()->count();
+
+        // Get total study time (formatted)
+        $studyTime = $user->getFormattedStudyTime();
+
+        // Get enrolled courses with progress (limit 5 for dashboard)
+        $enrolledCourses = $user->enrolledCourses()
+            ->whereNotNull('enrolled_at')
+            ->with(['modules.lessons', 'modules.quiz'])
+            ->latest('enrolled_at')
+            ->limit(5)
+            ->get()
+            ->map(function($course) use ($user) {
+                return [
+                    'id' => $course->id,
+                    'title' => $course->title,
+                    'category' => $course->category?->name ?? 'Uncategorized',
+                    'duration' => $course->duration_in_hours,
+                    'progress' => $course->getCompletionPercentage($user),
+                    'is_completed' => $course->isCompletedByUser($user),
+                    'thumbnail' => $course->thumbnail ? $course->thumbnail : 'default-thumbnail.jpg',
+                ];
+            });
+
+        return view('pages.dashboard.dashboard', compact(
+            'completedCoursesCount',
+            'inProgressCoursesCount',
+            'earnedCertificatesCount',
+            'studyTime',
+            'enrolledCourses'
+        ));
     }
 
     /**

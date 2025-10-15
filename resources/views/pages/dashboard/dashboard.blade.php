@@ -31,13 +31,12 @@
                 <div class="col-xxl-3 col-sm-6">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="mb-2">155+</h4>
+                            <h4 class="mb-2">{{ $completedCoursesCount }}</h4>
                             <span class="text-gray-600">Completed Courses</span>
                             <div class="flex-between gap-8 mt-16">
                                 <span
                                     class="flex-shrink-0 w-48 h-48 flex-center rounded-circle bg-main-600 text-white text-2xl"><i
                                         class="ph-fill ph-book-open"></i></span>
-
                             </div>
                         </div>
                     </div>
@@ -45,13 +44,12 @@
                 <div class="col-xxl-3 col-sm-6">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="mb-2">39+</h4>
+                            <h4 class="mb-2">{{ $inProgressCoursesCount }}</h4>
                             <span class="text-gray-600">Course in Progress</span>
                             <div class="flex-between gap-8 mt-16">
                                 <span
                                     class="flex-shrink-0 w-48 h-48 flex-center rounded-circle bg-main-two-600 text-white text-2xl"><i
                                         class="ph-fill ph-certificate"></i></span>
-
                             </div>
                         </div>
                     </div>
@@ -59,13 +57,12 @@
                 <div class="col-xxl-3 col-sm-6">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="mb-2">25+</h4>
+                            <h4 class="mb-2">{{ $earnedCertificatesCount }}</h4>
                             <span class="text-gray-600">Earned Certificate</span>
                             <div class="flex-between gap-8 mt-16">
                                 <span
                                     class="flex-shrink-0 w-48 h-48 flex-center rounded-circle bg-purple-600 text-white text-2xl">
                                     <i class="ph-fill ph-graduation-cap"></i></span>
-
                             </div>
                         </div>
                     </div>
@@ -73,13 +70,12 @@
                 <div class="col-xxl-3 col-sm-6">
                     <div class="card">
                         <div class="card-body">
-                            <h4 class="mb-2">18k+</h4>
+                            <h4 class="mb-2">{{ $studyTime }}</h4>
                             <span class="text-gray-600">Study Time</span>
                             <div class="flex-between gap-8 mt-16">
                                 <span
                                     class="flex-shrink-0 w-48 h-48 flex-center rounded-circle bg-warning-600 text-white text-2xl"><i
-                                        class="ph-fill ph-users-three"></i></span>
-
+                                        class="ph-fill ph-clock"></i></span>
                             </div>
                         </div>
                     </div>
@@ -92,60 +88,84 @@
                 <div class="card-header">
                     <div class="mb-0 flex-between flex-wrap gap-8">
                         <h4 class="mb-0">My Courses</h4>
-                        <a href="student-courses.html"
+                        <a href="{{ route('course') }}"
                             class="text-13 fw-medium text-main-600 hover-text-decoration-underline">See All</a>
                     </div>
                 </div>
                 <div class="card-body p-0 overflow-x-auto scroll-sm scroll-sm-horizontal">
-                    <table class="table style-two mb-0" style="background-color: white;">
-                        <thead>
-                            <tr>
-                                <th>Course Name</th>
-                                <th>Progress</th>
-                                <th class="text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>
-                                    <div class="flex-align gap-8">
-                                        <div class="w-40 h-40 rounded-circle bg-main-600 flex-center flex-shrink-0">
-                                            <img src="assets/images/icons/course-name-icon1.png" alt="">
-                                        </div>
-                                        <div class="">
-                                            <h6 class="mb-0">Design Accesibility</h6>
-                                            <div class="table-list">
-                                                <span class="text-13 text-gray-600">Advanced</span>
-                                                <span class="text-13 text-gray-600">12 Hours</span>
+                    @if($enrolledCourses->count() > 0)
+                        <table class="table style-two mb-0" style="background-color: white;">
+                            <thead>
+                                <tr>
+                                    <th>Course Name</th>
+                                    <th>Progress</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($enrolledCourses as $course)
+                                    <tr>
+                                        <td>
+                                            <div class="flex-align gap-8">
+                                                <div class="w-40 h-40 rounded-circle bg-main-600 flex-center flex-shrink-0 overflow-hidden">
+                                                    <img src="{{ asset('storage' . '/' . $course['thumbnail']) }}" alt="{{ $course['title'] }}" class="w-100 h-100 object-fit-cover">
+                                                </div>
+                                                <div class="">
+                                                    <h6 class="mb-0">{{ $course['title'] }}</h6>
+                                                    <div class="table-list">
+                                                        <span class="text-13 text-gray-600">{{ $course['category'] }}</span>
+
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="flex-align gap-8 mt-12">
-                                        <div class="progress w-100px  bg-main-100 rounded-pill h-4" role="progressbar"
-                                            aria-label="Basic example" aria-valuenow="32" aria-valuemin="0"
-                                            aria-valuemax="100">
-                                            <div class="progress-bar bg-main-600 rounded-pill" style="width: 32%"></div>
-                                        </div>
-                                        <span class="text-main-600 flex-shrink-0 text-13 fw-medium">32%</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="flex-align justify-content-center gap-16">
-                                        <span
-                                            class="text-13 py-2 px-8 bg-warning-50 text-warning-600 d-inline-flex align-items-center gap-8 rounded-pill">
-                                            <span class="w-6 h-6 bg-warning-600 rounded-circle flex-shrink-0"></span>
-                                            In Progress
-                                        </span>
-                                        <a href="assignment.html"
-                                            class="text-gray-900 hover-text-main-600 text-md d-flex"><i
-                                                class="ph ph-caret-right"></i></a>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                        </td>
+                                        <td>
+                                            <div class="flex-align gap-8 mt-12">
+                                                <div class="progress w-100px bg-main-100 rounded-pill h-4" role="progressbar"
+                                                    aria-label="Progress" aria-valuenow="{{ $course['progress'] }}" aria-valuemin="0"
+                                                    aria-valuemax="100">
+                                                    <div class="progress-bar bg-main-600 rounded-pill" style="width: {{ $course['progress'] }}%"></div>
+                                                </div>
+                                                <span class="text-main-600 flex-shrink-0 text-13 fw-medium">{{ $course['progress'] }}%</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="flex-align justify-content-center gap-16">
+                                                @if($course['is_completed'])
+                                                    <span class="text-13 py-2 px-8 bg-success-50 text-success-600 d-inline-flex align-items-center gap-8 rounded-pill">
+                                                        <span class="w-6 h-6 bg-success-600 rounded-circle flex-shrink-0"></span>
+                                                        Completed
+                                                    </span>
+                                                @else
+                                                    <span class="text-13 py-2 px-8 bg-warning-50 text-warning-600 d-inline-flex align-items-center gap-8 rounded-pill">
+                                                        <span class="w-6 h-6 bg-warning-600 rounded-circle flex-shrink-0"></span>
+                                                        In Progress
+                                                    </span>
+                                                @endif
+                                                <a href="{{ route('course.show', $course['id']) }}"
+                                                    class="text-gray-900 hover-text-main-600 text-md d-flex">
+                                                    <i class="ph ph-caret-right"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <!-- Empty State -->
+                        <div class="text-center py-40 px-24">
+                            <div class="w-80 h-80 bg-gray-50 rounded-circle mx-auto flex-center mb-16">
+                                <i class="ph ph-book-open text-48 text-gray-400"></i>
+                            </div>
+                            <h5 class="text-gray-600 mb-8">No Enrolled Courses Yet</h5>
+                            <p class="text-gray-500 mb-20">Start your learning journey by enrolling in a course!</p>
+                            <a href="{{ route('course') }}" class="btn btn-main px-24 py-12">
+                                <i class="ph ph-book-open me-2"></i>
+                                Browse Courses
+                            </a>
+                        </div>
+                    @endif
                 </div>
             </div>
             <!-- Table End -->
@@ -170,26 +190,36 @@
                     <div class="setting-profile px-24">
                         <div class="flex-between">
                             <div class="d-flex align-items-end flex-wrap mb-32 gap-24">
-                                <img src="assets/images/thumbs/setting-profile-img.jpg" alt=""
-                                    class="w-120 h-120 rounded-circle border border-white">
+                                <img src="{{ asset('storage/' . Auth::user()->profile_photo_path) }}" alt="{{ Auth::user()->name }}"
+                                    class="w-120 h-120 rounded-circle border border-white object-fit-cover"
+                                    onerror="this.src='{{ Auth::user()->getProfilePhotoUrlAttribute() }}'">
                                 <div>
                                     <h4 class="mb-8">{{ Auth::user()->name}}</h4>
                                     <div class="setting-profile__infos flex-align flex-wrap gap-16">
-                                        <div class="flex-align gap-6">
-                                            <span class="text-gray-600 d-flex text-lg"><i
-                                                    class="ph ph-swatches"></i></span>
-                                            <span class="text-gray-600 d-flex text-15">UX Designer</span>
-                                        </div>
-                                        <div class="flex-align gap-6">
-                                            <span class="text-gray-600 d-flex text-lg"><i
-                                                    class="ph ph-map-pin"></i></span>
-                                            <span class="text-gray-600 d-flex text-15">Sans Fransisco</span>
-                                        </div>
-                                        <div class="flex-align gap-6">
-                                            <span class="text-gray-600 d-flex text-lg"><i
-                                                    class="ph ph-calendar-dots"></i></span>
-                                            <span class="text-gray-600 d-flex text-15">Join August 2024</span>
-                                        </div>
+                                        @if(Auth::user()->position)
+                                            <div class="flex-align gap-6">
+                                                <span class="text-gray-600 d-flex text-lg"><i class="ph ph-briefcase"></i></span>
+                                                <span class="text-gray-600 d-flex text-15">{{ Auth::user()->position }}</span>
+                                            </div>
+                                        @endif
+                                        @if(Auth::user()->division)
+                                            <div class="flex-align gap-6">
+                                                <span class="text-gray-600 d-flex text-lg"><i class="ph ph-buildings"></i></span>
+                                                <span class="text-gray-600 d-flex text-15">{{ Auth::user()->division }}</span>
+                                            </div>
+                                        @endif
+                                        @if(Auth::user()->location)
+                                            <div class="flex-align gap-6">
+                                                <span class="text-gray-600 d-flex text-lg"><i class="ph ph-map-pin"></i></span>
+                                                <span class="text-gray-600 d-flex text-15">{{ Auth::user()->location->name }}</span>
+                                            </div>
+                                        @endif
+                                        @if(Auth::user()->join_date)
+                                            <div class="flex-align gap-6">
+                                                <span class="text-gray-600 d-flex text-lg"><i class="ph ph-calendar-dots"></i></span>
+                                                <span class="text-gray-600 d-flex text-15">Join {{ \Carbon\Carbon::parse(Auth::user()->join_date)->format('F Y') }}</span>
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
