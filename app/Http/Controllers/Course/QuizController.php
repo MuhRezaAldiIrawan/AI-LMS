@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Quiz;
 use App\Models\Module;
 use App\Models\QuizAttempt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class QuizController extends Controller
 {
@@ -75,7 +77,7 @@ class QuizController extends Controller
         $quiz = Quiz::with(['module.course', 'questions.options', 'attempts.user'])->findOrFail($id);
 
         // Check if user is enrolled
-        $user = auth()->user();
+        $user = Auth::user();
         $course = $quiz->module->course;
 
         // Admin dan author course bisa akses tanpa enrollment
@@ -120,7 +122,7 @@ class QuizController extends Controller
         $quiz = Quiz::with(['questions.options'])->findOrFail($id);
 
         // Check if user is enrolled
-        $user = auth()->user();
+        $user = Auth::user();
         $course = $quiz->module->course;
 
         // Admin dan author course bisa akses tanpa enrollment
@@ -157,9 +159,10 @@ class QuizController extends Controller
      */
     public function submit(Request $request, string $quizId, string $attemptId)
     {
+        $user = Auth::user();
         $quiz = Quiz::with('questions.options')->findOrFail($quizId);
         $attempt = QuizAttempt::where('id', $attemptId)
-            ->where('user_id', auth()->id())
+            ->where('user_id', $user->id)
             ->where('quiz_id', $quiz->id)
             ->firstOrFail();
 
@@ -200,7 +203,7 @@ class QuizController extends Controller
 
         // Award 10 points if passed quiz
         if ($isPassed) {
-            $user = auth()->user();
+            $user = Auth::user();
 
             // Check if user already got points for this quiz before (prevent double points)
             $existingPassed = $quiz->attempts()
@@ -217,10 +220,21 @@ class QuizController extends Controller
 
         // Check if course is now 100% complete and trigger certificate generation
         if ($isPassed) {
-            $user = auth()->user();
+            $user = Auth::user();
             $course = $quiz->module->course;
             if ($course->isCompletedByUser($user)) {
-                $course->markAsCompletedFor($user);
+                $certificate = $course->markAsCompletedFor($user);
+                if ($certificate) {
+                    session()->flash('course_completed', true);
+                    session()->flash('certificate_info', [
+                        'id' => $certificate->id,
+                        'certificate_number' => $certificate->certificate_number,
+                        'download_url' => $certificate->getDownloadUrl(),
+                        'preview_url' => $certificate->getPreviewUrl(),
+                    ]);
+                } else {
+                    session()->flash('course_completed', true);
+                }
             }
         }
 
@@ -309,16 +323,17 @@ class QuizController extends Controller
      */
     public function reviewAttempt(string $attemptId)
     {
+        $user = Auth::user();
         $attempt = QuizAttempt::with(['quiz.questions.options', 'answers', 'quiz.module.course'])
             ->where('id', $attemptId)
-            ->where('user_id', auth()->id())
+            ->where('user_id', $user->id)
             ->firstOrFail();
 
         $quiz = $attempt->quiz;
         $course = $quiz->module->course;
 
         // Check if user is enrolled
-        $user = auth()->user();
+        $user = Auth::user();
         // Admin dan author course bisa akses tanpa enrollment
         if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
             abort(403, 'Anda belum terdaftar di kursus ini');

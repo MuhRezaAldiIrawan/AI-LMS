@@ -300,7 +300,7 @@ class LessonContentController extends Controller
             throw new Exception('FFMPEG_PATH is not configured correctly in .env');
         }
 
-        $ffmpegExecutable = rtrim($ffmpegPath, '\\/') . DIRECTORY_SEPARATOR . 'ffmpeg.exe';
+        $ffmpegExecutable = $ffmpegPath;
         if (!file_exists($ffmpegExecutable)) {
             throw new Exception("FFmpeg executable not found at: {$ffmpegExecutable}");
         }
@@ -676,8 +676,7 @@ class LessonContentController extends Controller
             // =================================================================
             // == Konversi ke WAV menggunakan FFmpeg ==
             // =================================================================
-            $ffmpegExecutable = rtrim($ffmpegPath, '\\/') . DIRECTORY_SEPARATOR . 'ffmpeg.exe';
-
+            $ffmpegExecutable = $ffmpegPath;
             if (!file_exists($ffmpegExecutable)) {
                 throw new Exception("FFmpeg executable not found at: {$ffmpegExecutable}");
             }
