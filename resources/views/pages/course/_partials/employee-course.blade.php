@@ -79,6 +79,18 @@
         .alert-success {
             border: 2px solid #28a745 !important;
         }
+
+        /* Make Preview button visible even without hover */
+        .btn-preview {
+            background-color: #ffffff !important;
+            color: #0ea5e9 !important; /* primary tone used in certificate panel */
+            border: 1px solid #0ea5e9 !important;
+        }
+        .btn-preview:hover {
+            background-color: #0ea5e9 !important;
+            color: #ffffff !important;
+            border-color: #0ea5e9 !important;
+        }
     </style>
 @endsection
 
@@ -231,9 +243,13 @@
                                 <div class="d-flex align-items-center">
                                     <i class="ph ph-check-circle text-success me-2" style="font-size: 24px;"></i>
                                     <div>
-                                        <span class="text-success fw-bold text-15 d-block">✅ Terdaftar - Siap belajar!</span>
-                                        @if($enrolledProgressPercentage > 0)
+                                        @if($enrolledProgressPercentage === 100)
+                                            <span class="text-success fw-bold text-15 d-block">🎉 Selesai - Anda telah menyelesaikan kursus ini!</span>
+                                        @elseif($enrolledProgressPercentage > 0)
+                                            <span class="text-success fw-bold text-15 d-block">📚 Sedang belajar - Lanjutkan pembelajaran</span>
                                             <span class="text-success text-13">Progress: {{ $enrolledProgressPercentage }}% selesai</span>
+                                        @else
+                                            <span class="text-success fw-bold text-15 d-block">✅ Terdaftar - Siap belajar!</span>
                                         @endif
                                     </div>
                                 </div>
@@ -251,54 +267,7 @@
                         </div>
                     @endif
 
-                    <!-- Certificate Section - Tampil jika sudah 100% -->
-                    @if($isEnrolled && $enrolledProgressPercentage === 100)
-                        @php
-                            $certificate = Auth::user()->getCertificateForCourse($course->id);
-                        @endphp
-
-                        @if($certificate)
-                            <div class="alert alert-info border-primary rounded-16 p-20 mb-20" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 2px solid #0ea5e9;">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div class="d-flex align-items-center">
-                                        <i class="ph ph-certificate text-primary" style="font-size: 48px;"></i>
-                                        <div class="ms-16">
-                                            <h5 class="text-dark mb-4 fw-bold">🎉 Sertifikat Tersedia!</h5>
-                                            <p class="text-dark mb-8 text-14">
-                                                Selamat! Anda telah menyelesaikan kursus ini dengan baik.
-                                            </p>
-                                            <p class="text-muted mb-0 text-13">
-                                                <strong>No. Sertifikat:</strong> {{ $certificate->certificate_number }}<br>
-                                                <strong>Tanggal Terbit:</strong> {{ $certificate->issued_date->format('d F Y') }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex gap-12 mt-16">
-                                    <a href="{{ route('certificate.download', $certificate->id) }}"
-                                       class="btn btn-primary btn-sm rounded-pill py-8 px-20"
-                                       style="box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);">
-                                        <i class="ph ph-download me-2"></i>Download Sertifikat
-                                    </a>
-                                    <a href="{{ route('certificate.preview', $certificate->id) }}"
-                                       class="btn btn-outline-primary btn-sm rounded-pill py-8 px-20"
-                                       target="_blank">
-                                        <i class="ph ph-eye me-2"></i>Preview
-                                    </a>
-                                </div>
-                            </div>
-                        @else
-                            <div class="alert alert-warning border-warning rounded-12 p-16 mb-16">
-                                <div class="d-flex align-items-center">
-                                    <i class="ph ph-hourglass text-warning me-2" style="font-size: 24px;"></i>
-                                    <span class="text-dark text-14">
-                                        Sertifikat sedang diproses. Refresh halaman dalam beberapa saat.
-                                    </span>
-                                </div>
-                            </div>
-                        @endif
-                    @endif
+                    <!-- Certificate Section dipindahkan ke sidebar (kanan) -->
 
                     <!-- Course Thumbnail -->
                     <div class="rounded-16 overflow-hidden">
@@ -363,12 +332,7 @@
                                 </div>
                             </div>
 
-                            @if($progressPercentage === 100)
-                                <div class="alert alert-success p-12 rounded-8 mt-12">
-                                    <i class="ph ph-check-circle me-2"></i>
-                                    <span class="fw-medium">🎉 Selamat! Anda telah menyelesaikan kursus ini!</span>
-                                </div>
-                            @endif
+                            {{-- Notif selesai di bagian progress dihapus agar tidak duplikat; cukup tampil di bagian atas --}}
                         </div>
                         @endif
                         <div class="mb-24 pb-24 border-bottom border-gray-100">
@@ -541,12 +505,50 @@
                 </div>
             </div>
 
-            <div class="card mt-24">
-                <div class="card-body">
-                    <h4 class="mb-20">Enrolled Courses</h4>
-                    <button>Enroll this course</button>
+            @php
+                $user = Auth::user();
+                $rightProgress = $course->getCompletionPercentage($user);
+            @endphp
+            @if($isEnrolled && $rightProgress === 100)
+                @php
+                    $certificate = $user->getCertificateForCourse($course->id);
+                @endphp
+                <div class="card mt-24">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-12">
+                            <h4 class="mb-0">Sertifikat</h4>
+                            <span class="badge bg-success text-dark py-6 px-12"><i class="ph ph-trophy me-1"></i> Tersedia</span>
+                        </div>
+                        @if($certificate)
+                            <div class="p-12 rounded-12 mb-16" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 1px solid #0ea5e9;">
+                                <div class="d-flex align-items-start gap-12">
+                                    <i class="ph ph-certificate text-primary" style="font-size: 32px;"></i>
+                                    <div>
+                                        <div class="fw-bold text-dark mb-4">Selamat! Sertifikat Anda siap.</div>
+                                        <div class="text-13 text-dark">
+                                            <div><strong>No.:</strong> {{ $certificate->certificate_number }}</div>
+                                            <div><strong>Terbit:</strong> {{ $certificate->issued_date->format('d F Y') }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-10">
+                                <a href="{{ route('certificate.download', $certificate->id) }}" class="btn btn-primary btn-sm rounded-pill py-8 px-16">
+                                    <i class="ph ph-download me-2"></i>Download
+                                </a>
+                                <a href="{{ route('certificate.preview', $certificate->id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-preview btn-sm rounded-pill py-8 px-16">
+                                    <i class="ph ph-eye me-2"></i>Preview
+                                </a>
+                            </div>
+                        @else
+                            <div class="alert alert-warning border-warning rounded-12 p-12 mb-0">
+                                <i class="ph ph-hourglass text-warning me-2"></i>
+                                Sertifikat sedang diproses, silakan refresh beberapa saat lagi.
+                            </div>
+                        @endif
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
     </div>
 @endsection
