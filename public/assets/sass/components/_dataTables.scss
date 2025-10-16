@@ -8,7 +8,11 @@ table.dataTable {
 }
 
 .table-striped>tbody>tr:nth-of-type(odd)>* {
-    --bs-table-color-type: transparent !important;
+    /* Use the Bootstrap striped color variable so text remains readable
+       (previously set to transparent, which made odd-row text invisible) */
+    --bs-table-color-type: var(--bs-table-striped-color) !important;
+    /* Keep background transparent if desired; change to var(--bs-table-striped-bg)
+       to restore the subtle striped background instead */
     --bs-table-bg-type: transparent !important;
 }
 

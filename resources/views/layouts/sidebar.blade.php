@@ -38,6 +38,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu__item {{ setActive('profile') }}">
+                    <a href="{{ route('profile') }}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-user-circle"></i></span>
+                        <span class="text">Profile</span>
+                    </a>
+                </li>
+
                 {{-- Admin Only Menu --}}
                 @if(isAdmin())
                     <li class="sidebar-divider">
@@ -74,31 +81,41 @@
                     </li>
                 @endif
 
-                {{-- Rewards Section - Admin only untuk management, Admin & Karyawan untuk redemption --}}
-                @if(isAdmin() || canAccess(['karyawan']))
-                    <li class="sidebar-divider">
-                        <span>Rewards</span>
+
+                {{-- Rewards Section --}}
+                <li class="sidebar-divider">
+                    <span>Rewards</span>
+                </li>
+
+                {{-- Reward Shop: Selalu tampil untuk semua role --}}
+                <li class="sidebar-menu__item {{ setActive(['rewards.shop']) }}">
+                    <a href="{{ route('rewards.shop') }}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-shopping-bag"></i></span>
+                        <span class="text">Reward Shop</span>
+                    </a>
+                </li>
+
+                {{-- Admin: Management & Redemption --}}
+                @if(isAdmin())
+                    <li class="sidebar-menu__item {{ (request()->routeIs('rewards') || request()->routeIs('rewards.index') || request()->routeIs('rewards.create') || request()->routeIs('rewards.edit')) ? 'activePage' : '' }}">
+                        <a href="{{ route('rewards') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-treasure-chest"></i></span>
+                            <span class="text">Rewards Management</span>
+                        </a>
                     </li>
-
-                    {{-- Rewards Management - Admin Only --}}
-                    @if(isAdmin())
-                        <li class="sidebar-menu__item {{ setActive(['rewards*']) }}">
-                            <a href="{{ route('rewards') }}" class="sidebar-menu__link">
-                                <span class="icon"><i class="ph ph-treasure-chest"></i></span>
-                                <span class="text">Rewards Management</span>
-                            </a>
-                        </li>
-                    @endif
-
-                    {{-- Redemption - Admin & Karyawan --}}
-                    @if(canAccess(['admin', 'karyawan']))
-                        <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
-                            <a href="{{ route('redeemtion') }}" class="sidebar-menu__link">
-                                <span class="icon"><i class="ph ph-swap"></i></span>
-                                <span class="text">Penukaran Reward</span>
-                            </a>
-                        </li>
-                    @endif
+                    <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
+                        <a href="{{ route('redeemtion') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-swap"></i></span>
+                            <span class="text">Penukaran Reward</span>
+                        </a>
+                    </li>
+                @elseif(canAccess(['pengajar']))
+                    <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
+                        <a href="{{ route('redeemtion') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-swap"></i></span>
+                            <span class="text">Penukaran Reward</span>
+                        </a>
+                    </li>
                 @endif
 
                 {{-- Settings Section - Admin Only --}}
