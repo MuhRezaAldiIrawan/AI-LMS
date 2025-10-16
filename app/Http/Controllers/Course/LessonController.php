@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Lesson;
 use Illuminate\Support\Facades\Storage;
+use App\Jobs\ProcessLessonContent;
 
 class LessonController extends Controller
 {
@@ -52,10 +53,15 @@ class LessonController extends Controller
         $dataToStore['module_id'] = $request->module_id;
 
         // Store the lesson data
-        Lesson::create($dataToStore);
+        $lesson = Lesson::create($dataToStore);
+
+        // dd($lesson);
+
+        ProcessLessonContent::dispatch($lesson);
 
         return response()->json([
             'success' => true,
+            'lesson_id' => $lesson->id,
             'redirect_url' => route('course.show', $request->course_id) . '#kurikulum'
         ]);
     }

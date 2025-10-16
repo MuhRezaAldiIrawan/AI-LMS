@@ -198,7 +198,7 @@ class AiAssistantController extends Controller
             $geminiApiKey = config('services.gemini.api_key');
             $pineconeApiKey = config('services.pinecone.api_key');
             $pineconeHost = config('services.pinecone.host');
-            $pineconeNamespace = config('services.pinecone.index'); // This is namespace, not index
+            $pineconeNamespace = config('services.pinecone.index');
 
             if (!$geminiApiKey) {
                 return response()->json([
@@ -263,9 +263,6 @@ class AiAssistantController extends Controller
                     ]);
                 }
             }
-
-            // dd($context);
-
 
             // Step 3: Generate AI response with or without context
             if (!empty(trim($context))) {

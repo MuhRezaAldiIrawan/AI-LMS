@@ -18,7 +18,7 @@
 
 
                 <div class="flex-align gap-8 flex-wrap mt-16">
-                    <img src="{{ $course->author->profile_photo_url }}"
+                    <img src="{{ asset('storage' . '/' . $course->author->profile_photo_path) }}"
                         class="w-32 h-32 rounded-circle object-fit-cover" alt="User Image">
                     <div>
                         <span class="text-gray-600 text-13">{{ $course->author->name }}</span>

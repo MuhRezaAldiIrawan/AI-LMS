@@ -11,8 +11,16 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "cloudconvert/cloudconvert-php": "^3.4",
+        "google/apiclient": "^2.18",
+        "google/cloud-ai-platform": "^1.36",
+        "google/cloud-document-ai": "^2.3",
+        "google/cloud-speech": "^2.1",
+        "google/cloud-storage": "^1.48",
+        "guzzlehttp/guzzle": "^7.10",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "probots-io/pinecone-php": "^1.0",
         "spatie/laravel-permission": "^6.21",
         "yajra/laravel-datatables": "^12.0"
     },

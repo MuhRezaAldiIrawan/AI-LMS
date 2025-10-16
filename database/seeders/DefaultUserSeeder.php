@@ -57,13 +57,13 @@ class DefaultUserSeeder extends Seeder
         $karyawan->assignRole('karyawan');
 
         // Membuat 5 akun Pengajar baru menggunakan Factory, lalu memberikan role
-        User::factory()->count(5)->create()->each(function ($user) {
-            $user->assignRole('pengajar');
-        });
+        // User::factory()->count(5)->create()->each(function ($user) {
+        //     $user->assignRole('pengajar');
+        // });
 
         // Membuat 5 akun Karyawan baru menggunakan Factory, lalu memberikan role
-        User::factory()->count(5)->create()->each(function ($user) {
-            $user->assignRole('karyawan');
-        });
+        // User::factory()->count(5)->create()->each(function ($user) {
+        //     $user->assignRole('karyawan');
+        // });
     }
 }

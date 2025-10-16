@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             LocationSeeder::class,    // <-- TAMBAHKAN INI DI SINI
-            UserSeeder::class,        // Ini untuk user Admin
             DefaultUserSeeder::class, // Ini akan membuat 5 pengajar & 5 karyawan
             CourseTypeSeeder::class,
             CategorySeeder::class,

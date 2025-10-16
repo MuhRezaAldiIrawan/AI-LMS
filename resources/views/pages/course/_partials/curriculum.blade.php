@@ -23,7 +23,6 @@
     </style>
 @endsection
 
-
 <div class="row gy-4">
     <div class="col-lg-12">
         <div class="card mt-24">
@@ -736,6 +735,7 @@
 
                 const successText = isEditMode ? 'Data Pelajaran berhasil diperbarui.' :
                     'Data Pelajaran berhasil disimpan.';
+
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',

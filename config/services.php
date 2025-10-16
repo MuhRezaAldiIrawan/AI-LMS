@@ -46,4 +46,22 @@ return [
         'index' => env('PINECONE_INDEX_NAME'),
     ],
 
+    'google' => [
+        'project_id' => env('GOOGLE_PROJECT_ID'),
+        'location_id' => env('GOOGLE_LOCATION_ID', 'asia-southeast1'),
+        'shared_drive_id' => env('GOOGLE_SHARED_DRIVE_ID'),
+        'storage_bucket' => env('GOOGLE_STORAGE_BUCKET'),
+        'document_ai_processor_id' => env('GOOGLE_DOCUMENT_AI_PROCESSOR_ID'),
+        'credentials_path' => env('GOOGLE_APPLICATION_CREDENTIALS', storage_path('app/google-credentials.json')),
+    ],
+
+    'media' => [
+        'youtube_dl_path' => env('YOUTUBE_DL_PATH'),
+        'ffmpeg_path' => env('FFMPEG_PATH'),
+    ],
+
+    'cloudconvert' => [
+        'api_key' => env('CLOUDCONVERT_API_KEY'),
+        'sandbox' => env('CLOUDCONVERT_SANDBOX', false),
+    ],
 ];

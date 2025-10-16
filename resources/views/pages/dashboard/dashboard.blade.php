@@ -114,7 +114,6 @@
                                                     <h6 class="mb-0">{{ $course['title'] }}</h6>
                                                     <div class="table-list">
                                                         <span class="text-13 text-gray-600">{{ $course['category'] }}</span>
-
                                                     </div>
                                                 </div>
                                             </div>
