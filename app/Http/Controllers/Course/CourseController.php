@@ -80,23 +80,46 @@ class CourseController extends Controller
         }
 
         if (canAccess('karyawan')) {
-            $coursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz']);
+            // Karyawan: Dua bagian
+            // 1) Kursus yang sudah di-enroll (enrolled_at not null)
+            //    Dengan filter: all | on_progress (completed_at null) | completed (completed_at not null)
+            // 2) Kursus yang sudah di-assign tetapi belum enroll (enrolled_at null)
 
-            // Apply status filter - karyawan juga bisa filter status
-            if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
-                $coursesQuery->where('status', $status);
-            }
-            // Jika tidak ada filter atau filter = 'all', default ke published saja untuk karyawan
-            elseif (!$status || $status === 'all') {
-                $coursesQuery->where('status', 'published');
-            }
+            $enrolledQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('status', 'published')
+                ->whereHas('enrolledUsers', function ($q) use ($userId, $status) {
+                    $q->where('user_id', $userId)
+                      ->whereNotNull('enrolled_at');
+
+                    // Terapkan filter progres jika diminta
+                    if ($status === 'on_progress') {
+                        $q->whereNull('completed_at');
+                    } elseif ($status === 'completed') {
+                        $q->whereNotNull('completed_at');
+                    }
+                });
 
             if ($search) {
-                $coursesQuery->where('title', 'like', '%' . $search . '%');
+                $enrolledQuery->where('title', 'like', '%' . $search . '%');
             }
 
-            $availableCourses = $coursesQuery->latest()->paginate(8, ['*'], 'available_courses_page');
-            return view('pages.course.course', compact('availableCourses'))
+            $enrolledCourses = $enrolledQuery->latest()->paginate(6, ['*'], 'enrolled_courses_page');
+
+            // Assigned tapi belum enroll
+            $assignedQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('status', 'published')
+                ->whereHas('enrolledUsers', function ($q) use ($userId) {
+                    $q->where('user_id', $userId)
+                      ->whereNull('enrolled_at');
+                });
+
+            if ($search) {
+                $assignedQuery->where('title', 'like', '%' . $search . '%');
+            }
+
+            $assignedCourses = $assignedQuery->latest()->paginate(6, ['*'], 'assigned_courses_page');
+
+            return view('pages.course.course', compact('enrolledCourses', 'assignedCourses'))
                 ->with('userRole', 'karyawan');
         }
 

@@ -442,7 +442,7 @@
             <div class="card">
                 <div class="card-body p-0">
                     <!-- Course Curriculum Header -->
-                    <div class="p-16 border-bottom border-gray-100 bg-main-50">
+                    <div class="p-16 bg-main-50">
                         <h5 class="mb-0 fw-bold text-main-600">
                             <i class="ph ph-list-bullets me-2"></i>Kurikulum Kursus
                         </h5>
@@ -481,7 +481,7 @@
                             @foreach($course->modules as $index => $module)
                                 <div class="course-item">
                                     <button type="button"
-                                        class="course-item__button {{ $index === 0 ? 'active' : '' }} flex-align gap-4 w-100 p-16 border-bottom border-gray-100">
+                                        class="course-item__button {{ $index === 0 ? 'active' : '' }} flex-align gap-4 w-100 p-16">
                                         <span class="d-block text-start">
                                             <span class="d-block h5 mb-0 text-line-1">{{ $module->title }}</span>
                                             <span class="d-block text-15 text-gray-300">
@@ -492,8 +492,8 @@
                                             <i class="ph ph-arrow-right"></i>
                                         </span>
                                     </button>
-                                    <div class="course-item-dropdown {{ $index === 0 ? 'active' : '' }} border-bottom border-gray-100">
-                                        <ul class="course-list p-16 pb-0">
+                                    <div class="course-item-dropdown {{ $index === 0 ? 'active' : '' }} ">
+                                        <ul class="course-list p-16 pb-0 border-top border-gray-100">
                                             @foreach($module->lessons as $lessonIndex => $lesson)
                                                 <li class="course-list__item flex-align gap-8 mb-16">
                                                     <span class="circle flex-shrink-0 text-32 d-flex text-success-600">

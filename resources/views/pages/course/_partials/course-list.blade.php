@@ -1,7 +1,7 @@
 <div class="col-xxl-3 col-lg-4 col-sm-6">
     <div class="mentor-card rounded-8 card border border-gray-100">
         <div class="card-body p-8">
-            <a href="course-details.html"
+            <a href="{{ route('course.show', $course->id) }}"
                 class="bg-main-100 rounded-8 overflow-hidden text-center mb-8 h-164 flex-center p-8">
                 <img src="{{ asset('storage' . '/' . $course->thumbnail) }}" alt="Course Image"
                     class="w-100 h-100 object-fit-cover" style="border-radius: 8px">
