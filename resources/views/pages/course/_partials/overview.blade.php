@@ -221,7 +221,7 @@
                     </div>
                     <div class="col-6">
                         <div class="bg-info-50 p-12 rounded-8 text-center">
-                            <h3 class="text-info-600 fw-bold mb-1">{{ $course->modules->where('quiz')->count() }}</h3>
+                            <h3 class="text-info-600 fw-bold mb-1">{{ $course->modules->filter(fn($module) => $module->quiz !== null)->count() }}</h3>
                             <p class="text-13 text-gray-300 mb-0">Quiz</p>
                         </div>
                     </div>
