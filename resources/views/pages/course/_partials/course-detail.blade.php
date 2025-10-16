@@ -47,9 +47,17 @@
             </div>
 
             <div class="col-sm-12">
+                <label for="summary" class="h7 mb-8 fw-semibold font-heading">About Course (Ringkasan)</label>
+                <div class="position-relative">
+                    <textarea name="summary" id="summary" cols="30" rows="4" class="form-control py-9" placeholder="Tuliskan ringkasan singkat tentang kursus ini...">{{ old('summary', $course->summary ?? '') }}</textarea>
+
+                </div>
+            </div>
+
+            <div class="col-sm-12">
                 <label for="description" class="h7 mb-8 fw-semibold font-heading">Deskripsi</label>
                 <div class="position-relative">
-                    <textarea name="description" id="description" cols="30" rows="10" class="form-control py-9">{{ old('description', $course->description ?? '') }}</textarea>
+                    <textarea name="description" id="description" cols="30" rows="4" class="form-control py-9" placeholder="Tuliskan Deskripsi tentang kursus ini...">{{ old('description', $course->description ?? '') }}</textarea>
                 </div>
             </div>
 

@@ -146,6 +146,7 @@ class CourseController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255|unique:courses',
             'description' => 'nullable|string',
+            'summary' => 'nullable|string',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
             'category_id' => 'required|exists:categories,id',
             'course_type_id' => 'required|exists:course_types,id',
@@ -282,11 +283,21 @@ class CourseController extends Controller
         }
 
         try {
-
             $user->enrolledCourses()->updateExistingPivot($course->id, [
                 'enrolled_at' => now(),
                 'updated_at' => now()
             ]);
+
+            // Tentukan halaman redirect: modul & pelajaran pertama jika tersedia
+            $course->loadMissing('modules.lessons');
+            $firstLesson = $course->modules
+                ->sortBy('order')
+                ->flatMap->lessons
+                ->sortBy('order')
+                ->first();
+            $redirectUrl = $firstLesson
+                ? route('lesson.show', $firstLesson->id)
+                : route('course.show', $course->id);
 
             // Log point activity (opsional - bisa ditambahkan nanti)
             // $user->addPoints(10, $course, 'Mendaftar kursus: ' . $course->title);
@@ -296,11 +307,11 @@ class CourseController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Berhasil mendaftar di kursus ini!',
-                    'redirect_url' => route('course.show', $course->id)
+                    'redirect_url' => $redirectUrl
                 ]);
             }
 
-            return redirect()->route('course.show', $course->id)
+            return redirect()->to($redirectUrl)
                 ->with('success', 'Berhasil mendaftar di kursus ini!');
 
         } catch (\Exception $e) {
@@ -372,6 +383,7 @@ class CourseController extends Controller
         $validatedData = $request->validate([
             'title' => 'required|string|max:255|unique:courses,title,' . $id,
             'description' => 'nullable|string',
+            'summary' => 'nullable|string',
             'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // max 2MB
             'category_id' => 'required|exists:categories,id',
             'course_type_id' => 'required|exists:course_types,id',
