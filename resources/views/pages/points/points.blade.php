@@ -189,7 +189,7 @@
                     @else
                         <!-- Empty State -->
                         <div class="text-center py-64">
-                            <div class="w-100 h-100 bg-gray-50 rounded-circle mx-auto flex-center mb-16" style="width: 100px; height: 100px;">
+                            <div class="w-80 h-80 bg-gray-50 rounded-circle mx-auto flex-center mb-16" style="width: 100px; height: 100px;">
                                 <i class="ph ph-trophy text-64 text-gray-400"></i>
                             </div>
                             <h5 class="text-gray-600 mb-8">No Point History Yet</h5>

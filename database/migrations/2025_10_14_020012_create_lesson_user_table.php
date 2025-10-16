@@ -11,9 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('lesson_user', function (Blueprint $table) {
-            $table->timestamp('completed_at')->nullable()->after('lesson_id');
-        });
+        // Sudah ada migration create dan add column terpisah, tidak perlu menambah kolom di sini
     }
 
     /**
@@ -21,8 +19,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('lesson_user', function (Blueprint $table) {
-            $table->dropColumn('completed_at');
-        });
+        // Tidak perlu drop kolom di sini
     }
 };

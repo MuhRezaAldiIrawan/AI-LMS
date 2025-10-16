@@ -97,7 +97,7 @@
 
                 {{-- Admin: Management & Redemption --}}
                 @if(isAdmin())
-                    <li class="sidebar-menu__item {{ setActive(['rewards*']) }}">
+                    <li class="sidebar-menu__item {{ (request()->routeIs('rewards') || request()->routeIs('rewards.index') || request()->routeIs('rewards.create') || request()->routeIs('rewards.edit')) ? 'activePage' : '' }}">
                         <a href="{{ route('rewards') }}" class="sidebar-menu__link">
                             <span class="icon"><i class="ph ph-treasure-chest"></i></span>
                             <span class="text">Rewards Management</span>
