@@ -38,6 +38,13 @@
                     </a>
                 </li>
 
+                <li class="sidebar-menu__item {{ setActive('profile') }}">
+                    <a href="{{ route('profile') }}" class="sidebar-menu__link">
+                        <span class="icon"><i class="ph ph-user-circle"></i></span>
+                        <span class="text">Profile</span>
+                    </a>
+                </li>
+
                 {{-- Admin Only Menu --}}
                 @if(isAdmin())
                     <li class="sidebar-divider">
