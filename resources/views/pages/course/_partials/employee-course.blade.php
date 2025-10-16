@@ -48,7 +48,7 @@
             cursor: not-allowed;
         }
 
-        .btn-main:hover:not(:disabled), .btn-success:hover:not(:disabled), .btn-warning:hover:not(:disabled) {
+        .btn-main:hover:not(:disabled), .btn-primary:hover:not(:disabled), .btn-success:hover:not(:disabled), .btn-warning:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
             transition: all 0.3s ease;
@@ -60,15 +60,9 @@
         }
 
         @keyframes pulse {
-            0% {
-                box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-            }
-            50% {
-                box-shadow: 0 8px 25px rgba(40, 167, 69, 0.6);
-            }
-            100% {
-                box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-            }
+            0% { box-shadow: 0 2px 10px rgba(14, 165, 233, 0.25); }
+            50% { box-shadow: 0 3px 12px rgba(14, 165, 233, 0.35); }
+            100% { box-shadow: 0 2px 10px rgba(14, 165, 233, 0.25); }
         }
 
         /* Gradient untuk alert */
@@ -91,6 +85,25 @@
             color: #ffffff !important;
             border-color: #0ea5e9 !important;
         }
+
+        /* Sidebar enroll card polish */
+        .side-enroll__header {
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            border: 1px solid #9bd5fb;
+            border-radius: 12px;
+        }
+        .side-enroll__benefits li i { color: #28a745; }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            border: 1px solid var(--chip-border, #e5e7eb);
+            background: var(--chip-bg, #fff);
+            color: var(--chip-color, #6b7280);
+        }
     </style>
 @endsection
 
@@ -108,26 +121,26 @@
     <!-- Breadcrumb End -->
 
     <div class="row gy-4">
-        <div class="col-md-8">
+        <!-- Left: Main Content -->
+        <div class="col-lg-8">
             <!-- Course Card Start -->
             <div class="card">
                 <div class="card-body p-lg-20 p-sm-3">
                     <div class="flex-between flex-wrap gap-12 mb-20">
                         <div>
-                            <h3 class="mb-4">{{ $course->title }}</h3>
-                            <p class="text-gray-600 text-15">{{ $course->author->name ?? 'Tidak ada pengajar' }}</p>
-                            <p class="text-gray-600 text-15 mb-2"><strong>Role Anda:</strong> Karyawan</p>
-                            @if($isEnrolled)
-                                @php
-                                    $enrollment = Auth::user()->enrolledCourses()->where('course_id', $course->id)->first();
-                                    $enrolledDate = $enrollment ? $enrollment->pivot->enrolled_at : null;
-                                @endphp
-                                @if($enrolledDate)
-                                    <p class="text-success-600 text-13">
-                                        <i class="ph ph-calendar me-1"></i>Terdaftar sejak: {{ \Carbon\Carbon::parse($enrolledDate)->format('d M Y') }}
-                                    </p>
-                                @endif
-                            @endif
+                            <h3 class="mb-8">{{ $course->title }}</h3>
+                            @php
+                                $modulesCount = $course->modules->count();
+                                $lessonsCount = $course->modules->sum(fn($module) => $module->lessons->count());
+                                $quizzesCount = $course->modules->whereNotNull('quiz')->count();
+                                $totalDuration = $course->getTotalDurationInHours();
+                            @endphp
+                            <ul class="d-flex flex-wrap gap-16 p-0 m-0 list-unstyled text-gray-600 text-13">
+                                <li class="d-flex align-items-center gap-6"><i class="ph ph-books text-main-600"></i> {{ $modulesCount }} Modul</li>
+                                <li class="d-flex align-items-center gap-6"><i class="ph ph-play-circle text-main-600"></i> {{ $lessonsCount }} Pelajaran</li>
+                                <li class="d-flex align-items-center gap-6"><i class="ph ph-exam text-main-600"></i> {{ $quizzesCount }} Quiz</li>
+                                <li class="d-flex align-items-center gap-6"><i class="ph ph-timer text-main-600"></i> {{ $totalDuration }} Durasi Total</li>
+                            </ul>
                         </div>
 
                         <div class="flex-align flex-wrap gap-24">
@@ -177,62 +190,9 @@
                         </div>
                     </div>
 
-                    <!-- Enrollment Section -->
-                    @if(!$hasAccess)
-                        <!-- No Access - Contact Admin -->
-                        <div class="alert alert-danger border-danger rounded-16 p-24 mb-20 text-center" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545;">
-                            <div class="mb-20">
-                                <i class="ph ph-lock text-danger" style="font-size: 64px;"></i>
-                            </div>
-                            <h4 class="text-dark mb-16 fw-bold">🚫 Akses Terbatas</h4>
-                            <p class="text-dark mb-20 fs-16">
-                                Anda belum memiliki akses ke kursus ini. Hubungi administrator untuk mendapatkan akses.
-                            </p>
-                            <div class="d-grid gap-2 d-md-block">
-                                <button type="button" class="btn btn-outline-danger btn-lg rounded-pill py-12 px-24" disabled>
-                                    <i class="ph ph-prohibition me-2"></i>
-                                    Tidak Dapat Mengakses
-                                </button>
-                            </div>
-                        </div>
-                    @elseif(!$isEnrolled)
-                        <!-- Has Access but Not Enrolled - Show Enroll Button -->
-                        <div class="alert alert-warning border-warning rounded-16 p-24 mb-20 text-center" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f0ad4e;">
-                            <div class="mb-20">
-                                <i class="ph ph-lock-simple-open text-warning" style="font-size: 64px; color: #f39c12!important;"></i>
-                            </div>
-                            <h4 class="text-dark mb-16 fw-bold">🎓 Siap untuk Memulai?</h4>
-                            <p class="text-dark mb-8 fs-16">
-                                Anda memiliki akses ke kursus ini! Klik tombol di bawah untuk memulai pembelajaran.
-                            </p>
-                            <p class="text-muted mb-20 fs-14">
-                                <strong>{{ $course->modules->count() }} modul</strong> •
-                                <strong>{{ $course->modules->sum(fn($module) => $module->lessons->count()) }} pelajaran</strong> •
-                                <strong>{{ $course->modules->whereNotNull('quiz')->count() }} quiz</strong>
-                            </p>
-
-                            <!-- Button yang sangat menonjol -->
-                            <div class="d-grid gap-2 d-md-block">
-                                <button type="button" class="btn btn-success btn-lg rounded-pill py-16 px-32 fw-bold"
-                                        id="enrollBtn" onclick="confirmEnrollment()" data-action="enroll"
-                                        style="font-size: 18px; box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4); text-transform: uppercase; letter-spacing: 1px;">
-                                    <i class="ph ph-graduation-cap me-3" style="font-size: 24px;"></i>
-                                    MULAI BELAJAR
-                                    <i class="ph ph-arrow-right ms-3" style="font-size: 20px;"></i>
-                                </button>
-                            </div>
-
-                            <p class="text-muted mt-16 mb-0 fs-14">
-                                <i class="ph ph-shield-check me-1"></i>
-                                Gratis • Akses seumur hidup • Sertifikat tersedia
-                            </p>
-
-                            <!-- Hidden form -->
-                            <form action="{{ route('course.enroll', $course->id) }}" method="POST" class="d-none" id="enrollForm">
-                                @csrf
-                            </form>
-                        </div>
-                    @else
+                <!-- Enrollment Section: tampilkan hanya saat sudah enrolled (banner hijau). 
+                    Untuk no-access & belum-enroll dipindahkan ke sidebar kanan agar tidak duplikat. -->
+                    @if($isEnrolled)
                         <!-- Actually Enrolled - Compact Success Indicator with Progress -->
                         @php
                             $enrolledProgressPercentage = $course->getCompletionPercentage(Auth::user());
@@ -282,28 +242,48 @@
                     </div>
 
                     <div class="mt-24">
+                        {{-- Ringkasan Kursus (teks singkat) --}}
                         <div class="mb-24 pb-24 border-bottom border-gray-100">
-                            <h5 class="mb-12 fw-bold">Tentang Kursus Ini</h5>
+                            <h5 class="mb-12 fw-bold">Ringkasan Kursus</h5>
+                            <p class="text-gray-300 text-15">{{ $course->summary ?? 'Ringkasan kursus belum tersedia.' }}</p>
+                        </div>
+
+                        {{-- Deskripsi Kursus --}}
+                        <div class="mb-24 pb-24 border-bottom border-gray-100">
+                            <h5 class="mb-12 fw-bold">Deskripsi Kursus</h5>
                             <p class="text-gray-300 text-15">{{ $course->description ?? 'Deskripsi kursus belum tersedia.' }}</p>
                         </div>
 
+                        {{-- Pengajar --}}
+                        <div class="mb-24">
+                            <h5 class="mb-12 fw-bold">Pengajar</h5>
+                            <div class="flex-align gap-8">
+                                @if($course->author && $course->author->avatar)
+                                    <img src="{{ Storage::url($course->author->avatar) }}" alt="{{ $course->author->name }}" class="w-44 h-44 rounded-circle object-fit-cover flex-shrink-0">
+                                @else
+                                    <div class="w-44 h-44 rounded-circle bg-main-50 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="ph ph-user text-main-600" style="font-size: 20px;"></i>
+                                    </div>
+                                @endif
+                                <div class="d-flex flex-column">
+                                    <h6 class="text-15 fw-bold mb-0">{{ $course->author->name ?? 'Tidak ada pengajar' }}</h6>
+                                    <span class="text-13 text-gray-300">{{ $course->author->position ?? 'Instruktur' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+
+                        {{-- Progress Pembelajaran --}}
                         @if($isEnrolled)
-                        <div class="mb-24 pb-24 border-bottom border-gray-100">
+                        <div class="mt-24 mb-0 pb-0">
                             <h5 class="mb-12 fw-bold">Progress Pembelajaran</h5>
                             @php
                                 $user = Auth::user();
-
-                                // Hitung total lessons dan quizzes
                                 $totalLessons = $course->modules->sum(fn($module) => $module->lessons->count());
                                 $totalQuizzes = $course->modules->whereNotNull('quiz')->count();
                                 $totalItems = $totalLessons + $totalQuizzes;
-
-                                // Hitung lessons yang sudah diselesaikan
-                                $completedLessons = $user->completedLessons()
-                                    ->whereIn('lesson_id', $course->modules->flatMap->lessons->pluck('id'))
-                                    ->count();
-
-                                // Hitung quiz yang sudah lulus
+                                $completedLessons = $user->completedLessons()->whereIn('lesson_id', $course->modules->flatMap->lessons->pluck('id'))->count();
                                 $passedQuizzes = 0;
                                 $allQuizzes = $course->modules->map->quiz->filter();
                                 foreach ($allQuizzes as $quiz) {
@@ -311,10 +291,7 @@
                                         $passedQuizzes++;
                                     }
                                 }
-
                                 $completedItems = $completedLessons + $passedQuizzes;
-
-                                // Gunakan method dari Course model untuk konsistensi
                                 $progressPercentage = $course->getCompletionPercentage($user);
                             @endphp
                             <div class="mb-12">
@@ -331,184 +308,85 @@
                                     <div class="progress-bar bg-main-600" role="progressbar" style="width: {{ $progressPercentage }}%"></div>
                                 </div>
                             </div>
-
-                            {{-- Notif selesai di bagian progress dihapus agar tidak duplikat; cukup tampil di bagian atas --}}
                         </div>
                         @endif
-                        <div class="mb-24 pb-24 border-bottom border-gray-100">
-                            <h5 class="mb-16 fw-bold">Yang Termasuk dalam Kursus</h5>
-                            <div class="row g-20">
-                                <div class="col-md-6 col-sm-6">
-                                    <ul>
-                                        <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                            <span class="flex-shrink-0 text-22 d-flex text-main-600"><i class="ph ph-checks"></i></span>
-                                            {{ $course->modules->count() }} Module Pembelajaran
-                                        </li>
-                                        <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                            <span class="flex-shrink-0 text-22 d-flex text-main-600"><i class="ph ph-checks"></i></span>
-                                            {{ $course->modules->sum(fn($module) => $module->lessons->count()) }} Pelajaran
-                                        </li>
-                                        <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                            <span class="flex-shrink-0 text-22 d-flex text-main-600"><i class="ph ph-checks"></i></span>
-                                            {{ $course->modules->whereNotNull('quiz')->count() }} Quiz
-                                        </li>
-                                    </ul>
-                                </div>
-                                <div class="col-md-6 col-sm-6">
-                                    <ul>
-                                        <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                            <span class="flex-shrink-0 text-22 d-flex text-main-600"><i class="ph ph-checks"></i></span>
-                                            Akses Seumur Hidup
-                                        </li>
-                                        <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                            <span class="flex-shrink-0 text-22 d-flex text-main-600"><i class="ph ph-checks"></i></span>
-                                            Sertifikat Penyelesaian
-                                        </li>
-                                        <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                            <span class="flex-shrink-0 text-22 d-flex text-main-600"><i class="ph ph-checks"></i></span>
-                                            Akses Mobile & Desktop
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="">
-                            <h5 class="mb-12 fw-bold">Pengajar</h5>
-                            <div class="flex-align gap-8">
-                                @if($course->author && $course->author->avatar)
-                                    <img src="{{ Storage::url($course->author->avatar) }}" alt="{{ $course->author->name }}"
-                                        class="w-44 h-44 rounded-circle object-fit-cover flex-shrink-0">
-                                @else
-                                    <div class="w-44 h-44 rounded-circle bg-main-50 d-flex align-items-center justify-content-center flex-shrink-0">
-                                        <i class="ph ph-user text-main-600" style="font-size: 20px;"></i>
-                                    </div>
-                                @endif
-                                <div class="d-flex flex-column">
-                                    <h6 class="text-15 fw-bold mb-0">{{ $course->author->name ?? 'Tidak ada pengajar' }}</h6>
-                                    <span class="text-13 text-gray-300">{{ $course->author->position ?? 'Instruktur' }}</span>
-                                    @if($course->author)
-                                        <div class="flex-align gap-4 mt-4">
-                                            <span class="text-15 fw-bold text-warning-600 d-flex"><i class="ph-fill ph-star"></i></span>
-                                            <span class="text-13 fw-bold text-gray-600">5.0</span>
-                                            <span class="text-13 fw-bold text-gray-300">({{ $course->enrolledUsers->count() }} siswa)</span>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                </div>
-            </div>
-            <!-- Course Card End -->
-        </div>
+                </div> <!-- /card-body -->
+            </div> <!-- /card -->
+        </div> <!-- /col-lg-8 -->
 
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body p-0">
-                    <!-- Course Curriculum Header -->
-                    <div class="p-16 bg-main-50">
-                        <h5 class="mb-0 fw-bold text-main-600">
-                            <i class="ph ph-list-bullets me-2"></i>Kurikulum Kursus
-                        </h5>
-                    </div>
-
-                    @if(!$hasAccess)
-                        <!-- No Access State -->
-                        <div class="p-20 text-center" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border-radius: 12px;">
-                            <i class="ph ph-lock text-danger" style="font-size: 56px;"></i>
-                            <h6 class="text-dark mt-12 mb-8 fw-bold">🚫 Tidak Ada Akses</h6>
-                            <p class="text-muted text-14 mb-16">Hubungi admin untuk mendapatkan akses ke kursus ini</p>
-                            <button type="button" class="btn btn-outline-danger btn-sm rounded-pill py-8 px-16 text-13" disabled>
-                                <i class="ph ph-prohibition me-1"></i>Akses Ditolak
-                            </button>
-                        </div>
-                    @elseif(!$isEnrolled)
-                        <!-- Has Access but Not Enrolled State -->
-                        <div class="p-20 text-center" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border-radius: 12px;">
-                            <i class="ph ph-lock-simple-open text-warning" style="font-size: 56px;"></i>
-                            <h6 class="text-dark mt-12 mb-8 fw-bold">� Siap Memulai?</h6>
-                            <p class="text-muted text-14 mb-16">Klik tombol untuk mengakses <strong>{{ $course->modules->count() }} modul</strong> pembelajaran</p>
-
-                            <button type="button" class="btn btn-success btn-sm rounded-pill py-8 px-16 text-13 fw-bold"
-                                    onclick="confirmEnrollment()" data-action="enroll"
-                                    style="box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);">
-                                <i class="ph ph-graduation-cap me-1"></i>MULAI BELAJAR
-                            </button>
-
-                            <p class="text-muted mt-8 mb-0" style="font-size: 11px;">
-                                <i class="ph ph-check me-1"></i>Akses Sudah Diberikan
-                            </p>
-                        </div>
-                    @else
-                        <!-- Enrolled State - Show Full Curriculum -->
-                        @if($course->modules && $course->modules->count() > 0)
-                            @foreach($course->modules as $index => $module)
-                                <div class="course-item">
-                                    <button type="button"
-                                        class="course-item__button {{ $index === 0 ? 'active' : '' }} flex-align gap-4 w-100 p-16">
-                                        <span class="d-block text-start">
-                                            <span class="d-block h5 mb-0 text-line-1">{{ $module->title }}</span>
-                                            <span class="d-block text-15 text-gray-300">
-                                                {{ $module->lessons->count() }} pelajaran{{ $module->quiz ? ' + 1 quiz' : '' }}
-                                            </span>
-                                        </span>
-                                        <span class="course-item__arrow ms-auto text-20 text-gray-500">
-                                            <i class="ph ph-arrow-right"></i>
-                                        </span>
-                                    </button>
-                                    <div class="course-item-dropdown {{ $index === 0 ? 'active' : '' }} ">
-                                        <ul class="course-list p-16 pb-0 border-top border-gray-100">
-                                            @foreach($module->lessons as $lessonIndex => $lesson)
-                                                <li class="course-list__item flex-align gap-8 mb-16">
-                                                    <span class="circle flex-shrink-0 text-32 d-flex text-success-600">
-                                                        <i class="ph ph-play-circle"></i>
-                                                    </span>
-                                                    <div class="w-100">
-                                                        <a href="{{ route('lesson.show', $lesson->id) }}" class="text-gray-700 fw-medium d-block hover-text-main-600 lesson-link">
-                                                            {{ $lessonIndex + 1 }}. {{ $lesson->title }}
-                                                            <span class="text-gray-500 fw-normal d-block">
-                                                                <i class="ph ph-video me-1"></i>Pelajaran • {{ $lesson->duration_in_minutes ?? 5 }} menit
-                                                            </span>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-
-                                            @if($module->quiz)
-                                                <li class="course-list__item flex-align gap-8 mb-16">
-                                                    <span class="circle flex-shrink-0 text-32 d-flex text-warning-600">
-                                                        <i class="ph ph-exam"></i>
-                                                    </span>
-                                                    <div class="w-100">
-                                                        <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-gray-700 fw-medium d-block hover-text-warning-600 quiz-link">
-                                                            Quiz: {{ $module->quiz->title }}
-                                                            <span class="text-warning-600 fw-normal d-block">
-                                                                <i class="ph ph-question me-1"></i>{{ $module->quiz->questions->count() }} Pertanyaan
-                                                            </span>
-                                                        </a>
-                                                    </div>
-                                                </li>
-                                            @endif
-                                        </ul>
-                                    </div>
-                                </div>
-                            @endforeach
-                        @else
-                            <!-- No Content Available -->
-                            <div class="p-20 text-center">
-                                <i class="ph ph-book-open text-gray-400" style="font-size: 48px;"></i>
-                                <h6 class="text-gray-600 mt-12 mb-8">Belum Ada Konten</h6>
-                                <p class="text-gray-500 text-14">Materi pembelajaran sedang dalam tahap persiapan</p>
-                            </div>
-                        @endif
-                    @endif
-                </div>
-            </div>
-
+        <!-- Right: Sidebar -->
+        <div class="col-lg-4">
             @php
                 $user = Auth::user();
                 $rightProgress = $course->getCompletionPercentage($user);
             @endphp
+
+            {{-- Enroll CTA / Access State --}}
+            @if(!$isEnrolled)
+                <div class="card side-enroll">
+                    <div class="card-body">
+                        @if(isset($hasAccess) && $hasAccess)
+                            <div class="side-enroll__header p-12 d-flex align-items-center gap-10 mb-14">
+                                <div class="w-36 h-36 rounded-circle bg-white d-flex align-items-center justify-content-center">
+                                    <i class="ph ph-graduation-cap text-main-600" style="font-size:18px"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">Mulai Belajar</div>
+                                    <div class="text-12 text-gray-500">Buka semua materi, video & kuis</div>
+                                </div>
+                            </div>
+                            <form id="enrollForm" action="{{ route('course.enroll', $course->id) }}" method="POST">
+                                @csrf
+                                <button type="button" id="enrollBtn" class="btn btn-primary w-100 rounded-pill py-10" onclick="window.confirmEnrollment()">
+                                    <i class="ph ph-check me-2"></i> Daftar Kursus Ini
+                                </button>
+                            </form>
+                        @else
+                            <div class="side-enroll__header p-12 d-flex align-items-center gap-10 mb-14" style="background:linear-gradient(135deg,#fef3c7 0%, #fde68a 100%); border-color:#f7d177;">
+                                <div class="w-36 h-36 rounded-circle bg-white d-flex align-items-center justify-content-center">
+                                    <i class="ph ph-lock text-warning" style="font-size:18px"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">Akses Diperlukan</div>
+                                    <div class="text-12 text-gray-500">Hubungi admin untuk mendapatkan akses</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary w-100 rounded-pill" disabled>
+                                <i class="ph ph-lock me-2"></i> Belum Memiliki Akses
+                            </button>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Locked Modules list in sidebar --}}
+                <div class="card mt-24">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between mb-10">
+                            <h6 class="mb-0">Daftar Modul</h6>
+                            <span class="badge bg-main-50 text-main-600">Terkunci</span>
+                        </div>
+                        @forelse($course->modules as $module)
+                            <div class="border rounded-12 p-12 mb-10 course-list__item">
+                                <button type="button" class="w-100 d-flex justify-content-between align-items-center course-item__button bg-transparent border-0">
+                                    <div class="d-flex align-items-center gap-10">
+                                        <i class="ph ph-lock text-warning"></i>
+                                        <span class="fw-medium">{{ $module->title }}</span>
+                                    </div>
+                                    <span class="course-item__arrow"><i class="ph ph-caret-right"></i></span>
+                                </button>
+                                <div class="course-item-dropdown">
+                                    <div class="text-gray-400 text-13 mt-8">Pelajaran di modul ini akan terlihat setelah Anda mendaftar.</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-gray-400">Belum ada modul.</div>
+                        @endforelse
+                    </div>
+                </div>
+            @endif
+
+            {{-- Certificate card (only when 100% complete) --}}
             @if($isEnrolled && $rightProgress === 100)
                 @php
                     $certificate = $user->getCertificateForCourse($course->id);
@@ -516,7 +394,7 @@
                 <div class="card mt-24">
                     <div class="card-body">
                         <div class="d-flex align-items-center justify-content-between mb-12">
-                            <h4 class="mb-0">Sertifikat</h4>
+                            <h5 class="mb-0">Sertifikat</h5>
                             <span class="badge bg-success text-dark py-6 px-12"><i class="ph ph-trophy me-1"></i> Tersedia</span>
                         </div>
                         @if($certificate)
@@ -549,8 +427,8 @@
                     </div>
                 </div>
             @endif
-        </div>
-    </div>
+        </div> <!-- /col-lg-4 -->
+    </div> <!-- /row -->
 @endsection
 
 @section('js')
@@ -649,10 +527,9 @@
                 throw new Error(data.message || 'Terjadi kesalahan');
             }
         })
-        .catch(error => {
+        .catch(() => {
             button.disabled = false;
             button.innerHTML = originalText;
-
             Swal.fire({
                 title: '❌ Gagal!',
                 text: 'Maaf, terjadi kesalahan saat mendaftar. Silakan coba lagi.',
