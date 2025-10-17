@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\Module;
+use Illuminate\Support\Facades\Auth;
 
 class ModuleController extends Controller
 {
@@ -30,6 +31,16 @@ class ModuleController extends Controller
     public function store(Request $request)
     {
         $request->validate(['title' => 'required|string|max:255']);
+
+        // Authorization: only course owner or admin can create module
+        $course = Course::findOrFail($request->course_id);
+        $user = Auth::user();
+        if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki izin untuk menambah modul pada kursus ini.'
+            ], 403);
+        }
 
         $createModule = Module::create([
             'title' => $request->title,
@@ -65,6 +76,16 @@ class ModuleController extends Controller
     {
         $request->validate(['title' => 'required|string|max:255']);
         $module = Module::findOrFail($id);
+
+        // Authorization: only course owner or admin can update module
+        $user = Auth::user();
+        $course = $module->course;
+        if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki izin untuk mengubah modul ini.'
+            ], 403);
+        }
         $module->update(['title' => $request->title]);
         return response()->json(['success' => true]);
     }
@@ -76,6 +97,16 @@ class ModuleController extends Controller
     {
         try {
             $module = Module::findOrFail($id);
+
+            // Authorization: only course owner or admin can delete module
+            $user = Auth::user();
+            $course = $module->course;
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk menghapus modul ini.'
+                ], 403);
+            }
 
             // Delete the module (lessons will be deleted due to cascade)
             $module->delete();

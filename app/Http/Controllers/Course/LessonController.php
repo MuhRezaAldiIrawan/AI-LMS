@@ -8,6 +8,7 @@ use App\Models\Lesson;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth; // Ensure Auth facade is imported
 use App\Jobs\ProcessLessonContent;
+use App\Models\Module;
 
 class LessonController extends Controller
 {
@@ -43,6 +44,17 @@ class LessonController extends Controller
         ]);
 
         $dataToStore = $validated;
+
+        // Authorization: only course owner or admin can add lessons to the module
+        $module = Module::findOrFail($request->module_id);
+        $course = $module->course;
+        $user = Auth::user();
+        if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki izin untuk menambah pelajaran pada kursus ini.'
+            ], 403);
+        }
 
         // Handle file upload if content_type is 'file'
         if ($validated['content_type'] === 'file' && $request->hasFile('attachment')) {
@@ -216,6 +228,16 @@ class LessonController extends Controller
     {
         $lesson = Lesson::findOrFail($id);
 
+        // Authorization: only course owner or admin can update lessons
+        $user = Auth::user();
+        $course = $lesson->module->course;
+        if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki izin untuk mengubah pelajaran ini.'
+            ], 403);
+        }
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'summary' => 'nullable|string',
@@ -271,6 +293,16 @@ class LessonController extends Controller
     {
         try {
             $lesson = Lesson::findOrFail($id);
+
+            // Authorization: only course owner or admin can delete lessons
+            $user = Auth::user();
+            $course = $lesson->module->course;
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk menghapus pelajaran ini.'
+                ], 403);
+            }
 
             // Delete attached file if exists
             if ($lesson->attachment_path && Storage::disk('public')->exists($lesson->attachment_path)) {

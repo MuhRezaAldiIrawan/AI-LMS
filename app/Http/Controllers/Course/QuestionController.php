@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Question;
 use App\Models\Option;
 use App\Models\Quiz;
+use Illuminate\Support\Facades\Auth;
 
 class QuestionController extends Controller
 {
@@ -26,6 +27,16 @@ class QuestionController extends Controller
         ]);
 
         try {
+            // Authorization: only course owner or admin can add questions
+            $quiz = Quiz::with('module.course')->findOrFail($request->quiz_id);
+            $course = $quiz->module->course;
+            $user = Auth::user();
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk menambah pertanyaan pada kuis ini.'
+                ], 403);
+            }
             // Create question
             $question = Question::create([
                 'quiz_id' => $request->quiz_id,
@@ -71,7 +82,16 @@ class QuestionController extends Controller
         ]);
 
         try {
-            $question = Question::findOrFail($id);
+            $question = Question::with('quiz.module.course')->findOrFail($id);
+            // Authorization: only course owner or admin can update questions
+            $user = Auth::user();
+            $course = $question->quiz->module->course;
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengubah pertanyaan ini.'
+                ], 403);
+            }
 
             // Update question
             $question->update([
@@ -110,7 +130,17 @@ class QuestionController extends Controller
     public function destroy(string $id)
     {
         try {
-            $question = Question::findOrFail($id);
+            $question = Question::with('quiz.module.course')->findOrFail($id);
+
+            // Authorization: only course owner or admin can delete questions
+            $user = Auth::user();
+            $course = $question->quiz->module->course;
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk menghapus pertanyaan ini.'
+                ], 403);
+            }
             $question->delete(); // Options akan otomatis terhapus karena cascade delete
 
             return response()->json([

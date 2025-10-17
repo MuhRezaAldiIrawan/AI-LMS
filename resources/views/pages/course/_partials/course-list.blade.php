@@ -1,7 +1,12 @@
 <div class="col-xxl-3 col-lg-4 col-sm-6">
     <div class="mentor-card rounded-8 card border border-gray-100">
         <div class="card-body p-8">
-            <a href="{{ route('course.show', $course->id) }}"
+            @php
+                $isOwner = auth()->check() && auth()->id() === $course->user_id;
+                $manageUrl = route('course.show', $course->id);
+                $overviewUrl = route('course.show', $course->id) . '#overview';
+            @endphp
+            <a href="{{ $isOwner || isAdmin() ? $manageUrl : $overviewUrl }}"
                 class="bg-main-100 rounded-8 overflow-hidden text-center mb-8 h-164 flex-center p-8">
                 <img src="{{ asset('storage' . '/' . $course->thumbnail) }}" alt="Course Image"
                     class="w-100 h-100 object-fit-cover" style="border-radius: 8px">
@@ -10,7 +15,7 @@
                 <span
                     class="text-13 py-2 px-10 rounded-pill bg-success-50 text-success-600 mb-16">{{ $course->category->name }}</span>
                 <h5 class="mb-0">
-                    <a href="{{ route('course.show', $course->id) }}" class="hover-text-main-600 text-truncate d-inline-block"
+                    <a href="{{ $isOwner || isAdmin() ? $manageUrl : $overviewUrl }}" class="hover-text-main-600 text-truncate d-inline-block"
                         style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                         {{ $course->title }}
                     </a>
@@ -58,13 +63,9 @@
                     </span>
                 </div>
 
-                <a href="{{ route('course.show', $course->id) }}"
+                <a href="{{ $isOwner || isAdmin() ? $manageUrl : $overviewUrl }}"
                     class="btn btn-outline-main rounded-pill py-9 w-100 mt-24">
-                    @if(canManageCourses())
-                        Kelola Kursus
-                    @else
-                        Detail Kursus
-                    @endif
+                    {{ ($isOwner || isAdmin()) ? 'Kelola Kursus' : 'Lihat Overview' }}
                 </a>
             </div>
         </div>

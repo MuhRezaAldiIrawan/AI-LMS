@@ -28,22 +28,27 @@
                     <div class="d-flex align-items-end flex-wrap mb-32 gap-24">
                     </div>
                 </div>
+                @php
+                    $isOwner = auth()->check() && (auth()->id() === $course->user_id || auth()->user()->hasRole('admin'));
+                @endphp
                 <ul class="nav common-tab style-two nav-pills mb-0" id="pills-tab" role="tablist">
+                    @if($isOwner)
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="informasi-umum-tab" data-bs-toggle="pill"
+                                data-bs-target="#informasi-umum" type="button" role="tab" aria-controls="informasi-umum"
+                                aria-selected="true">Informasi Umum</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="kurikulum-tab" data-bs-toggle="pill" data-bs-target="#kurikulum"
+                                type="button" role="tab" aria-controls="kurikulum" aria-selected="false">Kurikulum</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="users-tab" data-bs-toggle="pill" data-bs-target="#users" type="button"
+                                role="tab" aria-controls="users" aria-selected="false">Peserta & Akses</button>
+                        </li>
+                    @endif
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="informasi-umum-tab" data-bs-toggle="pill"
-                            data-bs-target="#informasi-umum" type="button" role="tab" aria-controls="informasi-umum"
-                            aria-selected="true">Informasi Umum</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="kurikulum-tab" data-bs-toggle="pill" data-bs-target="#kurikulum"
-                            type="button" role="tab" aria-controls="kurikulum" aria-selected="false">Kurikulum</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="users-tab" data-bs-toggle="pill" data-bs-target="#users" type="button"
-                            role="tab" aria-controls="users" aria-selected="false">Peserta & Akses</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview"
+                        <button class="nav-link {{ $isOwner ? '' : 'active' }}" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview"
                             type="button" role="tab" aria-controls="overview" aria-selected="false">Overview</button>
                     </li>
                 </ul>
@@ -53,27 +58,29 @@
     </div>
 
     <div class="tab-content" id="pills-tabContent">
-        <!-- Courses Tab start -->
-        <div class="tab-pane fade show active" id="informasi-umum" role="tabpanel" aria-labelledby="informasi-umum-tab"
-            tabindex="0">
-            @include('pages.course._partials.course-detail', ['course' => $course])
-        </div>
-        <!-- Courses Tab End -->
+        @if($isOwner)
+            <!-- Courses Tab start -->
+            <div class="tab-pane fade show active" id="informasi-umum" role="tabpanel" aria-labelledby="informasi-umum-tab"
+                tabindex="0">
+                @include('pages.course._partials.course-detail', ['course' => $course])
+            </div>
+            <!-- Courses Tab End -->
 
-        <!-- Kurikulum Tab Start -->
-        <div class="tab-pane fade" id="kurikulum" role="tabpanel" aria-labelledby="kurikulum-tab" tabindex="0">
-            @include('pages.course._partials.curriculum', ['course' => $course])
-        </div>
-        <!-- Kurikulum Tab End -->
+            <!-- Kurikulum Tab Start -->
+            <div class="tab-pane fade" id="kurikulum" role="tabpanel" aria-labelledby="kurikulum-tab" tabindex="0">
+                @include('pages.course._partials.curriculum', ['course' => $course])
+            </div>
+            <!-- Kurikulum Tab End -->
 
-        <!-- Users And Access Tab Start -->
-        <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab" tabindex="0">
-            @include('pages.course._partials.participants-access', ['course' => $course, 'users' => $users])
-        </div>
-        <!-- Users And Access Tab End -->
+            <!-- Users And Access Tab Start -->
+            <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab" tabindex="0">
+                @include('pages.course._partials.participants-access', ['course' => $course, 'users' => $users])
+            </div>
+            <!-- Users And Access Tab End -->
+        @endif
 
         <!-- Overview Tab Start -->
-        <div class="tab-pane fade" id="overview" role="tabpanel" aria-labelledby="overview-tab" tabindex="0">
+        <div class="tab-pane fade {{ $isOwner ? '' : 'show active' }}" id="overview" role="tabpanel" aria-labelledby="overview-tab" tabindex="0">
             @include('pages.course._partials.overview', ['course' => $course])
         </div>
         <!-- Overview Tab End -->
@@ -101,6 +108,19 @@
                 $.ajaxSetup({
                     headers: { 'X-CSRF-TOKEN': csrf }
                 });
+            }
+
+            // Activate tab based on URL hash
+            const hash = window.location.hash;
+            if (hash === '#overview') {
+                const tab = document.querySelector('#overview-tab');
+                if (tab) new bootstrap.Tab(tab).show();
+            } else if (hash === '#kurikulum') {
+                const tab = document.querySelector('#kurikulum-tab');
+                if (tab) new bootstrap.Tab(tab).show();
+            } else if (hash === '#users') {
+                const tab = document.querySelector('#users-tab');
+                if (tab) new bootstrap.Tab(tab).show();
             }
         });
 
@@ -148,6 +168,8 @@
                         let html = '';
                         Object.keys(errors).forEach(k => { html += `• ${errors[k][0]}<br>`; });
                         Swal.fire({ icon: 'error', title: 'Validasi Gagal', html, confirmButtonColor: '#d33' });
+                    } else if (xhr.status === 401) {
+                        Swal.fire({ icon: 'error', title: 'Unauthorized', text: 'Silakan login kembali.' });
                     } else if (xhr.status === 403) {
                         Swal.fire({ icon: 'error', title: 'Tidak diizinkan', text: 'Anda tidak memiliki akses untuk mengupdate kursus ini.' });
                     } else if (xhr.status === 419) {

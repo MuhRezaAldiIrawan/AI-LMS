@@ -1,5 +1,10 @@
-
-
+{{-- No top-level @php variables to avoid scope issues with Livewire/Blade caching --}}
+<style>
+/* Force a clearly disabled look for non-owner overview items */
+.course-list .disabled-link { color: #9AA0A6 !important; cursor: not-allowed; text-decoration: none !important; }
+.course-list .disabled-link span { color: inherit !important; }
+.course-list .disabled-icon { color: #9AA0A6 !important; }
+</style>
 <div class="row gy-4" style="margin-top: 10px">
     <div class="col-md-8">
         <!-- Course Card Start -->
@@ -57,7 +62,11 @@
 
                 <div class="mt-24">
                     <div class="mb-24 pb-24 border-bottom border-gray-100">
-                        <h5 class="mb-12 fw-bold">Tentang Kursus Ini</h5>
+                        <h5 class="mb-12 fw-bold">Ringkasan Kursus</h5>
+                        <p class="text-gray-300 text-15">{{ $course->summary ?? '-' }}</p>
+                    </div>
+                    <div class="mb-24 pb-24 border-bottom border-gray-100">
+                        <h5 class="mb-12 fw-bold">Deskripsi Kursus</h5>
                         <p class="text-gray-300 text-15">{{ $course->description }}</p>
                     </div>
                     @if($course->objectives)
@@ -70,59 +79,19 @@
                         @endforeach
                     </div>
                     @endif
-                    <div class="mb-24 pb-24 border-bottom border-gray-100">
-                        <h5 class="mb-16 fw-bold">Kursus Ini Mencakup</h5>
-                        <div class="row g-20">
-                            <div class="col-md-6 col-sm-6">
-                                <ul>
-                                    <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                        <span class="flex-shrink-0 text-22 d-flex text-main-600"><i
-                                                class="ph ph-checks"></i> </span>
-                                        {{ $course->modules->count() }} Modul Pembelajaran
-                                    </li>
-                                    <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                        <span class="flex-shrink-0 text-22 d-flex text-main-600"><i
-                                                class="ph ph-checks"></i> </span>
-                                        {{ $course->modules->sum(function($module) { return $module->lessons->count(); }) }} Pelajaran
-                                    </li>
-                                    <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                        <span class="flex-shrink-0 text-22 d-flex text-main-600"><i
-                                                class="ph ph-checks"></i> </span>
-                                        {{ $course->modules->where('quiz')->count() }} Quiz Interaktif
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6 col-sm-6">
-                                <ul>
-                                    <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                        <span class="flex-shrink-0 text-22 d-flex text-main-600"><i
-                                                class="ph ph-checks"></i> </span>
-                                        {{ $course->modules->sum(function($module) { return $module->quiz ? $module->quiz->questions->count() : 0; }) }} Pertanyaan Quiz
-                                    </li>
-                                    <li class="flex-align gap-6 text-gray-300 text-15 mb-12">
-                                        <span class="flex-shrink-0 text-22 d-flex text-main-600"><i
-                                                class="ph ph-checks"></i> </span>
-                                        {{ $course->enrolledUsers->count() }} Peserta Aktif
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
                     <div class="">
                         <h5 class="mb-12 fw-bold">Instruktur</h5>
-                        <div class="flex-align gap-8">
-                            <div class="w-44 h-44 rounded-circle bg-main-600 text-white d-flex align-items-center justify-content-center flex-shrink-0">
-                                {{ strtoupper(substr($course->author->name ?? 'Admin', 0, 2)) }}
-                            </div>
-                            <div class="d-flex flex-column">
-                                <h6 class="text-15 fw-bold mb-0">{{ $course->author->name ?? 'Administrator' }}</h6>
-                                <span class="text-13 text-gray-300">{{ $course->author->bio ?? 'Instruktur Kursus' }}</span>
-                                <div class="flex-align gap-4 mt-4">
-                                    <span class="text-15 fw-bold text-warning-600 d-flex"><i
-                                            class="ph-fill ph-star"></i></span>
-                                    <span class="text-13 fw-bold text-gray-600">4.8</span>
-                                    <span class="text-13 fw-bold text-gray-300">({{ $course->enrolledUsers->count() }})</span>
+                        <div class="flex-align gap-12">
+                            @if($course->author?->profile_photo_url)
+                                <img src="{{ $course->author->profile_photo_url }}" alt="{{ $course->author->name }}" class="w-48 h-48 rounded-circle object-fit-cover flex-shrink-0"/>
+                            @else
+                                <div class="w-48 h-48 rounded-circle bg-main-600 text-white d-flex align-items-center justify-content-center flex-shrink-0">
+                                    {{ strtoupper(substr($course->author->name ?? 'Admin', 0, 2)) }}
                                 </div>
+                            @endif
+                            <div class="d-flex flex-column">
+                                <h6 class="text-15 fw-bold mb-1">{{ $course->author->name ?? 'Administrator' }}</h6>
+                                <span class="text-13 text-gray-300">{{ $course->author->position ?? 'Instruktur' }}</span>
                             </div>
                         </div>
                     </div>
@@ -133,13 +102,14 @@
     </div>
 
     <div class="col-md-4">
+        @php($canManage = auth()->check() && (auth()->id() === $course->user_id || auth()->user()->hasRole('admin')))
         <div class="card">
             <div class="card-body p-0">
                 @if($course->modules->count() > 0)
                     @foreach($course->modules as $index => $module)
-                        <div class="course-item">
+                        <div class="course-item border-top border-gray-100 ">
                             <button type="button"
-                                class="course-item__button {{ $index === 0 ? 'active' : '' }} flex-align gap-4 w-100 p-16 border-bottom border-gray-100">
+                                class="course-item__button flex-align gap-4 w-100 p-16">
                                 <span class="d-block text-start">
                                     <span class="d-block h5 mb-0 text-line-1">{{ $module->title }}</span>
                                     <span class="d-block text-15 text-gray-300">0 / {{ $module->lessons->count() }} | {{ $module->lessons->count() * 15 }} min</span>
@@ -147,31 +117,47 @@
                                 <span class="course-item__arrow ms-auto text-20 text-gray-500"><i
                                         class="ph ph-arrow-right"></i></span>
                             </button>
-                            <div class="course-item-dropdown {{ $index === 0 ? 'active' : '' }} border-bottom border-gray-100">
+                            <div class="course-item-dropdown border-top border-gray-100">
                                 <ul class="course-list p-16 pb-0">
                                     @foreach($module->lessons as $lessonIndex => $lesson)
-                                        <li class="course-list__item flex-align gap-8 mb-16 {{ $index === 0 && $lessonIndex < 2 ? 'active' : '' }}">
-                                            <span class="circle flex-shrink-0 text-32 d-flex text-gray-100"><i
-                                                    class="ph ph-circle"></i></span>
+                                        <li class="course-list__item flex-align gap-8 mb-16">
+                                            <span class="circle flex-shrink-0 text-32 d-flex {{ $canManage ? 'text-gray-100' : 'disabled-icon' }}">
+                                                <i class="ph {{ $canManage ? 'ph-circle' : 'ph-lock-simple' }}"></i>
+                                            </span>
                                             <div class="w-100">
-                                                <a href="{{ route('lesson.show', $lesson->id) }}"
-                                                    class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
-                                                    {{ $lessonIndex + 1 }}. {{ $lesson->title }}
-                                                    <span class="text-gray-300 fw-normal d-block">{{ $lesson->duration ?? '15 min' }}</span>
-                                                </a>
+                                                @if($canManage)
+                                                    <a href="{{ route('lesson.show', $lesson->id) }}"
+                                                       class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                        {{ $lessonIndex + 1 }}. {{ $lesson->title }}
+                                                        <span class="text-gray-300 fw-normal d-block">{{ $lesson->duration ?? '15 min' }}</span>
+                                                    </a>
+                                                @else
+                                                    <div class="text-muted fw-medium d-block d-lg-block disabled-link" title="Konten terkunci">
+                                                        {{ $lessonIndex + 1 }}. {{ $lesson->title }}
+                                                        <span class="fw-normal d-block">{{ $lesson->duration ?? '15 min' }}</span>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </li>
                                     @endforeach
                                     @if($module->quiz)
                                         <li class="course-list__item flex-align gap-8 mb-16">
-                                            <span class="circle flex-shrink-0 text-32 d-flex text-warning-600"><i
-                                                    class="ph ph-question"></i></span>
+                                            <span class="circle flex-shrink-0 text-32 d-flex {{ $canManage ? 'text-warning-600' : 'disabled-icon' }}">
+                                                <i class="ph {{ $canManage ? 'ph-question' : 'ph-lock-simple' }}"></i>
+                                            </span>
                                             <div class="w-100">
-                                                <a href="#"
-                                                    class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
-                                                    Quiz: {{ $module->quiz->title }}
-                                                    <span class="text-gray-300 fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes }} min</span>
-                                                </a>
+                                                @if($canManage)
+                                                    <a href="{{ route('quiz.show', $module->quiz->id) }}"
+                                                       class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                        Quiz: {{ $module->quiz->title }}
+                                                        <span class="text-gray-300 fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes }} min</span>
+                                                    </a>
+                                                @else
+                                                    <div class="text-muted fw-medium d-block d-lg-block disabled-link" title="Konten terkunci">
+                                                        Quiz: {{ $module->quiz->title }}
+                                                        <span class="fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes }} min</span>
+                                                    </div>
+                                                @endif
                                             </div>
                                         </li>
                                     @endif
@@ -215,7 +201,7 @@
                     </div>
                     <div class="col-6">
                         <div class="bg-info-50 p-12 rounded-8 text-center">
-                            <h3 class="text-main-600 fw-bold mb-1">{{ $course->modules->where('quiz')->count() }}</h3>
+                            <h3 class="text-main-600 fw-bold mb-1">{{ $course->modules->filter(function($m){ return !empty($m->quiz); })->count() }}</h3>
                             <p class="text-13 text-gray-300 mb-0">Quiz</p>
                         </div>
                     </div>
@@ -232,28 +218,27 @@
                     </div>
                     <div class="d-flex justify-content-between mb-16">
                         <span class="text-13 text-gray-300">Status:</span>
-                        @php
-                            $isPublished = $course->status === 'published';
-                        @endphp
-                        <span class="badge {{ $isPublished ? 'bg-success' : 'bg-warning' }}">
-                            {{ $isPublished ? 'Published' : 'Draft' }}
+                        <span class="badge {{ $course->status === 'published' ? 'bg-success' : 'bg-warning' }}">
+                            {{ $course->status === 'published' ? 'Published' : 'Draft' }}
                         </span>
                     </div>
 
-                    <!-- Publish Course Button -->
-                    <div class="mt-16">
-                        @if(!$isPublished)
-                            <button type="button" class="btn btn-main rounded-pill py-8 w-100" id="publishCourseBtn"
-                                    data-course-id="{{ $course->id }}">
-                                <i class="ph ph-rocket-launch me-1"></i> Publish Course
-                            </button>
-                        @else
-                            <button type="button" class="btn btn-outline-secondary rounded-pill py-8 w-100" id="unpublishCourseBtn"
-                                    data-course-id="{{ $course->id }}">
-                                <i class="ph ph-archive me-1"></i> Unpublish Course
-                            </button>
-                        @endif
-                    </div>
+                    <!-- Publish Course Button (owner/admin only) -->
+                    @if($canManage)
+                        <div class="mt-16">
+                            @if($course->status !== 'published')
+                                <button type="button" class="btn btn-main rounded-pill py-8 w-100" id="publishCourseBtn"
+                                        data-course-id="{{ $course->id }}">
+                                    <i class="ph ph-rocket-launch me-1"></i> Publish Course
+                                </button>
+                            @else
+                                <button type="button" class="btn btn-outline-secondary rounded-pill py-8 w-100" id="unpublishCourseBtn"
+                                        data-course-id="{{ $course->id }}">
+                                    <i class="ph ph-archive me-1"></i> Unpublish Course
+                                </button>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

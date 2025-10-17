@@ -45,6 +45,17 @@ class QuizController extends Controller
         ]);
 
         try {
+            // Authorization: only course owner or admin can create quiz for the module
+            $module = Module::findOrFail($request->module_id);
+            $course = $module->course;
+            $user = Auth::user();
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk membuat kuis pada kursus ini.'
+                ], 403);
+            }
+
             $quiz = Quiz::create([
                 'title' => $request->title,
                 'description' => $request->description,
@@ -303,6 +314,16 @@ class QuizController extends Controller
         try {
             $quiz = Quiz::findOrFail($id);
 
+            // Authorization: only course owner or admin can update quiz
+            $user = Auth::user();
+            $course = $quiz->module->course;
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengubah kuis ini.'
+                ], 403);
+            }
+
             $quiz->update([
                 'title' => $request->title,
                 'description' => $request->description,
@@ -332,6 +353,13 @@ class QuizController extends Controller
     {
         try {
             $quiz = Quiz::with(['questions.options', 'module.course'])->findOrFail($id);
+
+            // Authorization: only course owner or admin can manage quiz
+            $user = Auth::user();
+            $course = $quiz->module->course;
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return redirect()->back()->with('error', 'Anda tidak memiliki izin untuk mengelola kuis ini.');
+            }
 
             return view('pages.course._partials.quiz-question', compact('quiz'));
         } catch (\Exception $e) {
@@ -385,6 +413,16 @@ class QuizController extends Controller
     {
         try {
             $quiz = Quiz::findOrFail($id);
+
+            // Authorization: only course owner or admin can delete quiz
+            $user = Auth::user();
+            $course = $quiz->module->course;
+            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk menghapus kuis ini.'
+                ], 403);
+            }
             $quiz->delete();
 
             return response()->json([

@@ -165,9 +165,20 @@ class CourseController extends Controller
             $dataToStore['thumbnail'] = $path;
         }
 
-        Course::create($dataToStore);
+        $course = Course::create($dataToStore);
 
-        return redirect()->route('course');
+        // If AJAX, return redirect URL to course detail with Kurikulum tab
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data Course berhasil disimpan.',
+                'id' => $course->id,
+                'redirect_url' => route('course.show', $course->id) . '#kurikulum',
+            ]);
+        }
+
+        // Non-AJAX fallback: go to course detail page (Kurikulum tab)
+        return redirect()->to(route('course.show', $course->id) . '#kurikulum');
     }
 
     /**
@@ -343,9 +354,22 @@ class CourseController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // Authorization: only owner or admin can update
+        $courseAuth = Course::findOrFail($id);
+        $user = Auth::user();
+        if (!$user || (!($user->hasRole('admin')) && $courseAuth->user_id !== $user->id)) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengubah kursus ini.'
+                ], 403);
+            }
+            abort(403, 'Unauthorized action.');
+        }
+
         if ($request->action === 'toggle_publish') {
             try {
-                $course = Course::findOrFail($id);
+                $course = $courseAuth; // already found above
                 $isPublished = $request->boolean('is_published');
                 $newStatus = $isPublished ? 'published' : 'draft';
 
@@ -401,7 +425,7 @@ class CourseController extends Controller
             $dataToStore['thumbnail'] = $path;
         }
 
-        Course::where('id', $id)->update($dataToStore);
+    Course::where('id', $id)->update($dataToStore);
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -425,17 +449,28 @@ class CourseController extends Controller
 
     public function updateParticipants(Request $request, $course)
     {
+        // Authorization: only owner or admin can update participants
+        $courseModel = Course::findOrFail($course);
+        $user = Auth::user();
+        if (!$user || (!($user->hasRole('admin')) && $courseModel->user_id !== $user->id)) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki izin untuk mengelola peserta kursus ini.'
+                ], 403);
+            }
+            abort(403, 'Unauthorized action.');
+        }
+
         $request->validate([
             'participants' => 'nullable|array',
             'participants.*' => 'exists:users,id'
         ]);
 
         try {
-            $course = Course::findOrFail($course);
             $participantIds = $request->input('participants', []);
 
-
-            $course->enrolledUsers()->sync($participantIds);
+            $courseModel->enrolledUsers()->sync($participantIds);
 
             if ($request->expectsJson()) {
                 return response()->json([
@@ -443,12 +478,12 @@ class CourseController extends Controller
                     'message' => 'Peserta kursus berhasil diperbarui.',
                     'data' => [
                         'enrolled_count' => count($participantIds),
-                        'course_id' => $course->id
+                        'course_id' => $courseModel->id
                     ]
                 ]);
             }
 
-            return redirect()->route('course.show', $course->id)
+            return redirect()->route('course.show', $courseModel->id)
                 ->with('success', 'Peserta kursus berhasil diperbarui.');
 
         } catch (\Exception $e) {

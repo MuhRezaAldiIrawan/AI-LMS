@@ -3,6 +3,25 @@
 @section('css')
     <link rel="stylesheet" href="{{ asset('assets/css/file-upload.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/plyr.css') }}">
+    <style>
+        /* Center thumbnail dropzone content on create page */
+        .image-upload .image-upload__box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .image-upload .image-upload__boxInner {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 16px !important;
+        }
+        .image-upload__icon { align-self: center !important; }
+    </style>
 @endsection
 
 @section('content')
@@ -36,7 +55,7 @@
                                     <option value="">Pilih Kategori</option>
                                     @foreach ($categories as $category)
                                         <option value="{{ $category->id }}"
-                                            {{ $category->id == $course->id ? 'selected' : '' }}>
+                                            {{ (string) $category->id === (string) old('category_id', $course->category_id ?? '') ? 'selected' : '' }}>
                                             {{ $category->name }}
                                         </option>
                                     @endforeach
@@ -51,7 +70,7 @@
                                     <option value="">Pilih Tipe Kursus</option>
                                     @foreach ($courseType as $type)
                                         <option value="{{ $type->id }}"
-                                            {{ $type->id == $course->id ? 'selected' : '' }}>
+                                            {{ (string) $type->id === (string) old('course_type_id', $course->course_type_id ?? '') ? 'selected' : '' }}>
                                             {{ $type->name }}
                                         </option>
                                     @endforeach
@@ -130,7 +149,14 @@
                         showConfirmButton: false,
                         timer: 2000
                     }).then(() => {
-                        window.location.href = '/course';
+                        // Prefer server-provided redirect to the course detail (Kurikulum tab)
+                        if (response && response.redirect_url) {
+                            window.location.href = response.redirect_url;
+                        } else if (response && response.id) {
+                            window.location.href = `/course/${response.id}#kurikulum`;
+                        } else {
+                            window.location.href = '/course';
+                        }
                     });
                 },
                 error: function(xhr) {

@@ -8756,7 +8756,7 @@ button:focus {
     overflow: hidden;
     position: relative;
     border-radius: inherit;
-    border: 1px solid var(--main-200) !important;
+    /* border: 1px solid var(--main-200) !important; */
     background-color: var(--main-50);
     cursor: pointer;
     transition: 0.2s;
