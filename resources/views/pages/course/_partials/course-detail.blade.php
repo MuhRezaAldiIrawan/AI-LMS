@@ -3,7 +3,7 @@
     <h4 class="mb-4">Detail Kursus</h4>
 </div>
 <div class="card-body">
-    <form id="editCourseForm" enctype="multipart/form-data">
+    <form id="editCourseForm" action="{{ route('course.update', $course->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         <div class="row g-20">
             <input type="hidden" name="courseid" id="courseid" value="{{ $course->id ?? '' }}">
@@ -63,9 +63,19 @@
 
             <div class="col-sm-12">
                 <label for="thumbnail" class="h7 mb-8 fw-semibold font-heading">Thumbnail</label>
-                <div id="fileUpload" class="fileUpload image-upload" name="thumbnail"
-                    data-preview="{{ !empty($course->thumbnail) ? asset('storage/' . $course->thumbnail) : '' }}">
+                <div id="thumbnail_fallback" class="mt-8">
+                    <input type="file" name="thumbnail" accept="image/*" class="form-control" />
+                    @if(!empty($course->thumbnail))
+                        <img src="{{ $course->getThumbnailUrl() }}" class="mt-12 rounded-8 border" style="max-width: 100%; height:auto;" />
+                    @endif
                 </div>
+                <!-- Fallback input if JS is disabled -->
+                <noscript>
+                    <input type="file" name="thumbnail" accept="image/*" class="form-control mt-8" />
+                    @if(!empty($course->thumbnail))
+                        <img src="{{ $course->getThumbnailUrl() }}" class="mt-12" style="max-width: 100%; height:auto;" />
+                    @endif
+                </noscript>
             </div>
 
         </div>

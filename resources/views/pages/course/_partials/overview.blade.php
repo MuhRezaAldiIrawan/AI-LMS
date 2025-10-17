@@ -51,14 +51,8 @@
                 </div>
 
                 <div class="rounded-16 overflow-hidden">
-                    @if($course->thumbnail)
-                        <img src="{{ asset('storage/' . $course->thumbnail) }}"
-                             alt="{{ $course->title }}" class="w-100" style="height: 300px; object-fit: cover;">
-                    @else
-                        <div class="w-100 bg-light d-flex align-items-center justify-content-center" style="height: 300px;">
-                            <i class="ph ph-image text-muted" style="font-size: 4rem;"></i>
-                        </div>
-                    @endif
+                    <img src="{{ $course->getThumbnailUrl() }}"
+                         alt="{{ $course->title }}" class="w-100" style="height: 300px; object-fit: cover;">
                 </div>
 
                 <div class="mt-24">

@@ -112,7 +112,8 @@ Route::middleware('auth')->group(function () {
     Route::controller(CourseController::class)->group(function(){
         Route::get('course', 'index')->name('course');
 
-        Route::middleware('role:admin,pengajar')->group(function() {
+        // Allow either admin OR pengajar (Spatie role middleware uses | as OR)
+        Route::middleware('role:admin|pengajar')->group(function() {
             Route::get('course/create', 'create')->name('course.create');
             Route::post('course', 'store')->name('course.store');
             Route::post('course/{id}', 'update')->name('course.update');
@@ -120,18 +121,18 @@ Route::middleware('auth')->group(function () {
             Route::put('course/publish/{id}', 'update')->name('course.publish.update');
         });
 
-        Route::middleware('role:karyawan,pengajar')->post('course/{course}/enroll', 'enroll')->name('course.enroll');
+    Route::middleware('role:karyawan|pengajar')->post('course/{course}/enroll', 'enroll')->name('course.enroll');
 
         Route::middleware('course.access')->get('course/{id}', 'show')->name('course.show');
     });
 
-    Route::middleware('role:admin,pengajar')->controller(ModuleController::class)->group(function(){
+    Route::middleware('role:admin|pengajar')->controller(ModuleController::class)->group(function(){
         Route::post('module', 'store')->name('module.store');
         Route::put('module/{id}', 'update')->name('module.update');
         Route::delete('module/{id}', 'destroy')->name('module.destroy');
     });
 
-    Route::middleware('role:admin,pengajar')->controller(LessonController::class)->group(function(){
+    Route::middleware('role:admin|pengajar')->controller(LessonController::class)->group(function(){
         Route::post('lesson', 'store')->name('lesson.store');
         Route::get('lesson/{id}/edit', 'edit')->name('lesson.edit');
         Route::put('lesson/{id}', 'update')->name('lesson.update');
@@ -143,7 +144,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('course.access')->post('lesson/{id}/complete', 'complete')->name('lesson.complete');
     });
 
-    Route::middleware('role:admin,pengajar')->controller(QuizController::class)->group(function(){
+    Route::middleware('role:admin|pengajar')->controller(QuizController::class)->group(function(){
         Route::post('quiz', 'store')->name('quiz.store');
         Route::get('quiz/{id}/edit', 'edit')->name('quiz.edit');
         Route::put('quiz/{id}', 'update')->name('quiz.update');
@@ -160,14 +161,14 @@ Route::middleware('auth')->group(function () {
     });
 
 
-    Route::middleware('role:admin,pengajar')->controller(QuestionController::class)->group(function(){
+    Route::middleware('role:admin|pengajar')->controller(QuestionController::class)->group(function(){
         Route::post('question', 'store')->name('question.store');
         Route::put('question/{id}', 'update')->name('question.update');
         Route::delete('question/{id}', 'destroy')->name('question.destroy');
     });
 
 
-    Route::middleware('role:admin,karyawan,pengajar')->controller(AiAssistantController::class)->group(function(){
+    Route::middleware('role:admin|karyawan|pengajar')->controller(AiAssistantController::class)->group(function(){
         Route::get('aiassistant', 'index')->name('aiassistant');
         Route::post('aiassistant/ask', 'ask')->name('aiassistant.ask');
         Route::get('aiassistant/history', 'getHistory')->name('aiassistant.history');

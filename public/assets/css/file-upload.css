@@ -1,49 +1,62 @@
-:root{
-    --file-container-bg:  #eeeeee;
-    --file-bg:  #f8f8f8;
-    --file-border-color: #606060;
-    --file-color: #2b2b2b;
-    --table-border-color: #dbdbdb;
-    --delete-button-bg: #f53636;
-    --delete-button-color: #ffffff;
-    --font-size: 0.875em;
-    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    --shadow: 0px 8px 15px -8px rgba(0, 0, 0, 0.5);
+:root {
+    --file-border: #dbe1ea;
+    --file-text: #1f2937;
+    --file-muted: #6b7280;
+    --file-bg: #f8fafc;
+    --file-hover: #eef2f7;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-.file-container {
+.file-container { width: 100%; }
+
+/* Upload box */
+.file-container .file-upload {
+    display: block;
     width: 100%;
-    font-family: var(--font-family);
-
-    .file-upload {
-        width: 100%;
-        display: flex;
-        transition: all 0.3s;
-        text-align: center;
-        >div {
-            border: 1px solid #ddd;
-            padding: 24px;
-            width: 100%;
-            >p,
-            span,
-            div {
-                font-size: var(--font-size);
-                line-height: 30px;
-                color: var(--file-color);
-            }
-
-            >div {
-                width: max-content;
-                padding: 0 10px;
-                margin: 0 auto;
-                border: 1px solid var(--file-border-color);
-            }
-        }
-    }
 }
+
+.image-upload__box {
+    display: block;
+    width: 100%;
+    border: 1px dashed var(--file-border);
+    background: var(--file-bg);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+}
+
+.image-upload__box:hover { background: var(--file-hover); }
+
+.image-upload__boxInner {
+    padding: 24px;
+    text-align: center;
+    color: var(--file-muted);
+}
+
+.image-upload__icon { font-size: 28px; color: var(--file-muted); }
+
+.image-upload__image {
+    display: block;
+    width: 100%;
+    max-height: 280px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.image-upload__deleteBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #ffffff;
+    border: 1px solid var(--file-border);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--file-text);
+}
+
+.file-container.dragover .image-upload__box { border-color: #60a5fa; background: #eff6ff; }

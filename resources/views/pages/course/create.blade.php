@@ -76,7 +76,7 @@
                         <div class="col-sm-12">
                             <label for="thumbnail" class="h7 mb-8 fw-semibold font-heading">Thumbnail</label>
                             <div id="fileUpload" class="fileUpload image-upload" name="thumbnail"
-                                data-preview="{{ !empty($course->profile_photo_path) ? asset('storage/' . $course->profile_photo_path) : '' }}">
+                                data-preview="{{ !empty($course->thumbnail) ? asset('storage/' . $course->thumbnail) : '' }}">
                             </div>
                         </div>
 

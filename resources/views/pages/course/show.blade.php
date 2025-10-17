@@ -94,13 +94,28 @@
             } else {
                 console.error("❌ fileUpload plugin not found. Check file-upload.js loading order.");
             }
+
+            // Ensure CSRF header is sent for all AJAX
+            const csrf = $('meta[name="csrf-token"]').attr('content');
+            if (csrf) {
+                $.ajaxSetup({
+                    headers: { 'X-CSRF-TOKEN': csrf }
+                });
+            }
         });
 
-        $('#editCourseForm').on('submit', function(e) {
+        // Use delegated binding to avoid timing issues
+        $(document).on('submit', '#editCourseForm', function(e) {
             e.preventDefault();
 
-            let formData = new FormData(this);
-            let id = $('#courseid').val();
+            const $form = $(this);
+            const btn = $form.find('button[type="submit"]');
+            const original = btn.html();
+
+            const formData = new FormData(this);
+            const id = $('#courseid').val();
+
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...');
 
             $.ajax({
                 url: '/course/' + id,
@@ -110,21 +125,52 @@
                 processData: false,
                 cache: false,
                 success: function(response) {
+                    const message = (response && response.message) ? response.message : 'Data Kursus berhasil diupdate.';
                     Swal.fire({
                         icon: 'success',
                         title: 'Berhasil!',
-                        text: 'Data Kursus berhasil diupdate.',
+                        text: message,
                         showConfirmButton: false,
-                        timer: 2000
+                        timer: 1500
                     }).then(() => {
-                        window.location.href = '/course';
+                        // If server provides redirect, use it; else go to course list
+                        if (response && response.redirect_url) {
+                            window.location.href = response.redirect_url;
+                        } else {
+                            window.location.href = '/course';
+                        }
                     });
                 },
                 error: function(xhr) {
-                    console.error('Error:', xhr.responseText);
+                    console.error('Update error:', xhr);
+                    if (xhr.status === 422) {
+                        const errors = xhr.responseJSON?.errors || {};
+                        let html = '';
+                        Object.keys(errors).forEach(k => { html += `• ${errors[k][0]}<br>`; });
+                        Swal.fire({ icon: 'error', title: 'Validasi Gagal', html, confirmButtonColor: '#d33' });
+                    } else if (xhr.status === 403) {
+                        Swal.fire({ icon: 'error', title: 'Tidak diizinkan', text: 'Anda tidak memiliki akses untuk mengupdate kursus ini.' });
+                    } else if (xhr.status === 419) {
+                        Swal.fire({ icon: 'error', title: 'Session Habis', text: 'Silakan muat ulang halaman dan coba lagi.' });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Terjadi Kesalahan', text: 'Gagal menyimpan perubahan. Coba lagi.' });
+                    }
+                },
+                complete: function() {
+                    btn.prop('disabled', false).html(original);
                 }
             });
         });
+
+        // Reveal fallback input if the upload widget failed to render
+        setTimeout(function() {
+            const hasWidget = document.querySelector('.fileUpload label.file-upload');
+            const fallback = document.getElementById('thumbnail_fallback');
+            if (hasWidget && fallback) {
+                // Widget rendered fine -> hide fallback
+                fallback.style.display = 'none';
+            }
+        }, 0);
 
         $('#createModuleForm').on('submit', function(e) {
             e.preventDefault(); // cegah reload halaman

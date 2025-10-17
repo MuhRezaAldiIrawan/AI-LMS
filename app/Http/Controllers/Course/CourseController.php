@@ -403,7 +403,15 @@ class CourseController extends Controller
 
         Course::where('id', $id)->update($dataToStore);
 
-        return redirect()->route('course');
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Data Course berhasil diperbarui.',
+                'redirect_url' => route('course')
+            ]);
+        }
+
+        return redirect()->route('course')->with('success', 'Data Course berhasil diperbarui.');
     }
 
     /**
