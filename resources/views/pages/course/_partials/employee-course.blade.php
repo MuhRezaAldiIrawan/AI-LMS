@@ -10,10 +10,12 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
+            will-change: max-height;
         }
 
-        .course-item-dropdown.active {
-            max-height: 1000px;
+        /* BARU: Atur rotasi panah berdasarkan class .active pada parent */
+        .course-item.active .course-item__arrow i {
+            transform: rotate(90deg);
         }
 
         .course-list__item:hover {
@@ -108,7 +110,6 @@
 @endsection
 
 @section('content')
-    <!-- Breadcrumb Start -->
     <div class="breadcrumb mb-24">
         <ul class="flex-align gap-4">
             <li><a href="{{ route('dashboard.index') }}" class="text-gray-200 fw-normal text-15 hover-text-main-600">Home</a></li>
@@ -118,12 +119,8 @@
             <li><span class="text-main-600 fw-normal text-15">{{ $course->title }}</span></li>
         </ul>
     </div>
-    <!-- Breadcrumb End -->
-
     <div class="row gy-4">
-        <!-- Left: Main Content -->
         <div class="col-lg-8">
-            <!-- Course Card Start -->
             <div class="card">
                 <div class="card-body p-lg-20 p-sm-3">
                     <div class="flex-between flex-wrap gap-12 mb-20">
@@ -190,10 +187,7 @@
                         </div>
                     </div>
 
-                <!-- Enrollment Section: tampilkan hanya saat sudah enrolled (banner hijau). 
-                    Untuk no-access & belum-enroll dipindahkan ke sidebar kanan agar tidak duplikat. -->
-                    @if($isEnrolled)
-                        <!-- Actually Enrolled - Compact Success Indicator with Progress -->
+                @if($isEnrolled)
                         @php
                             $enrolledProgressPercentage = $course->getCompletionPercentage(Auth::user());
                         @endphp
@@ -227,9 +221,6 @@
                         </div>
                     @endif
 
-                    <!-- Certificate Section dipindahkan ke sidebar (kanan) -->
-
-                    <!-- Course Thumbnail -->
                     <div class="rounded-16 overflow-hidden">
                         @if($course->thumbnail)
                             <img src="{{ asset('storage' . '/' . $course->thumbnail) }}" alt="{{ $course->title }}"
@@ -242,9 +233,9 @@
                     </div>
 
                     <div class="mt-24">
-                        {{-- Ringkasan Kursus (teks singkat) --}}
+                        {{-- About Course (Ringkasan) --}}
                         <div class="mb-24 pb-24 border-bottom border-gray-100">
-                            <h5 class="mb-12 fw-bold">Ringkasan Kursus</h5>
+                            <h5 class="mb-12 fw-bold">About Course</h5>
                             <p class="text-gray-300 text-15">{{ $course->summary ?? 'Ringkasan kursus belum tersedia.' }}</p>
                         </div>
 
@@ -273,49 +264,10 @@
                         </div>
 
                         
-
-                        {{-- Progress Pembelajaran --}}
-                        @if($isEnrolled)
-                        <div class="mt-24 mb-0 pb-0">
-                            <h5 class="mb-12 fw-bold">Progress Pembelajaran</h5>
-                            @php
-                                $user = Auth::user();
-                                $totalLessons = $course->modules->sum(fn($module) => $module->lessons->count());
-                                $totalQuizzes = $course->modules->whereNotNull('quiz')->count();
-                                $totalItems = $totalLessons + $totalQuizzes;
-                                $completedLessons = $user->completedLessons()->whereIn('lesson_id', $course->modules->flatMap->lessons->pluck('id'))->count();
-                                $passedQuizzes = 0;
-                                $allQuizzes = $course->modules->map->quiz->filter();
-                                foreach ($allQuizzes as $quiz) {
-                                    if ($user->quizAttempts()->where('quiz_id', $quiz->id)->where('passed', true)->exists()) {
-                                        $passedQuizzes++;
-                                    }
-                                }
-                                $completedItems = $completedLessons + $passedQuizzes;
-                                $progressPercentage = $course->getCompletionPercentage($user);
-                            @endphp
-                            <div class="mb-12">
-                                <div class="d-flex justify-content-between mb-8">
-                                    <span class="text-gray-600 text-15">
-                                        {{ $completedItems }} dari {{ $totalItems }} materi selesai
-                                        @if($completedItems > 0)
-                                            <span class="text-success-600">({{ $completedLessons }} lesson, {{ $passedQuizzes }} quiz)</span>
-                                        @endif
-                                    </span>
-                                    <span class="text-main-600 fw-medium">{{ $progressPercentage }}%</span>
-                                </div>
-                                <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar bg-main-600" role="progressbar" style="width: {{ $progressPercentage }}%"></div>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
                     </div>
-                </div> <!-- /card-body -->
-            </div> <!-- /card -->
-        </div> <!-- /col-lg-8 -->
-
-        <!-- Right: Sidebar -->
+                </div> 
+            </div> 
+        </div> 
         <div class="col-lg-4">
             @php
                 $user = Auth::user();
@@ -386,55 +338,200 @@
                 </div>
             @endif
 
-            {{-- Certificate card (only when 100% complete) --}}
-            @if($isEnrolled && $rightProgress === 100)
-                @php
-                    $certificate = $user->getCertificateForCourse($course->id);
-                @endphp
-                <div class="card mt-24">
+            {{-- Sidebar: Daftar Modul untuk user yang sudah terdaftar --}}
+            @if($isEnrolled)
+                {{-- Progress Pembelajaran (Sidebar - posisi pertama) --}}
+                <div class="card mt-0">
                     <div class="card-body">
-                        <div class="d-flex align-items-center justify-content-between mb-12">
-                            <h5 class="mb-0">Sertifikat</h5>
-                            <span class="badge bg-success text-dark py-6 px-12"><i class="ph ph-trophy me-1"></i> Tersedia</span>
+                        <h6 class="mb-12">Progress Pembelajaran</h6>
+                        @php
+                            $totalLessons = $course->modules->sum(fn($module) => $module->lessons->count());
+                            $totalQuizzes = $course->modules->whereNotNull('quiz')->count();
+                            $totalItems = $totalLessons + $totalQuizzes;
+                            $completedLessons = $user->completedLessons()->whereIn('lesson_id', $course->modules->flatMap->lessons->pluck('id'))->count();
+                            $passedQuizzes = 0;
+                            $allQuizzes = $course->modules->map->quiz->filter();
+                            foreach ($allQuizzes as $quiz) {
+                                if ($user->quizAttempts()->where('quiz_id', $quiz->id)->where('passed', true)->exists()) {
+                                    $passedQuizzes++;
+                                }
+                            }
+                            $completedItems = $completedLessons + $passedQuizzes;
+                        @endphp
+                        <div class="d-flex justify-content-between mb-8 text-14">
+                            <span class="text-gray-600">{{ $completedItems }} dari {{ $totalItems }} materi selesai</span>
+                            <span class="text-main-600 fw-medium">{{ $rightProgress }}%</span>
                         </div>
-                        @if($certificate)
-                            <div class="p-12 rounded-12 mb-16" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 1px solid #0ea5e9;">
-                                <div class="d-flex align-items-start gap-12">
-                                    <i class="ph ph-certificate text-primary" style="font-size: 32px;"></i>
-                                    <div>
-                                        <div class="fw-bold text-dark mb-4">Selamat! Sertifikat Anda siap.</div>
-                                        <div class="text-13 text-dark">
-                                            <div><strong>No.:</strong> {{ $certificate->certificate_number }}</div>
-                                            <div><strong>Terbit:</strong> {{ $certificate->issued_date->format('d F Y') }}</div>
+                        <div class="progress" style="height:8px;">
+                            <div class="progress-bar bg-main-600" role="progressbar" style="width: {{ $rightProgress }}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Intro + Daftar Modul (digabung dalam satu card seperti overview) --}}
+                <div class="card mt-24">
+                    <div class="card-body p-0">
+                        @php
+                            $firstLessonCandidate = $course->modules->sortBy('order')->flatMap->lessons->sortBy('order')->first();
+                            $firstLessonUrl = $firstLessonCandidate ? route('lesson.show', $firstLessonCandidate->id) : null;
+                            // Prefetch progress datasets to avoid N+1 queries inside the loop
+                            $allLessonIds = $course->modules->flatMap->lessons->pluck('id');
+                            $completedLessonIds = $user
+                                ? $user->completedLessons()->whereIn('lesson_id', $allLessonIds)->pluck('lesson_id')->toArray()
+                                : [];
+                            $quizIds = $course->modules->map->quiz->filter()->pluck('id');
+                            $passedQuizIds = $user && $quizIds->isNotEmpty()
+                                ? $user->quizAttempts()->whereIn('quiz_id', $quizIds)->where('passed', true)->pluck('quiz_id')->toArray()
+                                : [];
+                        @endphp
+
+                        {{-- Item: Intro Kursus (posisi teratas) --}}
+                        <div class="course-item">
+                            <button type="button"
+                                class="course-item__button flex-align gap-4 w-100 p-16 border-bottom border-gray-100">
+                                <span class="d-block text-start">
+                                    <span class="d-block h5 mb-0 text-line-1">Intro Kursus</span>
+                                    <span class="d-block text-15 text-gray-300">Ringkasan & mulai</span>
+                                </span>
+                                <span class="course-item__arrow ms-auto text-20 text-gray-500"><i class="ph ph-caret-down"></i></span>
+                            </button>
+                            <div class="course-item-dropdown border-bottom border-gray-100">
+                                <ul class="course-list p-16 pb-0">
+                                    <li class="course-list__item flex-align gap-8 mb-16 active">
+                                        <span class="circle flex-shrink-0 text-32 d-flex text-main-600"><i class="ph-fill ph-check-circle"></i></span>
+                                        <div class="w-100">
+                                            @if($firstLessonUrl)
+                                                <a href="{{ $firstLessonUrl }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                    Mulai Pelajaran Pertama
+                                                    <span class="text-gray-300 fw-normal d-block">{{ $firstLessonCandidate->title ?? 'Pelajaran 1' }} • {{ $firstLessonCandidate->duration ?? '15 min' }}</span>
+                                                </a>
+                                            @else
+                                                <span class="text-gray-300 fw-medium d-block">Belum ada pelajaran pertama</span>
+                                            @endif
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {{-- Items: Modul --}}
+                        @forelse($course->modules as $index => $module)
+                            @php
+                                // Hitung progres per modul untuk user saat ini (tanpa query tambahan)
+                                $moduleLessonIds = $module->lessons->pluck('id');
+                                $moduleCompletedLessons = collect($completedLessonIds)->intersect($moduleLessonIds)->count();
+                                $moduleQuiz = $module->quiz;
+                                $quizPassed = 0;
+                                if ($moduleQuiz) {
+                                    $quizPassed = in_array($moduleQuiz->id, $passedQuizIds) ? 1 : 0;
+                                }
+                                $moduleTotalItems = $module->lessons->count() + ($moduleQuiz ? 1 : 0);
+                                $moduleCompletedItems = $moduleCompletedLessons + $quizPassed;
+                                $moduleDurationMinutes = $module->lessons->sum('duration_in_minutes');
+                            @endphp
+                            <div class="course-item">
+                                <button type="button"
+                                    class="course-item__button flex-align gap-4 w-100 p-16 border-bottom border-gray-100">
+                                    <span class="d-block text-start">
+                                        <span class="d-block h5 mb-0 text-line-1">{{ $module->title }}</span>
+                                        <span class="d-block text-15 text-gray-300">{{ $moduleCompletedItems }} / {{ $moduleTotalItems }} | {{ $moduleDurationMinutes }} min</span>
+                                    </span>
+                                    <span class="course-item__arrow ms-auto text-20 text-gray-500"><i class="ph ph-arrow-right"></i></span>
+                                </button>
+                                <div class="course-item-dropdown border-bottom border-gray-100 {{ $index === 0 ? 'active' : '' }}">
+                                    <ul class="course-list p-16 pb-0">
+                                        @foreach($module->lessons as $lessonIndex => $lesson)
+                                            @php $isDone = in_array($lesson->id, $completedLessonIds); @endphp
+                                            <li class="course-list__item flex-align gap-8 mb-16">
+                                                <span class="circle flex-shrink-0 text-32 d-flex {{ $isDone ? 'text-main-600' : 'text-gray-100' }}">
+                                                    <i class="{{ $isDone ? 'ph-fill ph-check-circle' : 'ph ph-circle' }}"></i>
+                                                </span>
+                                                <div class="w-100">
+                                                    <a href="{{ route('lesson.show', $lesson->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                        {{ $lessonIndex + 1 }}. {{ $lesson->title }}
+                                                        <span class="text-gray-300 fw-normal d-block">{{ $lesson->duration_in_minutes ?? 0 }} menit</span>
+                                                    </a>
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                        @if($module->quiz)
+                                            @php
+                                                $passed = in_array($module->quiz->id, $passedQuizIds);
+                                            @endphp
+                                            <li class="course-list__item flex-align gap-8 mb-16">
+                                                <span class="circle flex-shrink-0 text-32 d-flex {{ $passed ? 'text-success-600' : 'text-warning-600' }}">
+                                                    <i class="{{ $passed ? 'ph-fill ph-check-circle' : 'ph ph-question' }}"></i>
+                                                </span>
+                                                <div class="w-100">
+                                                    <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                        Quiz: {{ $module->quiz->title }}
+                                                        <span class="text-gray-300 fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes }} min</span>
+                                                    </a>
+                                                </div>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="p-20 text-center">
+                                <i class="ph ph-book text-muted" style="font-size: 3rem;"></i>
+                                <h5 class="text-muted mt-3">Belum ada modul</h5>
+                                <p class="text-muted">Modul akan ditampilkan di sini setelah dibuat.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                {{-- Certificate card (only when 100% complete) - ditempatkan setelah card modul --}}
+                @if($rightProgress === 100)
+                    @php $certificate = $user->getCertificateForCourse($course->id); @endphp
+                    <div class="card mt-24">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between mb-12">
+                                <h5 class="mb-0">Sertifikat</h5>
+                                <span class="badge bg-success text-dark py-6 px-12"><i class="ph ph-trophy me-1"></i> Tersedia</span>
+                            </div>
+                            @if($certificate)
+                                <div class="p-12 rounded-12 mb-16" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 1px solid #0ea5e9;">
+                                    <div class="d-flex align-items-start gap-12">
+                                        <i class="ph ph-certificate text-primary" style="font-size: 32px;"></i>
+                                        <div>
+                                            <div class="fw-bold text-dark mb-4">Selamat! Sertifikat Anda siap.</div>
+                                            <div class="text-13 text-dark">
+                                                <div><strong>No.:</strong> {{ $certificate->certificate_number }}</div>
+                                                <div><strong>Terbit:</strong> {{ $certificate->issued_date->format('d F Y') }}</div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="d-flex gap-10">
-                                <a href="{{ route('certificate.download', $certificate->id) }}" class="btn btn-primary btn-sm rounded-pill py-8 px-16">
-                                    <i class="ph ph-download me-2"></i>Download
-                                </a>
-                                <a href="{{ route('certificate.preview', $certificate->id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-preview btn-sm rounded-pill py-8 px-16">
-                                    <i class="ph ph-eye me-2"></i>Preview
-                                </a>
-                            </div>
-                        @else
-                            <div class="alert alert-warning border-warning rounded-12 p-12 mb-0">
-                                <i class="ph ph-hourglass text-warning me-2"></i>
-                                Sertifikat sedang diproses, silakan refresh beberapa saat lagi.
-                            </div>
-                        @endif
+                                <div class="d-flex gap-10">
+                                    <a href="{{ route('certificate.download', $certificate->id) }}" class="btn btn-primary btn-sm rounded-pill py-8 px-16">
+                                        <i class="ph ph-download me-2"></i>Download
+                                    </a>
+                                    <a href="{{ route('certificate.preview', $certificate->id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-preview btn-sm rounded-pill py-8 px-16">
+                                        <i class="ph ph-eye me-2"></i>Preview
+                                    </a>
+                                </div>
+                            @else
+                                <div class="alert alert-warning border-warning rounded-12 p-12 mb-0">
+                                    <i class="ph ph-hourglass text-warning me-2"></i>
+                                    Sertifikat sedang diproses, silakan refresh beberapa saat lagi.
+                                </div>
+                            @endif
+                        </div>
                     </div>
-                </div>
+                @endif
             @endif
-        </div> <!-- /col-lg-4 -->
-    </div> <!-- /row -->
+        </div> 
+    </div> 
 @endsection
 
 @section('js')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Define enrollment functions globally
+    // FUNGSI UNTUK ENROLLMENT (TIDAK BERUBAH)
+    // ==========================================
     window.confirmEnrollment = function() {
         if (typeof Swal === 'undefined') {
             alert('SweetAlert tidak tersedia. Silakan refresh halaman.');
@@ -483,7 +580,6 @@
         });
     };
 
-    // Fungsi untuk proses enrollment
     window.enrollUser = function() {
         const button = document.getElementById('enrollBtn');
         const form = document.getElementById('enrollForm');
@@ -521,7 +617,11 @@
                     timerProgressBar: true,
                     showConfirmButton: false
                 }).then(() => {
-                    window.location.reload();
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        window.location.reload();
+                    }
                 });
             } else {
                 throw new Error(data.message || 'Terjadi kesalahan');
@@ -540,94 +640,58 @@
         });
     };
 
-    // Course Item Dropdown Toggle
+
+    // LOGIKA DROPDOWN YANG DIPERBAIKI
+    // ==========================================
     document.addEventListener('DOMContentLoaded', function() {
-        const courseButtons = document.querySelectorAll('.course-item__button');
+        // 1. Dapatkan semua elemen yang relevan
+        const courseItems = document.querySelectorAll('.course-item');
 
-        courseButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const dropdown = this.nextElementSibling;
-                const arrow = this.querySelector('.course-item__arrow i');
+        // 2. Tambahkan event listener untuk setiap item
+        courseItems.forEach(item => {
+            const button = item.querySelector('.course-item__button');
+            const dropdown = item.querySelector('.course-item-dropdown');
+            const arrowIcon = item.querySelector('.course-item__arrow i');
 
-                // Toggle active class
-                this.classList.toggle('active');
-                dropdown.classList.toggle('active');
+            if (button && dropdown) {
+                button.addEventListener('click', () => {
+                    // Cek apakah item yang diklik saat ini sudah aktif
+                    const isActive = item.classList.contains('active');
 
-                // Rotate arrow
-                if (this.classList.contains('active')) {
-                    arrow.style.transform = 'rotate(90deg)';
-                } else {
-                    arrow.style.transform = 'rotate(0deg)';
-                }
-            });
-        });
+                    // 3. Tutup semua item lain (fungsi accordion)
+                    courseItems.forEach(otherItem => {
+                        otherItem.classList.remove('active');
+                        otherItem.querySelector('.course-item-dropdown').style.maxHeight = null;
+                        const otherArrow = otherItem.querySelector('.course-item__arrow i');
+                        if(otherArrow) otherArrow.style.transform = 'rotate(0deg)';
+                    });
 
-        // Handle enrollment form submission (legacy support)
-        const enrollForms = document.querySelectorAll('form[action*="enroll"]');
-        enrollForms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-
-                const button = this.querySelector('button[type="submit"]');
-                const originalText = button.innerHTML;
-
-                // Show confirmation dialog
-                Swal.fire({
-                    title: 'Konfirmasi Pendaftaran',
-                    text: 'Apakah Anda yakin ingin mendaftar di kursus ini?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#d33',
-                    confirmButtonText: 'Ya, Daftar!',
-                    cancelButtonText: 'Batal'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Show loading state
-                        button.disabled = true;
-                        button.innerHTML = '<i class="ph ph-spinner me-2"></i>Mendaftar...';
-
-                        // Submit form
-                        fetch(this.action, {
-                            method: 'POST',
-                            body: new FormData(this),
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                            }
-                        }).then(response => {
-                            if (response.ok) {
-                                // Show success message and reload
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Berhasil!',
-                                    text: 'Anda berhasil mendaftar di kursus ini!',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.reload();
-                                });
-                            } else {
-                                throw new Error('Network response was not ok');
-                            }
-                        }).catch(error => {
-                            // Show error message and restore button
-                            button.disabled = false;
-                            button.innerHTML = originalText;
-
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Gagal!',
-                                text: 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.',
-                                timer: 3000,
-                                showConfirmButton: false
-                            });
-                        });
+                    // 4. Buka item yang diklik (jika sebelumnya tertutup)
+                    if (!isActive) {
+                        item.classList.add('active');
+                        // Set maxHeight sesuai dengan tinggi konten di dalamnya agar animasi mulus
+                        dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
+                        if(arrowIcon) arrowIcon.style.transform = 'rotate(90deg)';
                     }
+                    // Jika item yang diklik sudah aktif, langkah no 3 sudah menutupnya.
                 });
-            });
+            }
         });
 
-        // Show flash messages from server
+        // Inisialisasi: Buka dropdown yang sudah memiliki class 'active' saat halaman dimuat
+        const initiallyActiveItem = document.querySelector('.course-item .course-item-dropdown.active');
+        if (initiallyActiveItem) {
+            const parentItem = initiallyActiveItem.closest('.course-item');
+            const arrowIcon = parentItem.querySelector('.course-item__arrow i');
+
+            parentItem.classList.add('active');
+            initiallyActiveItem.style.maxHeight = initiallyActiveItem.scrollHeight + 'px';
+            if(arrowIcon) arrowIcon.style.transform = 'rotate(90deg)';
+        }
+
+
+        // Handle flash messages dari server (TIDAK BERUBAH)
+        // ==========================================
         @if(session('success'))
             Swal.fire({
                 icon: 'success',
@@ -660,8 +724,3 @@
     });
 </script>
 @endsection
-
-
-
-
-

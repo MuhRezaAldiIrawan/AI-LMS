@@ -51,22 +51,36 @@
         background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
         border-radius: 8px;
     }
+
+    /* Sidebar/course item styles to match course/lesson */
+    .course-item__arrow i { transition: transform 0.3s ease; }
+    .course-item-dropdown { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; will-change: max-height; }
+    .course-item.active .course-item__arrow i { transform: rotate(90deg); }
+    .course-list__item:hover { background-color: #f8f9fa; border-radius: 8px; transition: background-color 0.2s ease; }
+    .progress { border-radius: 10px; background-color: #e9ecef; }
+    .progress-bar { border-radius: 10px; transition: width 0.6s ease; }
 </style>
 @endsection
 
 @section('content')
-<div class="container-fluid px-0">
-    <div class="row g-0">
-        <!-- Main Content -->
-        <div class="col-lg-9 col-md-8">
-            <div class="quiz-container h-100">
+@php
+    $course = $quiz->module->course;
+    $user = Auth::user();
+    $rightProgress = method_exists($course, 'getCompletionPercentage') && $user ? $course->getCompletionPercentage($user) : ($completionPercentage ?? 0);
+    $courseModules = isset($courseModules) ? $courseModules : $course->modules;
+@endphp
+<div class="row gy-4">
+    <!-- Main Content -->
+    <div class="col-lg-8 col-md-8">
+        <div class="card">
+            <div class="card-body p-lg-20 p-sm-3">
                 <!-- Quiz Header -->
-                <div class="quiz-header p-24">
+                <div class="quiz-header p-24 rounded-12">
                     <nav aria-label="breadcrumb" class="mb-16">
                         <ol class="breadcrumb mb-0">
                             <li class="breadcrumb-item">
-                                <a href="{{ route('course.show', $quiz->module->course->id) }}" class="text-white text-decoration-none opacity-75">
-                                    <i class="ph ph-arrow-left me-1"></i> {{ $quiz->module->course->title }}
+                                <a href="{{ route('course.show', $course->id) }}" class="text-white text-decoration-none opacity-75">
+                                    <i class="ph ph-arrow-left me-1"></i> {{ $course->title }}
                                 </a>
                             </li>
                             <li class="breadcrumb-item text-white opacity-75">{{ $quiz->module->title }}</li>
@@ -106,7 +120,7 @@
                             </div>
                             <div class="col-md-3 col-6">
                                 <div class="text-center">
-                                    <div class="fw-bold text-24 text-info-600">{{ $quiz->time_limit ?? 60 }}</div>
+                                    <div class="fw-bold text-24 text-main-600">{{ $quiz->time_limit ?? 60 }}</div>
                                     <div class="text-14 text-gray-600">Menit</div>
                                 </div>
                             </div>
@@ -166,16 +180,14 @@
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <span class="text-14 text-gray-600">Skor:</span>
-                                                <span class="fw-medium {{ $attempt->passed ? 'text-success-600' : 'text-danger-600' }}">
-                                                    {{ $attempt->score }}%
-                                                </span>
+                                                <span class="fw-medium {{ $attempt->passed ? 'text-success-600' : 'text-danger-600' }}">{{ $attempt->score }}%</span>
                                             </div>
                                             @if($attempt->finished_at)
-                                            <div class="mt-12 pt-12 border-top">
-                                                <button onclick="showAttemptReview({{ $attempt->id }})" class="btn btn-sm btn-outline-primary rounded-pill w-100">
-                                                    <i class="ph ph-eye me-1"></i>Lihat Review
-                                                </button>
-                                            </div>
+                                                <div class="mt-12 pt-12 border-top">
+                                                    <button onclick="showAttemptReview({{ $attempt->id }})" class="btn btn-sm btn-outline-primary rounded-pill w-100">
+                                                        <i class="ph ph-eye me-1"></i>Lihat Review
+                                                    </button>
+                                                </div>
                                             @endif
                                         </div>
                                     </div>
@@ -218,75 +230,120 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-3 col-md-4 bg-gray-50 border-start quiz-sidebar">
-            <div class="p-24">
-                <div class="quiz-navigation">
-                    <h6 class="fw-bold text-gray-900 mb-16">
-                        <i class="ph ph-list-bullets me-2"></i>Daftar Materi
-                    </h6>
+    <!-- Sidebar -->
+    <div class="col-lg-4 col-md-4">
+        @php
+            $totalLessons = $course->modules->sum(fn($m) => $m->lessons->count());
+            $totalQuizzes = $course->modules->whereNotNull('quiz')->count();
+            $allQuizzes = $course->modules->map->quiz->filter();
+            $passedQuizzes = 0;
+            if($user){
+                foreach ($allQuizzes as $q) {
+                    if ($user->quizAttempts()->where('quiz_id', $q->id)->where('passed', true)->exists()) {
+                        $passedQuizzes++;
+                    }
+                }
+                $completedLessons = $user->completedLessons()->whereIn('lesson_id', $course->modules->flatMap->lessons->pluck('id'))->count();
+            } else {
+                $completedLessons = 0;
+            }
+            $totalItems = $totalLessons + $totalQuizzes;
+            $completedItems = $completedLessons + $passedQuizzes;
+        @endphp
 
-                    <!-- Progress Bar -->
-                    <div class="mb-20">
-                        <div class="d-flex justify-content-between mb-8">
-                            <span class="text-14 text-gray-600">Progress</span>
-                            <span class="text-14 fw-medium text-success-600">{{ $completionPercentage }}%</span>
-                        </div>
-                        <div class="quiz-progress">
-                            <div class="quiz-progress-bar" style="width: {{ $completionPercentage }}%"></div>
+        <!-- Progress card -->
+        <div class="card mt-0">
+            <div class="card-body">
+                <h6 class="mb-12">Progress Pembelajaran</h6>
+                <div class="d-flex justify-content-between mb-8 text-14">
+                    <span class="text-gray-600">{{ $completedItems }} dari {{ $totalItems }} materi selesai</span>
+                    <span class="text-main-600 fw-medium">{{ $rightProgress }}%</span>
+                </div>
+                <div class="progress" style="height:8px;">
+                    <div class="progress-bar bg-main-600" role="progressbar" style="width: {{ $rightProgress }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daftar Materi card with accordion -->
+        <div class="card mt-24">
+            <div class="card-body p-0">
+                @php
+                    $firstLessonCandidate = $course->modules->sortBy('order')->flatMap->lessons->sortBy('order')->first();
+                    $firstLessonUrl = $firstLessonCandidate ? route('lesson.show', $firstLessonCandidate->id) : null;
+                @endphp
+
+                <div class="course-item">
+                    <button type="button" class="course-item__button flex-align gap-4 w-100 p-16 border-bottom border-gray-100">
+                        <span class="d-block text-start">
+                            <span class="d-block h5 mb-0 text-line-1">Intro Kursus</span>
+                            <span class="d-block text-15 text-gray-300">Ringkasan & mulai</span>
+                        </span>
+                        <span class="course-item__arrow ms-auto text-20 text-gray-500"><i class="ph ph-caret-down"></i></span>
+                    </button>
+                    <div class="course-item-dropdown border-bottom border-gray-100">
+                        <ul class="course-list p-16 pb-0">
+                            <li class="course-list__item flex-align gap-8 mb-16 active">
+                                <span class="circle flex-shrink-0 text-32 d-flex text-main-600"><i class="ph-fill ph-check-circle"></i></span>
+                                <div class="w-100">
+                                    <a href="{{ route('course.show', $course->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                        Buka Ringkasan Kursus
+                                        <span class="text-gray-300 fw-normal d-block">Lihat deskripsi, pengajar, dan daftar modul</span>
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                @forelse($courseModules as $index => $module)
+                    @php $moduleContainsQuiz = $module->quiz && $module->quiz->id == $quiz->id; @endphp
+                    <div class="course-item">
+                        <button type="button" class="course-item__button flex-align gap-4 w-100 p-16 border-bottom border-gray-100">
+                            <span class="d-block text-start">
+                                <span class="d-block h5 mb-0 text-line-1">{{ $module->title }}</span>
+                                <span class="d-block text-15 text-gray-300">{{ $module->lessons->count() }} pelajaran</span>
+                            </span>
+                            <span class="course-item__arrow ms-auto text-20 text-gray-500"><i class="ph ph-arrow-right"></i></span>
+                        </button>
+                        <div class="course-item-dropdown border-bottom border-gray-100 {{ $moduleContainsQuiz ? 'active' : '' }}">
+                            <ul class="course-list p-16 pb-0">
+                                @foreach($module->lessons as $lessonIndex => $moduleLesson)
+                                    <li class="course-list__item flex-align gap-8 mb-16">
+                                        <span class="circle flex-shrink-0 text-32 d-flex {{ $moduleLesson->isCompletedByUser($user) ? 'text-main-600' : 'text-gray-100' }}">
+                                            <i class="{{ $moduleLesson->isCompletedByUser($user) ? 'ph-fill ph-check-circle' : 'ph ph-circle' }}"></i>
+                                        </span>
+                                        <div class="w-100">
+                                            <a href="{{ route('lesson.show', $moduleLesson->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                {{ $lessonIndex + 1 }}. {{ $moduleLesson->title }}
+                                                <span class="text-gray-300 fw-normal d-block">{{ $moduleLesson->duration_in_minutes ?? 5 }} menit</span>
+                                            </a>
+                                        </div>
+                                    </li>
+                                @endforeach
+                                @if($module->quiz)
+                                    <li class="course-list__item flex-align gap-8 mb-16 {{ $module->quiz->id == $quiz->id ? 'active ' : '' }}">
+                                        <span class="circle flex-shrink-0 text-32 d-flex text-warning-600"><i class="ph ph-question"></i></span>
+                                        <div class="w-100">
+                                            <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                Quiz: {{ $module->quiz->title }}
+                                                <span class="text-gray-300 fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes ?? ($module->quiz->time_limit ?? 60) }} min</span>
+                                            </a>
+                                        </div>
+                                    </li>
+                                @endif
+                            </ul>
                         </div>
                     </div>
-
-                    <!-- Course Content -->
-                    @foreach($courseModules as $module)
-                        <div class="mb-20">
-                            <h6 class="fw-medium text-gray-800 mb-12 text-14">{{ $module->title }}</h6>
-
-                            @foreach($module->lessons as $lesson)
-                                <div class="lesson-item p-12 rounded-8 mb-8">
-                                    <a href="{{ route('lesson.show', $lesson->id) }}" class="text-decoration-none d-flex align-items-start">
-                                        <div class="me-8 mt-2">
-                                            @if($lesson->isCompletedByUser(Auth::user()))
-                                                <i class="ph ph-check-circle text-success-600" style="font-size: 16px;"></i>
-                                            @else
-                                                <i class="ph ph-circle text-gray-400" style="font-size: 16px;"></i>
-                                            @endif
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="text-14 fw-medium text-gray-800 mb-2">{{ $lesson->title }}</div>
-                                            <div class="text-12 text-gray-500">
-                                                <i class="ph ph-video me-1"></i>
-                                                {{ $lesson->duration_in_minutes ?? 5 }} menit
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            @endforeach
-
-                            @if($module->quiz)
-                                <div class="lesson-item {{ $module->quiz->id == $quiz->id ? 'active bg-warning-50 border-warning-200' : '' }} p-12 rounded-8 border">
-                                    <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-decoration-none d-flex align-items-start">
-                                        <div class="me-8 mt-2">
-                                            @if($module->quiz->isPassedByUser(Auth::user()))
-                                                <i class="ph ph-check-circle text-success-600" style="font-size: 16px;"></i>
-                                            @else
-                                                <i class="ph ph-exam text-warning-600" style="font-size: 16px;"></i>
-                                            @endif
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="text-14 fw-medium text-gray-800 mb-2">Quiz: {{ $module->quiz->title }}</div>
-                                            <div class="text-12 text-warning-600">
-                                                <i class="ph ph-question me-1"></i>
-                                                {{ $module->quiz->questions->count() }} pertanyaan
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            @endif
-                        </div>
-                    @endforeach
-                </div>
+                @empty
+                    <div class="p-20 text-center">
+                        <i class="ph ph-book text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-3">Belum ada modul</h5>
+                        <p class="text-muted">Modul akan ditampilkan di sini setelah dibuat.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -336,6 +393,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
+    }
+});
+
+// Sidebar accordion logic to mirror course/lesson behavior
+document.addEventListener('DOMContentLoaded', function () {
+    const courseItems = document.querySelectorAll('.course-item');
+    courseItems.forEach(item => {
+        const button = item.querySelector('.course-item__button');
+        const dropdown = item.querySelector('.course-item-dropdown');
+        const arrowIcon = item.querySelector('.course-item__arrow i');
+        if (button && dropdown) {
+            button.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                courseItems.forEach(other => {
+                    other.classList.remove('active');
+                    const dd = other.querySelector('.course-item-dropdown');
+                    if (dd) dd.style.maxHeight = null;
+                    const arr = other.querySelector('.course-item__arrow i');
+                    if (arr) arr.style.transform = 'rotate(0deg)';
+                });
+                if (!isActive) {
+                    item.classList.add('active');
+                    dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
+                    if (arrowIcon) arrowIcon.style.transform = 'rotate(90deg)';
+                }
+            });
+        }
+    });
+
+    const activeDropdown = document.querySelector('.course-item-dropdown.active');
+    if (activeDropdown) {
+        const parent = activeDropdown.closest('.course-item');
+        if (parent) {
+            parent.classList.add('active');
+            activeDropdown.style.maxHeight = activeDropdown.scrollHeight + 'px';
+            const arr = parent.querySelector('.course-item__arrow i');
+            if (arr) arr.style.transform = 'rotate(90deg)';
+        }
     }
 });
 

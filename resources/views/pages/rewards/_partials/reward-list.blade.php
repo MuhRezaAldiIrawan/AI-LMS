@@ -7,7 +7,7 @@
                         <img src="{{ asset('storage/' . $reward->image) }}" alt="{{ $reward->name }}" class="w-100 h-100 object-fit-cover" style="border-radius: 8px; max-height: 140px; object-fit: contain;">
                     @endif
                 </div>
-                <span class="text-13 py-2 px-10 rounded-pill bg-info-50 text-info-600 mb-16">Reward</span>
+                <span class="text-13 py-2 px-10 rounded-pill bg-info-50 text-main-600 mb-16">Reward</span>
                 <h5 class="mb-0 fw-bold text-main-700" style="min-height: 28px;">{{ $reward->name }}</h5>
                 <p class="text-muted mb-2 mt-2" style="min-height: 40px; font-size: 14px;">{{ $reward->description }}</p>
                 <div class="d-flex flex-wrap gap-2 mb-2 mt-2">

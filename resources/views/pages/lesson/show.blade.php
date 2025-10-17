@@ -97,6 +97,29 @@
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
 
+    /* Sidebar/course item styles to match course page */
+    .course-item__arrow i { transition: transform 0.3s ease; }
+    .course-item-dropdown { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; will-change: max-height; }
+    .course-item.active .course-item__arrow i { transform: rotate(90deg); }
+    .course-list__item:hover { background-color: #f8f9fa; border-radius: 8px; transition: background-color 0.2s ease; }
+    .progress { border-radius: 10px; background-color: #e9ecef; }
+    .progress-bar { border-radius: 10px; transition: width 0.6s ease; }
+
+    /* Simple spinner for current lesson in-progress */
+    @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
+    .ph-spinner { animation: spin 1s linear infinite; display: inline-block; }
+
+    /* Explicit hollow dot for current lesson (no check icon at all) */
+    .status-dot {
+        width: 20px;
+        height: 20px;
+        border: 2px solid currentColor;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    /* Static progress icon only: spinner animation removed */
+
     /* AI Chat Modal Styles */
     .ai-chat-widget {
         position: fixed;
@@ -536,46 +559,48 @@
 @endSection
 
 @section('content')
-<div class="container-fluid px-0">
-    <div class="row g-0">
-        <!-- Main Content Area -->
-        <div class="col-lg-9 col-md-8">
-            <div class="lesson-content h-100">
-                <!-- Lesson Header -->
-                <div class="p-24 border-bottom border-gray-100">
-                    <div class="d-flex align-items-center justify-content-between mb-16">
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item">
-                                    <a href="{{ route('course.show', $lesson->module->course->id) }}" class="text-decoration-none">
-                                        <i class="ph ph-arrow-left me-1"></i> {{ $lesson->module->course->title }}
-                                    </a>
-                                </li>
-                                <li class="breadcrumb-item text-muted">{{ $lesson->module->title }}</li>
-                                <li class="breadcrumb-item active">{{ $lesson->title }}</li>
-                            </ol>
-                        </nav>
+@php
+    $course = $lesson->module->course;
+    $user = Auth::user();
+    $rightProgress = method_exists($course, 'getCompletionPercentage') && $user ? $course->getCompletionPercentage($user) : ($completionPercentage ?? 0);
+    $courseModules = isset($courseModules) ? $courseModules : $course->modules;
+@endphp
+<div class="row gy-4">
+    <!-- Main Content Area -->
+    <div class="col-lg-8 col-md-8">
+        <div class="card">
+            <div class="card-body p-lg-20 p-sm-3">
+                <div class="flex-between flex-wrap gap-12 mb-20">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="{{ route('course.show', $course->id) }}" class="text-gray-200 fw-normal text-15 hover-text-main-600 text-decoration-none">
+                                    <i class="ph ph-arrow-left me-1"></i> {{ $course->title }}
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item text-muted">{{ $lesson->module->title }}</li>
+                            <li class="breadcrumb-item active">{{ $lesson->title }}</li>
+                        </ol>
+                    </nav>
 
-                        <div class="d-flex align-items-center gap-12">
-                            <span class="badge bg-success-50 text-success-600 py-6 px-12 rounded-pill">
-                                <i class="ph ph-video me-1"></i>Pelajaran
+                    <div class="d-flex align-items-center gap-12">
+                        <span class="py-6 px-12 bg-success-50 text-success-600 rounded-pill text-15">
+                            <i class="ph ph-video me-1"></i>Pelajaran
+                        </span>
+                        @if($lesson->duration_in_minutes)
+                            <span class="text-gray-500 text-14">
+                                <i class="ph ph-clock me-1"></i>{{ $lesson->duration_in_minutes }} menit
                             </span>
-                            @if($lesson->duration_in_minutes)
-                                <span class="text-gray-500 text-14">
-                                    <i class="ph ph-clock me-1"></i>{{ $lesson->duration_in_minutes }} menit
-                                </span>
-                            @endif
-                        </div>
+                        @endif
                     </div>
-
-                    <h1 class="h3 fw-bold text-gray-900 mb-8">{{ $lesson->title }}</h1>
-                    @if($lesson->description)
-                        <p class="text-gray-600 mb-0">{{ $lesson->description }}</p>
-                    @endif
                 </div>
 
+                <h3 class="mb-8">{{ $lesson->title }}</h3>
+                @if($lesson->description)
+                    <p class="text-gray-300 text-15">{{ $lesson->description }}</p>
+                @endif
+
                 <!-- Content Area Based on Type -->
-                <div class="p-24">
                     @if($lesson->content_type === 'video' && $lesson->video_url)
                         <!-- Video Content -->
                         <div class="lesson-video-container mb-24">
@@ -690,125 +715,198 @@
                                 @endif
                             </div>
                         </div>
+                @else
+                    <!-- No Content -->
+                    <div class="text-center py-64">
+                        <i class="ph ph-file-x text-gray-300" style="font-size: 64px;"></i>
+                        <h5 class="text-gray-500 mt-16 mb-8">Konten Belum Tersedia</h5>
+                        <p class="text-gray-400">Materi pembelajaran akan segera ditambahkan</p>
+                    </div>
+                @endif
+
+                <!-- Navigasi Bawah (langsung di bawah materi) -->
+                <div class="d-flex justify-content-between mt-32">
+                    @if($previousLesson)
+                        <a href="{{ route('lesson.show', $previousLesson->id) }}" class="btn btn-outline-primary rounded-pill py-10 px-20">
+                            <i class="ph ph-arrow-left me-1"></i> Sebelumnya
+                        </a>
                     @else
-                        <!-- No Content -->
-                        <div class="text-center py-64">
-                            <i class="ph ph-file-x text-gray-300" style="font-size: 64px;"></i>
-                            <h5 class="text-gray-500 mt-16 mb-8">Konten Belum Tersedia</h5>
-                            <p class="text-gray-400">Materi pembelajaran akan segera ditambahkan</p>
-                        </div>
+                        <div></div>
                     @endif
 
-                    <!-- Completion Section -->
-                    <div class="mt-40 pt-24 border-top border-gray-100">
-                        <div class="text-center">
-                            @if($isCompleted)
-                                <div class="d-inline-flex align-items-center bg-success-50 text-success-600 py-12 px-24 rounded-pill mb-16">
-                                    <i class="ph ph-check-circle me-2" style="font-size: 20px;"></i>
-                                    <span class="fw-medium">Pelajaran Selesai</span>
-                                </div>
-                                <p class="text-gray-600 mb-24">Selamat! Anda telah menyelesaikan pelajaran ini.</p>
-                            @else
-                                <h5 class="fw-bold text-gray-900 mb-16">Selesaikan Pelajaran</h5>
-                                <p class="text-gray-600 mb-24">Tandai sebagai selesai untuk melanjutkan ke materi berikutnya</p>
-                                <button type="button" id="completeBtn" class="btn btn-success btn-lg rounded-pill py-12 px-32 completion-button">
-                                    <i class="ph ph-check-circle me-2"></i>
-                                    Tandai Selesai
-                                </button>
-                            @endif
+                    @if($nextLesson)
+                        <a href="{{ route('lesson.show', $nextLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                            Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                        </a>
+                    @elseif($moduleQuiz)
+                        <a href="{{ route('quiz.show', $moduleQuiz->id) }}" class="btn btn-warning rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                            <i class="ph ph-exam me-1"></i> Kerjakan Quiz
+                        </a>
+                    @else
+                        <button type="button" class="btn btn-success rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                            Tandai Selesai
+                        </button>
+                    @endif
+                </div>
 
-                            <!-- Navigation Buttons -->
-                            <div class="d-flex justify-content-between mt-32">
-                                @if($previousLesson)
-                                    <a href="{{ route('lesson.show', $previousLesson->id) }}" class="btn btn-outline-primary rounded-pill py-10 px-20">
-                                        <i class="ph ph-arrow-left me-1"></i> Sebelumnya
-                                    </a>
-                                @else
-                                    <div></div>
-                                @endif
+                <!-- Ringkasan Pelajaran -->
+                <div class="mt-32">
+                    <h5 class="fw-bold text-gray-900 mb-12">Ringkasan Pelajaran</h5>
+                    @php $summary = $lesson->summary ?? $lesson->description; @endphp
+                    <div class="text-gray-700" style="font-size: 15px;">{!! $summary ? nl2br(e($summary)) : 'Ringkasan belum tersedia.' !!}</div>
+                </div>
 
-                                @if($nextLesson)
-                                    <a href="{{ route('lesson.show', $nextLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20" id="nextLessonBtn">
-                                        Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
-                                    </a>
-                                @elseif($moduleQuiz)
-                                    <a href="{{ route('quiz.show', $moduleQuiz->id) }}" class="btn btn-warning rounded-pill py-10 px-20">
-                                        <i class="ph ph-exam me-1"></i> Kerjakan Quiz
-                                    </a>
-                                @else
-                                    <div class="text-muted small">Tidak ada materi selanjutnya</div>
-                                @endif
+                <!-- Instruktur -->
+                <div class="mt-24 pt-24 border-top border-gray-100">
+                    <h5 class="fw-bold text-gray-900 mb-12">Instruktur</h5>
+                    <div class="d-flex align-items-center gap-12">
+                        @php $author = $lesson->module->course->author; @endphp
+                        @if($author && ($author->avatar ?? null))
+                            <img src="{{ Storage::url($author->avatar) }}" alt="{{ $author->name }}" class="w-56 h-56 rounded-circle object-fit-cover">
+                        @else
+                            <div class="w-56 h-56 rounded-circle bg-main-50 d-flex align-items-center justify-content-center">
+                                <i class="ph ph-user text-main-600" style="font-size: 24px;"></i>
                             </div>
+                        @endif
+                        <div>
+                            <div class="fw-bold text-gray-900">{{ $author->name ?? 'Administrator' }}</div>
+                            <div class="text-13 text-gray-500">{{ $author->position ?? 'Instruktur' }}</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Sidebar -->
-        <div class="col-lg-3 col-md-4 bg-gray-50 border-start lesson-sidebar">
-            <div class="p-24">
-                <div class="lesson-navigation">
-                    <h6 class="fw-bold text-gray-900 mb-16">
-                        <i class="ph ph-list-bullets me-2"></i>Daftar Materi
-                    </h6>
+    <!-- Sidebar -->
+    <div class="col-lg-4 col-md-4">
+        @php
+            $totalLessons = $course->modules->sum(fn($m) => $m->lessons->count());
+            $totalQuizzes = $course->modules->whereNotNull('quiz')->count();
+            $allQuizzes = $course->modules->map->quiz->filter();
+            $passedQuizzes = 0;
+            if($user){
+                foreach ($allQuizzes as $quiz) {
+                    if ($user->quizAttempts()->where('quiz_id', $quiz->id)->where('passed', true)->exists()) {
+                        $passedQuizzes++;
+                    }
+                }
+                $completedLessons = $user->completedLessons()->whereIn('lesson_id', $course->modules->flatMap->lessons->pluck('id'))->count();
+            } else {
+                $completedLessons = 0;
+            }
+            $totalItems = $totalLessons + $totalQuizzes;
+            $completedItems = $completedLessons + $passedQuizzes;
+        @endphp
 
-                    <!-- Progress Bar -->
-                    <div class="mb-20">
-                        <div class="d-flex justify-content-between mb-8">
-                            <span class="text-14 text-gray-600">Progress</span>
-                            <span class="text-14 fw-medium text-success-600">{{ $completionPercentage }}%</span>
-                        </div>
-                        <div class="lesson-progress">
-                            <div class="lesson-progress-bar" style="width: {{ $completionPercentage }}%"></div>
-                        </div>
+        <!-- Progress card -->
+        <div class="card mt-0">
+            <div class="card-body">
+                <h6 class="mb-12">Progress Pembelajaran</h6>
+                <div class="d-flex justify-content-between mb-8 text-14">
+                    <span class="text-gray-600">{{ $completedItems }} dari {{ $totalItems }} materi selesai</span>
+                    <span class="text-main-600 fw-medium">{{ $rightProgress }}%</span>
+                </div>
+                <div class="progress" style="height:8px;">
+                    <div class="progress-bar bg-main-600" role="progressbar" style="width: {{ $rightProgress }}%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daftar Materi card using course accordion style -->
+        <div class="card mt-24">
+            <div class="card-body p-0">
+                @php
+                    $firstLessonCandidate = $course->modules->sortBy('order')->flatMap->lessons->sortBy('order')->first();
+                    $firstLessonUrl = $firstLessonCandidate ? route('lesson.show', $firstLessonCandidate->id) : null;
+                @endphp
+
+                <div class="course-item">
+                    <button type="button" class="course-item__button flex-align gap-4 w-100 p-16 ">
+                        <span class="d-block text-start">
+                            <span class="d-block h5 mb-0 text-line-1">Intro Kursus</span>
+                            <span class="d-block text-15 text-gray-300">Ringkasan & mulai</span>
+                        </span>
+                        <span class="course-item__arrow ms-auto text-20 text-gray-500"><i class="ph ph-caret-down"></i></span>
+                    </button>
+                    <div class="course-item-dropdown border-top border-gray-100">
+                        <ul class="course-list p-16 pb-0">
+                            <li class="course-list__item flex-align gap-8 mb-16 active">
+                                <span class="circle flex-shrink-0 text-32 d-flex text-main-600"><i class="ph-fill ph-check-circle"></i></span>
+                                <div class="w-100">
+                                    <a href="{{ route('course.show', $course->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                        Buka Ringkasan Kursus
+                                        <span class="text-gray-300 fw-normal d-block">Lihat deskripsi, pengajar, dan daftar modul</span>
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
                     </div>
+                </div>
 
-                    <!-- Lessons List -->
-                    @foreach($courseModules as $module)
-                        <div class="mb-20">
-                            <h6 class="fw-medium text-gray-800 mb-12 text-14">{{ $module->title }}</h6>
-
-                            @foreach($module->lessons as $moduleLesson)
-                                <div class="lesson-item {{ $moduleLesson->id == $lesson->id ? 'active' : '' }} p-12">
-                                    <a href="{{ route('lesson.show', $moduleLesson->id) }}" class="text-decoration-none d-flex align-items-start">
-                                        <div class="me-8 mt-2">
-                                            @if($moduleLesson->isCompletedByUser(Auth::user()))
-                                                <i class="ph ph-check-circle text-success-600" style="font-size: 16px;"></i>
+                @forelse($courseModules as $index => $module)
+                    <div class="course-item border-top border-gray-100">
+                        <button type="button" class="course-item__button flex-align gap-4 w-100 p-16 ">
+                            <span class="d-block text-start">
+                                <span class="d-block h5 mb-0 text-line-1">{{ $module->title }}</span>
+                                <span class="d-block text-15 text-gray-300">{{ $module->lessons->count() }} pelajaran</span>
+                            </span>
+                            <span class="course-item__arrow ms-auto text-20 text-gray-500"><i class="ph ph-arrow-right"></i></span>
+                        </button>
+                        <div class="course-item-dropdown border-top border-gray-100 {{ $module->lessons->contains('id', $lesson->id) ? 'active' : '' }}">
+                            <ul class="course-list p-16 pb-0">
+                                @foreach($module->lessons as $lessonIndex => $moduleLesson)
+                                    @php
+                                        $isCurrent = $moduleLesson->id == $lesson->id;
+                                        $isDone = $moduleLesson->isCompletedByUser($user);
+                                        // Jika ini adalah pelajaran yang sedang dibuka dan BELUM selesai,
+                                        // paksa ikon menjadi bulat kosong meskipun ada data lama
+                                        $forceEmpty = $isCurrent && (isset($isCompleted) && !$isCompleted);
+                                        // Tampilkan ceklist hanya jika SELESAI dan BUKAN pelajaran yang sedang dibuka
+                                        $displayCheck = !$isCurrent && $isDone;
+                                    @endphp
+                                    <li class="course-list__item flex-align gap-8 mb-16 {{ $isCurrent ? 'is-current' : '' }}">
+                                        <span class="circle flex-shrink-0 d-flex {{ $isCurrent ? 'text-main-600' : ($isDone ? 'text-main-600' : 'text-gray-100') }}">
+                                            @if($isCurrent)
+                                                <i class="ph ph-circle text-32"></i>
+                                            @elseif($isDone)
+                                                <i class="ph-fill ph-check-circle text-32"></i>
                                             @else
-                                                <i class="ph ph-circle text-gray-400" style="font-size: 16px;"></i>
+                                                <i class="ph ph-circle text-32"></i>
+                                            @endif
+                                        </span>
+                                        <div class="w-100 d-flex align-items-start justify-content-between gap-8">
+                                            <a href="{{ route('lesson.show', $moduleLesson->id) }}" class="fw-medium d-block hover-text-main-600 d-lg-block flex-grow-1 {{ $isCurrent ? 'text-main-600' : 'text-gray-300' }}">
+                                                {{ $lessonIndex + 1 }}. {{ $moduleLesson->title }}
+                                                <span class="text-gray-300 fw-normal d-block">{{ $moduleLesson->duration_in_minutes ?? 5 }} menit</span>
+                                            </a>
+                                            @if($isCurrent && ($forceEmpty || !$isDone))
+                                                <span title="Sedang dipelajari" class="text-main-600 mt-1"><i class="ph ph-spinner ph-spinner"></i></span>
                                             @endif
                                         </div>
-                                        <div class="flex-grow-1">
-                                            <div class="text-14 fw-medium text-gray-800 mb-2">{{ $moduleLesson->title }}</div>
-                                            <div class="text-12 text-gray-500">
-                                                <i class="ph ph-video me-1"></i>
-                                                {{ $moduleLesson->duration_in_minutes ?? 5 }} menit
-                                            </div>
+                                    </li>
+                                @endforeach
+                                @if($module->quiz)
+                                    <li class="course-list__item flex-align gap-8 mb-16">
+                                        <span class="circle flex-shrink-0 text-32 d-flex text-warning-600"><i class="ph ph-question"></i></span>
+                                        <div class="w-100">
+                                            <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                                Quiz: {{ $module->quiz->title }}
+                                                <span class="text-gray-300 fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes }} min</span>
+                                            </a>
                                         </div>
-                                    </a>
-                                </div>
-                            @endforeach
-
-                            @if($module->quiz)
-                                <div class="lesson-item p-12">
-                                    <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-decoration-none d-flex align-items-start">
-                                        <div class="me-8 mt-2">
-                                            <i class="ph ph-exam text-warning-600" style="font-size: 16px;"></i>
-                                        </div>
-                                        <div class="flex-grow-1">
-                                            <div class="text-14 fw-medium text-gray-800 mb-2">Quiz: {{ $module->quiz->title }}</div>
-                                            <div class="text-12 text-warning-600">
-                                                <i class="ph ph-question me-1"></i>
-                                                {{ $module->quiz->questions->count() }} pertanyaan
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-                            @endif
+                                    </li>
+                                @endif
+                            </ul>
                         </div>
-                    @endforeach
-                </div>
+                    </div>
+                @empty
+                    <div class="p-20 text-center">
+                        <i class="ph ph-book text-muted" style="font-size: 3rem;"></i>
+                        <h5 class="text-muted mt-3">Belum ada modul</h5>
+                        <p class="text-muted">Modul akan ditampilkan di sini setelah dibuat.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -1057,91 +1155,97 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 
-    // Lesson completion logic
-    const completeBtn = document.getElementById('completeBtn');
+    // Next button marks lesson complete before navigation
+    const nextBtn = document.getElementById('nextLessonBtn');
     const completeForm = document.getElementById('completeForm');
 
-    if (completeBtn && completeForm) {
-        completeBtn.addEventListener('click', function() {
-            Swal.fire({
-                title: 'Selesaikan Pelajaran?',
-                text: 'Tandai pelajaran ini sebagai selesai?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#10b981',
-                cancelButtonColor: '#6b7280',
-                confirmButtonText: 'Ya, Selesai!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Show loading state
-                    completeBtn.disabled = true;
-                    completeBtn.innerHTML = '<i class="ph ph-spinner me-2" style="animation: spin 1s linear infinite;"></i>Memproses...';
+    async function markCompleteThenNavigate(navigateTo) {
+        try {
+            // Update sidebar icon to a static progress indicator while processing
+            const currentItem = document.querySelector('.course-list__item.active .circle i');
+            if (currentItem) {
+                currentItem.className = 'ph ph-circle';
+                currentItem.style.animation = '';
+            }
 
-                    // Submit form
-                    fetch(completeForm.action, {
-                        method: 'POST',
-                        body: new FormData(completeForm),
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            @if($nextLesson)
-                                // Redirect to next lesson
-                                Swal.fire({
-                                    title: '✅ Pelajaran Selesai!',
-                                    text: 'Lanjut ke materi berikutnya...',
-                                    icon: 'success',
-                                    timer: 1000,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.href = '{{ route("lesson.show", $nextLesson->id) }}';
-                                });
-                            @elseif($moduleQuiz)
-                                // Redirect to quiz
-                                Swal.fire({
-                                    title: '✅ Pelajaran Selesai!',
-                                    text: 'Saatnya mengerjakan quiz...',
-                                    icon: 'success',
-                                    timer: 1000,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.href = '{{ route("quiz.show", $moduleQuiz->id) }}';
-                                });
-                            @else
-                                // No next lesson or quiz, just reload
-                                Swal.fire({
-                                    title: '✅ Pelajaran Selesai!',
-                                    text: 'Selamat! Anda telah menyelesaikan materi ini.',
-                                    icon: 'success',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.reload();
-                                });
-                            @endif
-                        } else {
-                            throw new Error(data.message || 'Terjadi kesalahan');
-                        }
-                    })
-                    .catch(error => {
-                        completeBtn.disabled = false;
-                        completeBtn.innerHTML = '<i class="ph ph-check-circle me-2"></i>Tandai Selesai';
-
-                        Swal.fire({
-                            title: '❌ Gagal!',
-                            text: 'Terjadi kesalahan. Silakan coba lagi.',
-                            icon: 'error',
-                            confirmButtonText: 'Oke'
-                        });
-                    });
+            const resp = await fetch(completeForm.action, {
+                method: 'POST',
+                body: new FormData(completeForm),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             });
+            const data = await resp.json();
+            if (!data.success) throw new Error(data.message || 'Terjadi kesalahan');
+
+            // Keep current icon as progress circle; the page change will render it as check on previous item
+
+            if (navigateTo) {
+                window.location.href = navigateTo;
+            } else {
+                window.location.reload();
+            }
+        } catch (e) {
+            Swal.fire({
+                title: '❌ Gagal!',
+                text: 'Terjadi kesalahan saat menandai selesai. Coba lagi.',
+                icon: 'error'
+            });
+        }
+    }
+
+    if (nextBtn && completeForm) {
+        nextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const already = this.getAttribute('data-completed') === '1';
+            const href = this.getAttribute('href');
+            if (already) {
+                if (href) window.location.href = href; else window.location.reload();
+                return;
+            }
+            // mark complete then go
+            markCompleteThenNavigate(href);
         });
+    }
+});
+
+// Sidebar accordion logic to mirror course page behavior
+document.addEventListener('DOMContentLoaded', function () {
+    const courseItems = document.querySelectorAll('.course-item');
+    courseItems.forEach(item => {
+        const button = item.querySelector('.course-item__button');
+        const dropdown = item.querySelector('.course-item-dropdown');
+        const arrowIcon = item.querySelector('.course-item__arrow i');
+        if (button && dropdown) {
+            button.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                courseItems.forEach(other => {
+                    other.classList.remove('active');
+                    const dd = other.querySelector('.course-item-dropdown');
+                    if (dd) dd.style.maxHeight = null;
+                    const arr = other.querySelector('.course-item__arrow i');
+                    if (arr) arr.style.transform = 'rotate(0deg)';
+                });
+                if (!isActive) {
+                    item.classList.add('active');
+                    dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
+                    if (arrowIcon) arrowIcon.style.transform = 'rotate(90deg)';
+                }
+            });
+        }
+    });
+
+    // Open the dropdown that contains the current lesson
+    const activeDropdown = document.querySelector('.course-item-dropdown.active');
+    if (activeDropdown) {
+        const parent = activeDropdown.closest('.course-item');
+        if (parent) {
+            parent.classList.add('active');
+            activeDropdown.style.maxHeight = activeDropdown.scrollHeight + 'px';
+            const arr = parent.querySelector('.course-item__arrow i');
+            if (arr) arr.style.transform = 'rotate(90deg)';
+        }
     }
 });
 </script>
