@@ -97,6 +97,40 @@
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
 
+    .doc-viewer,
+    .pdf-viewer,
+    .image-viewer,
+    .audio-viewer {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .doc-viewer iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+    .viewer-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+    }
+
+    /* Ensure outline button is visible even before hover */
+    .viewer-actions .btn-outline-primary {
+        border-color: var(--bs-primary, #0d6efd) !important;
+        color: var(--bs-primary, #0d6efd) !important;
+        background-color: transparent !important;
+    }
+    .viewer-actions .btn-outline-primary:hover {
+        background-color: var(--bs-primary, #0d6efd) !important;
+        color: #fff !important;
+        border-color: var(--bs-primary, #0d6efd) !important;
+    }
+
     /* Sidebar/course item styles to match course page */
     .course-item__arrow i { transition: transform 0.3s ease; }
     .course-item-dropdown { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; will-change: max-height; }
@@ -666,9 +700,11 @@
                                     $file_url = asset('storage/' . $lesson->attachment_path);
 
                                     // Determine file type
-                                    $is_pdf = in_array(strtolower($file_extension), ['pdf']);
-                                    $is_image = in_array(strtolower($file_extension), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                                    $is_document = in_array(strtolower($file_extension), ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']);
+                                    $ext = strtolower($file_extension);
+                                    $is_pdf = $ext === 'pdf';
+                                    $is_image = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    $is_office = in_array($ext, ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']);
+                                    $is_audio = in_array($ext, ['mp3', 'wav', 'ogg', 'm4a']);
                                 @endphp
 
                                 <div class="d-flex align-items-center justify-content-between bg-white rounded-8 p-20 mb-20">
@@ -681,7 +717,7 @@
                                             <div class="w-48 h-48 d-flex align-items-center justify-content-center bg-success-50 rounded-8 me-16">
                                                 <i class="ph ph-image text-success-600" style="font-size: 24px;"></i>
                                             </div>
-                                        @elseif($is_document)
+                                        @elseif($is_office)
                                             <div class="w-48 h-48 d-flex align-items-center justify-content-center bg-primary-50 rounded-8 me-16">
                                                 <i class="ph ph-file-doc text-primary-600" style="font-size: 24px;"></i>
                                             </div>
@@ -697,20 +733,48 @@
                                         </div>
                                     </div>
 
-                                    <a href="{{ $file_url }}" download class="btn btn-primary rounded-pill py-8 px-20">
-                                        <i class="ph ph-download me-2"></i>Download
-                                    </a>
+                                    <div class="viewer-actions">
+                                        <a href="{{ $file_url }}" target="_blank" class="btn btn-outline-primary rounded-pill py-8 px-16">
+                                            <i class="ph ph-arrow-square-out me-2"></i>Buka Tab Baru
+                                        </a>
+                                        <a href="{{ $file_url }}" download class="btn btn-primary rounded-pill py-8 px-16">
+                                            <i class="ph ph-download me-2"></i>Download
+                                        </a>
+                                    </div>
                                 </div>
 
                                 @if($is_pdf)
                                     <!-- PDF Viewer -->
-                                    <div class="pdf-viewer bg-white rounded-8 overflow-hidden" style="height: 600px;">
-                                        <iframe src="{{ $file_url }}" width="100%" height="100%" frameborder="0"></iframe>
+                                    <div class="pdf-viewer overflow-hidden" style="height: 650px;">
+                                        <iframe src="{{ $file_url }}#toolbar=1&navpanes=0&scrollbar=1" width="100%" height="100%" frameborder="0"></iframe>
                                     </div>
                                 @elseif($is_image)
                                     <!-- Image Viewer -->
                                     <div class="image-viewer text-center bg-white rounded-8 p-20">
                                         <img src="{{ $file_url }}" alt="{{ $lesson->title }}" class="img-fluid rounded-8" style="max-height: 600px;">
+                                    </div>
+                                @elseif($is_audio)
+                                    <!-- Audio Viewer -->
+                                    <div class="audio-viewer p-16 d-flex align-items-center gap-12">
+                                        <i class="ph ph-speaker-high text-main-600" style="font-size:28px"></i>
+                                        <audio controls style="width:100%">
+                                            <source src="{{ $file_url }}">
+                                            Browser Anda tidak mendukung audio HTML5.
+                                        </audio>
+                                    </div>
+                                @elseif($is_office)
+                                    <!-- Office Docs Viewer -->
+                                    @php
+                                        // Try Microsoft viewer first (works well for ppt/pptx/xls/xlsx/doc/docx) if publicly accessible
+                                        $msViewer = 'https://view.officeapps.live.com/op/embed.aspx?src=' . urlencode($file_url);
+                                        // Alternative Google viewer as fallback
+                                        $gViewer = 'https://drive.google.com/viewerng/viewer?embedded=1&url=' . urlencode($file_url);
+                                    @endphp
+                                    <div class="doc-viewer" style="height:650px">
+                                        <iframe src="{{ $msViewer }}" onerror="this.onerror=null; this.src='{{ $gViewer }}'" allowfullscreen></iframe>
+                                    </div>
+                                    <div class="text-13 text-gray-500 mt-8">
+                                        Catatan: Jika pratinjau tidak muncul, klik "Buka Tab Baru" atau unduh file untuk membukanya di perangkat Anda.
                                     </div>
                                 @endif
                             </div>
