@@ -207,11 +207,13 @@
                                         @endif
                                     </div>
                                 </div>
-                                @if($enrolledProgressPercentage === 100)
-                                    <span class="badge bg-warning text-dark py-6 px-12">
-                                        <i class="ph ph-trophy me-1"></i>Selesai!
-                                    </span>
-                                @endif
+                                <div class="d-flex align-items-center gap-8">
+                                    @if($enrolledProgressPercentage === 100)
+                                        <span class="badge bg-warning text-dark py-6 px-12">
+                                            <i class="ph ph-trophy me-1"></i>Selesai!
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                             @if($enrolledProgressPercentage > 0 && $enrolledProgressPercentage < 100)
                                 <div class="progress mt-12" style="height: 6px;">
@@ -220,6 +222,13 @@
                             @endif
                         </div>
                     @endif
+
+                    @php
+                        // Data untuk tombol "Selanjutnya" (di bawah thumbnail)
+                        $firstLessonCandidate = $course->modules->sortBy('order')->flatMap->lessons->sortBy('order')->first();
+                        $firstLessonUrl = $firstLessonCandidate ? route('lesson.show', $firstLessonCandidate->id) : null;
+                        $progressForCta = $isEnrolled ? $course->getCompletionPercentage(Auth::user()) : null;
+                    @endphp
 
                     <div class="rounded-16 overflow-hidden">
                         @if($course->thumbnail)
@@ -231,6 +240,15 @@
                             </div>
                         @endif
                     </div>
+
+                    {{-- CTA: Selanjutnya (di bawah thumbnail, rata kanan, biru) --}}
+                    @if($isEnrolled && $firstLessonUrl && ($progressForCta === 0 || $progressForCta < 100))
+                        <div class="mt-12 d-flex justify-content-end">
+                            <a href="{{ $firstLessonUrl }}" class="btn btn-primary rounded-pill py-8 px-16">
+                                Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    @endif
 
                     <div class="mt-24">
                         {{-- About Course (Ringkasan) --}}
@@ -395,7 +413,7 @@
                                 </span>
                                 <span class="course-item__arrow ms-auto text-20 text-gray-500"><i class="ph ph-caret-down"></i></span>
                             </button>
-                            <div class="course-item-dropdown border-bottom border-gray-100">
+                            <div class="course-item-dropdown border-bottom border-gray-100 active">
                                 <ul class="course-list p-16 pb-0">
                                     <li class="course-list__item flex-align gap-8 mb-16 active">
                                         <span class="circle flex-shrink-0 text-32 d-flex text-main-600"><i class="ph-fill ph-check-circle"></i></span>
@@ -438,7 +456,7 @@
                                     </span>
                                     <span class="course-item__arrow ms-auto text-20 text-gray-500"><i class="ph ph-arrow-right"></i></span>
                                 </button>
-                                <div class="course-item-dropdown border-bottom border-gray-100 {{ $index === 0 ? 'active' : '' }}">
+                                <div class="course-item-dropdown border-bottom border-gray-100">
                                     <ul class="course-list p-16 pb-0">
                                         @foreach($module->lessons as $lessonIndex => $lesson)
                                             @php $isDone = in_array($lesson->id, $completedLessonIds); @endphp

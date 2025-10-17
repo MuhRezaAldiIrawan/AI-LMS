@@ -107,10 +107,31 @@ class QuizController extends Controller
         // Get all course modules for sidebar
         $courseModules = $course->modules()->with(['lessons', 'quiz.questions'])->orderBy('order')->get();
 
+        // Determine next module's first lesson after this quiz's module
+        $orderedModules = $course->modules()->orderBy('order')->get()->values();
+        $currentModuleIndex = $orderedModules->search(fn($m) => $m->id === $quiz->module_id);
+        $nextModuleFirstLesson = null;
+        if ($currentModuleIndex !== false) {
+            $nextModule = $orderedModules->get($currentModuleIndex + 1);
+            if ($nextModule) {
+                $firstLesson = $nextModule->lessons()->orderBy('order')->first();
+                if ($firstLesson) {
+                    $nextModuleFirstLesson = $firstLesson;
+                }
+            }
+        }
+
+        // Certificate if course complete
+        $certificate = null;
+        if ($course->isCompletedByUser($user)) {
+            $certificate = $user->getCertificateForCourse($course->id);
+        }
+
         return view('pages.quiz.show', compact(
             'quiz', 'attempts', 'totalAttempts', 'bestScore',
             'lastScore', 'averageScore', 'isPassed', 'canTakeQuiz', 'canAttempt',
-            'hasPassedQuiz', 'remainingAttempts', 'completionPercentage', 'courseModules'
+            'hasPassedQuiz', 'remainingAttempts', 'completionPercentage', 'courseModules',
+            'nextModuleFirstLesson', 'certificate'
         ));
     }
 

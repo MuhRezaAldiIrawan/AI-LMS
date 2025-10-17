@@ -123,13 +123,21 @@ class LessonController extends Controller
             }
         }
 
-        // Get module quiz if this is the last lesson in the module
-        $moduleQuiz = null;
-        if (!$nextLesson) {
-            $currentModule = $lesson->module;
-            if ($currentModule->quiz) {
-                $moduleQuiz = $currentModule->quiz;
-            }
+        // Determine if this is the last lesson in its module
+        $currentModule = $lesson->module;
+        $moduleLessons = $currentModule->lessons()->orderBy('order')->get();
+        $isLastLessonInModule = $moduleLessons->isNotEmpty() && $moduleLessons->last()->id === $lesson->id;
+
+        // Module quiz (if exists) regardless of next lesson in other modules
+        $moduleQuiz = $currentModule->quiz;
+
+        // Whether user already passed module quiz
+        $hasPassedModuleQuiz = false;
+        if ($moduleQuiz && $user) {
+            $hasPassedModuleQuiz = $user->quizAttempts()
+                ->where('quiz_id', $moduleQuiz->id)
+                ->where('passed', true)
+                ->exists();
         }
 
         // Calculate course completion percentage
@@ -138,9 +146,16 @@ class LessonController extends Controller
         // Get all course modules for sidebar
         $courseModules = $course->modules()->with(['lessons', 'quiz.questions'])->orderBy('order')->get();
 
+        // Get certificate if course already completed (to show download button at the very end)
+        $certificate = null;
+        if ($user && $course->isCompletedByUser($user)) {
+            $certificate = $user->getCertificateForCourse($course->id);
+        }
+
         return view('pages.lesson.show', compact(
             'lesson', 'isCompleted', 'previousLesson', 'nextLesson',
-            'moduleQuiz', 'completionPercentage', 'courseModules'
+            'moduleQuiz', 'isLastLessonInModule', 'hasPassedModuleQuiz',
+            'completionPercentage', 'courseModules', 'certificate'
         ));
     }
 

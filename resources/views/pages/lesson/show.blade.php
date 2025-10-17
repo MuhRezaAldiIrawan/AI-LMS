@@ -97,40 +97,6 @@
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
 
-    .doc-viewer,
-    .pdf-viewer,
-    .image-viewer,
-    .audio-viewer {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-    }
-
-    .doc-viewer iframe {
-        width: 100%;
-        height: 100%;
-        border: 0;
-    }
-
-    .viewer-actions {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-    }
-
-    /* Ensure outline button is visible even before hover */
-    .viewer-actions .btn-outline-primary {
-        border-color: var(--bs-primary, #0d6efd) !important;
-        color: var(--bs-primary, #0d6efd) !important;
-        background-color: transparent !important;
-    }
-    .viewer-actions .btn-outline-primary:hover {
-        background-color: var(--bs-primary, #0d6efd) !important;
-        color: #fff !important;
-        border-color: var(--bs-primary, #0d6efd) !important;
-    }
-
     /* Sidebar/course item styles to match course page */
     .course-item__arrow i { transition: transform 0.3s ease; }
     .course-item-dropdown { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; will-change: max-height; }
@@ -695,16 +661,20 @@
                                 </h4>
 
                                 @php
-                                    $file_extension = pathinfo($lesson->attachment_path, PATHINFO_EXTENSION);
+                                    $file_extension = strtolower(pathinfo($lesson->attachment_path, PATHINFO_EXTENSION));
                                     $file_name = basename($lesson->attachment_path);
                                     $file_url = asset('storage/' . $lesson->attachment_path);
 
                                     // Determine file type
-                                    $ext = strtolower($file_extension);
-                                    $is_pdf = $ext === 'pdf';
-                                    $is_image = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
-                                    $is_office = in_array($ext, ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']);
-                                    $is_audio = in_array($ext, ['mp3', 'wav', 'ogg', 'm4a']);
+                                    $is_pdf = in_array($file_extension, ['pdf']);
+                                    $is_image = in_array($file_extension, ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                                    $is_document = in_array($file_extension, ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx']);
+                                    $is_audio = in_array($file_extension, ['mp3', 'wav', 'ogg', 'm4a']);
+                                    $is_video_file = in_array($file_extension, ['mp4', 'webm', 'ogg', 'mov']);
+                                    $is_text = in_array($file_extension, ['txt', 'csv', 'log', 'md']);
+
+                                    // Office Web Viewer requires a publicly accessible URL
+                                    $office_view_url = 'https://view.officeapps.live.com/op/embed.aspx?src=' . urlencode($file_url);
                                 @endphp
 
                                 <div class="d-flex align-items-center justify-content-between bg-white rounded-8 p-20 mb-20">
@@ -717,7 +687,7 @@
                                             <div class="w-48 h-48 d-flex align-items-center justify-content-center bg-success-50 rounded-8 me-16">
                                                 <i class="ph ph-image text-success-600" style="font-size: 24px;"></i>
                                             </div>
-                                        @elseif($is_office)
+                                        @elseif($is_document)
                                             <div class="w-48 h-48 d-flex align-items-center justify-content-center bg-primary-50 rounded-8 me-16">
                                                 <i class="ph ph-file-doc text-primary-600" style="font-size: 24px;"></i>
                                             </div>
@@ -733,48 +703,58 @@
                                         </div>
                                     </div>
 
-                                    <div class="viewer-actions">
-                                        <a href="{{ $file_url }}" target="_blank" class="btn btn-outline-primary rounded-pill py-8 px-16">
-                                            <i class="ph ph-arrow-square-out me-2"></i>Buka Tab Baru
-                                        </a>
-                                        <a href="{{ $file_url }}" download class="btn btn-primary rounded-pill py-8 px-16">
-                                            <i class="ph ph-download me-2"></i>Download
-                                        </a>
-                                    </div>
+                                    <a href="{{ $file_url }}" download class="btn btn-primary rounded-pill py-8 px-20">
+                                        <i class="ph ph-download me-2"></i>Download
+                                    </a>
                                 </div>
 
                                 @if($is_pdf)
                                     <!-- PDF Viewer -->
-                                    <div class="pdf-viewer overflow-hidden" style="height: 650px;">
-                                        <iframe src="{{ $file_url }}#toolbar=1&navpanes=0&scrollbar=1" width="100%" height="100%" frameborder="0"></iframe>
+                                    <div class="pdf-viewer bg-white rounded-8 overflow-hidden" style="height: 600px;">
+                                        <object data="{{ $file_url }}" type="application/pdf" width="100%" height="100%">
+                                            <iframe src="{{ $file_url }}" width="100%" height="100%" frameborder="0"></iframe>
+                                        </object>
                                     </div>
                                 @elseif($is_image)
                                     <!-- Image Viewer -->
                                     <div class="image-viewer text-center bg-white rounded-8 p-20">
                                         <img src="{{ $file_url }}" alt="{{ $lesson->title }}" class="img-fluid rounded-8" style="max-height: 600px;">
                                     </div>
+                                @elseif($is_document)
+                                    <!-- Office Document Viewer (Word/Excel/PPT) -->
+                                    <div class="bg-white rounded-8 overflow-hidden" style="height: 600px;">
+                                        <iframe src="{{ $office_view_url }}" width="100%" height="100%" frameborder="0"></iframe>
+                                    </div>
+                                    <div class="text-13 text-gray-500 mt-8">
+                                        Jika pratinjau tidak tampil, <a target="_blank" href="{{ $office_view_url }}">buka di tab baru</a> atau <a target="_blank" href="{{ $file_url }}">unduh dokumen</a>.
+                                    </div>
+                                @elseif($is_video_file)
+                                    <!-- Video File Viewer -->
+                                    <div class="bg-white rounded-8 p-12">
+                                        <video controls class="w-100" style="max-height: 600px;">
+                                            <source src="{{ $file_url }}" type="video/{{ $file_extension == 'ogv' ? 'ogg' : $file_extension }}">
+                                            Browser Anda tidak mendukung video HTML5.
+                                        </video>
+                                    </div>
                                 @elseif($is_audio)
-                                    <!-- Audio Viewer -->
-                                    <div class="audio-viewer p-16 d-flex align-items-center gap-12">
-                                        <i class="ph ph-speaker-high text-main-600" style="font-size:28px"></i>
-                                        <audio controls style="width:100%">
-                                            <source src="{{ $file_url }}">
+                                    <!-- Audio Player -->
+                                    <div class="bg-white rounded-8 p-20">
+                                        <audio controls style="width: 100%">
+                                            <source src="{{ $file_url }}" type="audio/{{ $file_extension }}">
                                             Browser Anda tidak mendukung audio HTML5.
                                         </audio>
                                     </div>
-                                @elseif($is_office)
-                                    <!-- Office Docs Viewer -->
-                                    @php
-                                        // Try Microsoft viewer first (works well for ppt/pptx/xls/xlsx/doc/docx) if publicly accessible
-                                        $msViewer = 'https://view.officeapps.live.com/op/embed.aspx?src=' . urlencode($file_url);
-                                        // Alternative Google viewer as fallback
-                                        $gViewer = 'https://drive.google.com/viewerng/viewer?embedded=1&url=' . urlencode($file_url);
-                                    @endphp
-                                    <div class="doc-viewer" style="height:650px">
-                                        <iframe src="{{ $msViewer }}" onerror="this.onerror=null; this.src='{{ $gViewer }}'" allowfullscreen></iframe>
+                                @elseif($is_text)
+                                    <!-- Text/CSV Viewer -->
+                                    <div class="bg-white rounded-8 overflow-hidden" style="height: 500px;">
+                                        <iframe src="{{ $file_url }}" width="100%" height="100%" frameborder="0"></iframe>
                                     </div>
-                                    <div class="text-13 text-gray-500 mt-8">
-                                        Catatan: Jika pratinjau tidak muncul, klik "Buka Tab Baru" atau unduh file untuk membukanya di perangkat Anda.
+                                @else
+                                    <!-- Fallback -->
+                                    <div class="text-center bg-white rounded-8 p-24">
+                                        <i class="ph ph-file text-gray-400" style="font-size:48px"></i>
+                                        <p class="text-gray-500 mt-12 mb-8">Pratinjau untuk tipe file ini belum didukung.</p>
+                                        <a target="_blank" href="{{ $file_url }}" class="btn btn-outline-primary rounded-pill">Buka di tab baru</a>
                                     </div>
                                 @endif
                             </div>
@@ -789,7 +769,7 @@
                 @endif
 
                 <!-- Navigasi Bawah (langsung di bawah materi) -->
-                <div class="d-flex justify-content-between mt-32">
+                <div class="d-flex justify-content-between">
                     @if($previousLesson)
                         <a href="{{ route('lesson.show', $previousLesson->id) }}" class="btn btn-outline-primary rounded-pill py-10 px-20">
                             <i class="ph ph-arrow-left me-1"></i> Sebelumnya
@@ -814,7 +794,7 @@
                 </div>
 
                 <!-- Ringkasan Pelajaran -->
-                <div class="mt-32">
+                <div class="mt-15">
                     <h5 class="fw-bold text-gray-900 mb-12">Ringkasan Pelajaran</h5>
                     @php $summary = $lesson->summary ?? $lesson->description; @endphp
                     <div class="text-gray-700" style="font-size: 15px;">{!! $summary ? nl2br(e($summary)) : 'Ringkasan belum tersedia.' !!}</div>
@@ -877,7 +857,6 @@
             </div>
         </div>
 
-        <!-- Daftar Materi card using course accordion style -->
         <div class="card mt-24">
             <div class="card-body p-0">
                 @php
@@ -923,16 +902,17 @@
                                     @php
                                         $isCurrent = $moduleLesson->id == $lesson->id;
                                         $isDone = $moduleLesson->isCompletedByUser($user);
-                                        // Jika ini adalah pelajaran yang sedang dibuka dan BELUM selesai,
-                                        // paksa ikon menjadi bulat kosong meskipun ada data lama
-                                        $forceEmpty = $isCurrent && (isset($isCompleted) && !$isCompleted);
-                                        // Tampilkan ceklist hanya jika SELESAI dan BUKAN pelajaran yang sedang dibuka
-                                        $displayCheck = !$isCurrent && $isDone;
+                                        // Status selesai untuk pelajaran yang sedang dibuka (ditentukan controller)
+                                        $currentCompleted = $isCurrent ? (isset($isCompleted) ? $isCompleted : false) : false;
                                     @endphp
                                     <li class="course-list__item flex-align gap-8 mb-16 {{ $isCurrent ? 'is-current' : '' }}">
-                                        <span class="circle flex-shrink-0 d-flex {{ $isCurrent ? 'text-main-600' : ($isDone ? 'text-main-600' : 'text-gray-100') }}">
+                                        <span class="circle flex-shrink-0 d-flex {{ ($isCurrent && $currentCompleted) || (!$isCurrent && $isDone) ? 'text-main-600' : 'text-gray-100' }}">
                                             @if($isCurrent)
-                                                <i class="ph ph-circle text-32"></i>
+                                                @if($currentCompleted)
+                                                    <i class="ph-fill ph-check-circle text-32"></i>
+                                                @else
+                                                    <i class="ph ph-circle text-32"></i>
+                                                @endif
                                             @elseif($isDone)
                                                 <i class="ph-fill ph-check-circle text-32"></i>
                                             @else
@@ -944,20 +924,37 @@
                                                 {{ $lessonIndex + 1 }}. {{ $moduleLesson->title }}
                                                 <span class="text-gray-300 fw-normal d-block">{{ $moduleLesson->duration_in_minutes ?? 5 }} menit</span>
                                             </a>
-                                            @if($isCurrent && ($forceEmpty || !$isDone))
+                                            @if($isCurrent && !$currentCompleted)
                                                 <span title="Sedang dipelajari" class="text-main-600 mt-1"><i class="ph ph-spinner ph-spinner"></i></span>
                                             @endif
                                         </div>
                                     </li>
                                 @endforeach
                                 @if($module->quiz)
-                                    <li class="course-list__item flex-align gap-8 mb-16">
-                                        <span class="circle flex-shrink-0 text-32 d-flex text-warning-600"><i class="ph ph-question"></i></span>
-                                        <div class="w-100">
-                                            <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                    @php
+                                        $quizPassed = $user ? $user->quizAttempts()
+                                            ->where('quiz_id', $module->quiz->id)
+                                            ->where('passed', true)
+                                            ->exists() : false;
+                                        // Quiz sedang aktif hanya pada halaman quiz (bukan di halaman lesson ini)
+                                        $isQuizCurrent = false;
+                                    @endphp
+                                    <li class="course-list__item flex-align gap-8 mb-16 {{ $isQuizCurrent ? 'is-current' : ($quizPassed ? 'completed' : '') }}">
+                                        <span class="circle flex-shrink-0 text-32 d-flex {{ $quizPassed ? 'text-main-600' : 'text-warning-600' }}">
+                                            @if($quizPassed)
+                                                <i class="ph-fill ph-check-circle"></i>
+                                            @else
+                                                <i class="ph ph-question"></i>
+                                            @endif
+                                        </span>
+                                        <div class="w-100 d-flex align-items-start justify-content-between gap-8">
+                                            <a href="{{ route('quiz.show', $module->quiz->id) }}" class="fw-medium d-block hover-text-main-600 d-lg-block flex-grow-1 {{ $isQuizCurrent ? 'text-main-600' : 'text-gray-300' }}">
                                                 Quiz: {{ $module->quiz->title }}
-                                                <span class="text-gray-300 fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes }} min</span>
+                                                <span class="text-gray-300 fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes ?? ($module->quiz->time_limit ?? 60) }} min</span>
                                             </a>
+                                            @if($quizPassed)
+                                                <span class="badge bg-success-50 text-success-600 rounded-pill mt-1">Lulus</span>
+                                            @endif
                                         </div>
                                     </li>
                                 @endif

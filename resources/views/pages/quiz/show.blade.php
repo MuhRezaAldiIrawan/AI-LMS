@@ -68,6 +68,8 @@
     $user = Auth::user();
     $rightProgress = method_exists($course, 'getCompletionPercentage') && $user ? $course->getCompletionPercentage($user) : ($completionPercentage ?? 0);
     $courseModules = isset($courseModules) ? $courseModules : $course->modules;
+    // Gunakan durasi dari field utama jika ada, fallback ke time_limit jika tidak tersedia
+    $quizDuration = $quiz->duration_in_minutes ?? $quiz->time_limit ?? 0;
 @endphp
 <div class="row gy-4">
     <!-- Main Content -->
@@ -97,8 +99,8 @@
                         </div>
 
                         <div class="text-end">
-                            <div class="badge bg-white bg-opacity-25 text-white py-8 px-16 rounded-pill mb-8">
-                                <i class="ph ph-exam me-1"></i>Quiz
+                            <div class="badge bg-white text-warning-700 py-8 px-16 rounded-pill mb-8 shadow-sm">
+                                <i class="ph ph-exam me-1"></i> Quiz
                             </div>
                             <div class="text-white opacity-90 text-14">
                                 <i class="ph ph-question me-1"></i>{{ $quiz->questions->count() }} Pertanyaan
@@ -120,7 +122,7 @@
                             </div>
                             <div class="col-md-3 col-6">
                                 <div class="text-center">
-                                    <div class="fw-bold text-24 text-main-600">{{ $quiz->time_limit ?? 60 }}</div>
+                                        <div class="fw-bold text-24 text-main-600">{{ $quizDuration }}</div>
                                     <div class="text-14 text-gray-600">Menit</div>
                                 </div>
                             </div>
@@ -146,7 +148,7 @@
                             <ul class="mb-0 text-gray-700">
                                 <li class="mb-8">Pastikan koneksi internet Anda stabil</li>
                                 <li class="mb-8">Baca setiap pertanyaan dengan teliti</li>
-                                <li class="mb-8">Waktu pengerjaan: <strong>{{ $quiz->time_limit ?? 60 }} menit</strong></li>
+                                <li class="mb-8">Waktu pengerjaan: <strong>{{ $quizDuration }} menit</strong></li>
                                 <li class="mb-8">Nilai minimum untuk lulus: <strong>{{ $quiz->passing_score ?? 70 }}%</strong></li>
                                 <li class="mb-0">Anda memiliki <strong>{{ $quiz->max_attempts ?? 3 }} kali kesempatan</strong> untuk mengerjakan</li>
                             </ul>
@@ -197,28 +199,38 @@
                     @endif
 
                     <!-- Start Quiz Section -->
-                    <div class="text-center">
+                    <div>
                         @if($canAttempt)
                             @if($hasPassedQuiz)
-                                <div class="mb-24">
-                                    <div class="d-inline-flex align-items-center bg-success-50 text-success-600 py-12 px-24 rounded-pill mb-16">
-                                        <i class="ph ph-check-circle me-2" style="font-size: 20px;"></i>
-                                        <span class="fw-medium">Quiz Sudah Lulus</span>
-                                    </div>
-                                    <p class="text-gray-600">Selamat! Anda telah lulus quiz ini dengan skor {{ $bestScore }}%</p>
+                                <div class="d-flex justify-content-end mt-12">
+                                    @if(isset($nextModuleFirstLesson))
+                                        <a href="{{ route('lesson.show', $nextModuleFirstLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20">
+                                            Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                                        </a>
+                                    @elseif(isset($certificate) && $certificate && ($completionPercentage ?? 0) >= 100)
+                                        <div class="d-flex gap-8 flex-wrap">
+                                            <a href="{{ route('certificate.preview', $certificate->id) }}" target="_blank" class="btn btn-outline-success rounded-pill py-10 px-20">
+                                                <i class="ph ph-eye me-1"></i> Lihat Sertifikat
+                                            </a>
+                                            <a href="{{ route('certificate.download', $certificate->id) }}" class="btn btn-success rounded-pill py-10 px-20">
+                                                <i class="ph ph-certificate me-1"></i> Download Sertifikat
+                                            </a>
+                                        </div>
+                                    @endif
                                 </div>
-                            @endif
-
-                            <button type="button" id="startQuizBtn" class="btn btn-warning btn-lg rounded-pill py-16 px-32 fw-bold">
-                                <i class="ph ph-play-circle me-2" style="font-size: 20px;"></i>
-                                {{ $attempts->count() > 0 ? 'Coba Lagi' : 'Mulai Quiz' }}
-                            </button>
-
-                            @if($remainingAttempts > 0)
-                                <p class="text-gray-600 mt-12 mb-0">
-                                    Sisa percobaan: <strong>{{ $remainingAttempts }}</strong>
-                                </p>
-                            @endif
+                            @else
+                                    <div class="d-flex justify-content-center">
+                                        <button type="button" id="startQuizBtn" class="btn btn-warning btn-lg rounded-pill py-16 px-32 fw-bold">
+                                            <i class="ph ph-play-circle me-2" style="font-size: 20px;"></i>
+                                            {{ $attempts->count() > 0 ? 'Coba Lagi' : 'Mulai Kuis' }}
+                                        </button>
+                                    </div>
+                                    @if($remainingAttempts > 0)
+                                        <p class="text-gray-600 mt-12 mb-0 text-center">
+                                            Sisa percobaan: <strong>{{ $remainingAttempts }}</strong>
+                                        </p>
+                                    @endif
+                                @endif
                         @else
                             <div class="bg-gray-50 border border-gray-200 rounded-12 p-32">
                                 <i class="ph ph-lock text-gray-400" style="font-size: 48px;"></i>
@@ -228,9 +240,28 @@
                         @endif
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+
+                <!-- Instruktur -->
+                <div class="mt-24 pt-24 border-top border-gray-100">
+                    <h5 class="fw-bold text-gray-900 mb-12">Instruktur</h5>
+                    <div class="d-flex align-items-center gap-12">
+                        @php $author = $quiz->module->course->author; @endphp
+                        @if($author && ($author->avatar ?? null))
+                            <img src="{{ Storage::url($author->avatar) }}" alt="{{ $author->name }}" class="w-56 h-56 rounded-circle object-fit-cover">
+                        @else
+                            <div class="w-56 h-56 rounded-circle bg-main-50 d-flex align-items-center justify-content-center">
+                                <i class="ph ph-user text-main-600" style="font-size: 24px;"></i>
+                            </div>
+                        @endif
+                        <div>
+                            <div class="fw-bold text-gray-900">{{ $author->name ?? 'Administrator' }}</div>
+                            <div class="text-13 text-gray-500">{{ $author->position ?? 'Instruktur' }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- end .card-body -->
+        </div> <!-- end .card -->
+    </div> <!-- end left column -->
 
     <!-- Sidebar -->
     <div class="col-lg-4 col-md-4">
@@ -324,13 +355,28 @@
                                     </li>
                                 @endforeach
                                 @if($module->quiz)
-                                    <li class="course-list__item flex-align gap-8 mb-16 {{ $module->quiz->id == $quiz->id ? 'active ' : '' }}">
-                                        <span class="circle flex-shrink-0 text-32 d-flex text-warning-600"><i class="ph ph-question"></i></span>
-                                        <div class="w-100">
-                                            <a href="{{ route('quiz.show', $module->quiz->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                    @php
+                                        $quizPassed = $user ? $user->quizAttempts()
+                                            ->where('quiz_id', $module->quiz->id)
+                                            ->where('passed', true)
+                                            ->exists() : false;
+                                    @endphp
+                                    <li class="course-list__item flex-align gap-8 mb-16 {{ $module->quiz->id == $quiz->id ? 'active ' : '' }} {{ $quizPassed ? 'completed' : '' }}">
+                                        <span class="circle flex-shrink-0 text-32 d-flex {{ $quizPassed ? 'text-main-600' : 'text-warning-600' }}">
+                                            @if($quizPassed)
+                                                <i class="ph-fill ph-check-circle"></i>
+                                            @else
+                                                <i class="ph ph-question"></i>
+                                            @endif
+                                        </span>
+                                        <div class="w-100 d-flex align-items-start justify-content-between gap-8">
+                                            <a href="{{ route('quiz.show', $module->quiz->id) }}" class="fw-medium d-block hover-text-main-600 d-lg-block flex-grow-1 {{ $module->quiz->id == $quiz->id ? 'text-main-600' : ($quizPassed ? 'text-main-600' : 'text-gray-300') }}">
                                                 Quiz: {{ $module->quiz->title }}
                                                 <span class="text-gray-300 fw-normal d-block">{{ $module->quiz->questions->count() }} pertanyaan • {{ $module->quiz->duration_in_minutes ?? ($module->quiz->time_limit ?? 60) }} min</span>
                                             </a>
+                                            @if($quizPassed)
+                                                <span class="badge bg-success-50 text-success-600 rounded-pill mt-1">Lulus</span>
+                                            @endif
                                         </div>
                                     </li>
                                 @endif
@@ -365,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="d-flex align-items-center mb-2">
                             <i class="ph ph-clock me-2 text-info"></i>
                             <span>Waktu: {{ $quiz->time_limit ?? 60 }} menit</span>
+                                <span>Waktu: {{ $quizDuration }} menit</span>
                         </div>
                         <div class="d-flex align-items-center mb-2">
                             <i class="ph ph-target me-2 text-success"></i>

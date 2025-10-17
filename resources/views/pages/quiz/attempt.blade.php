@@ -236,7 +236,7 @@
             <div class="question-nav">
                 <div class="bg-white rounded-12 p-20 mb-20">
                     <h6 class="fw-bold text-gray-900 mb-16">Navigasi Soal</h6>
-                    <div class="d-flex flex-wrap">
+                    <div class="d-flex flex-wrap" id="questionNav">
                         @foreach($questions as $index => $question)
                             <div class="question-nav-item {{ $index === 0 ? 'current' : '' }}"
                                  onclick="goToQuestion({{ $index }})" id="nav-{{ $index }}">
@@ -302,6 +302,7 @@ let isSubmitting = false; // Flag to prevent beforeunload alert on submit
 document.addEventListener('DOMContentLoaded', function() {
     startTimer();
     updateProgress();
+    updateAnsweredCount();
 });
 
 // Timer functionality
@@ -400,7 +401,7 @@ function updateProgress() {
 
 // Update answered count
 function updateAnsweredCount() {
-    const answeredCount = document.querySelectorAll('.question-nav-item.answered').length;
+    const answeredCount = document.querySelectorAll('#questionNav .question-nav-item.answered').length;
     const percentage = Math.round((answeredCount / totalQuestions) * 100);
 
     document.getElementById('answeredCount').innerHTML =
