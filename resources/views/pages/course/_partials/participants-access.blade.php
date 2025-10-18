@@ -1,6 +1,6 @@
-@section('css')
+@push('js')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-@endsection
+@endpush
 
 <div class="card mt-24">
     <div class="card-header border-bottom">
@@ -17,11 +17,11 @@
                 </div>
             </div>
             <div class="col-md-6 d-flex justify-content-end align-items-center">
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-outline-primary btn-sm" id="selectAll">
+                <div class="participants-actions d-flex gap-2">
+                    <button type="button" class="btn btn-outline-main btn-sm" id="selectAll">
                         <i class="ph-check-square me-1"></i> Pilih Semua
                     </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="deselectAll">
+                    <button type="button" class="btn btn-outline-main btn-sm" id="deselectAll">
                         <i class="ph-square me-1"></i> Batalkan Semua
                     </button>
                 </div>
@@ -54,12 +54,7 @@
                                 </div>
                                 <div class="flex-grow-1">
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-sm me-3">
-                                            <div
-                                                class="avatar-sm-wrapper rounded-circle bg-primary text-white d-flex align-items-center justify-content-center">
-                                                {{ strtoupper(substr($user->name, 0, 2)) }}
-                                            </div>
-                                        </div>
+                                        <img src="{{ $user->profile_photo_url }}" alt="{{ $user->name }}" class="participant-avatar" />
                                         <div>
                                             <h6 class="mb-1 fw-semibold">{{ $user->name }}</h6>
                                             <p class="mb-0 text-muted small">{{ $user->email }}</p>
@@ -108,13 +103,9 @@
                         Centang kotak di samping nama untuk memilih peserta
                     </small>
                 </div>
-                <div>
-                    <button type="button" class="btn btn-secondary me-2" onclick="window.location.reload()">
-                        <i class="ph-arrow-clockwise me-1"></i> Reset
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="ph-floppy-disk me-1"></i> Simpan Peserta
-                    </button>
+                <div class="flex-align justify-content-end gap-8">
+                    <button type="button" class="btn btn-outline-main rounded-pill py-9" id="btnBackToModule">Kembali</button>
+                    <button type="button" class="btn btn-main rounded-pill py-9" id="btnSaveAndContinuePublish">Simpan & Lanjutkan</button>
                 </div>
             </div>
         </form>
@@ -147,6 +138,17 @@
         font-weight: 600;
     }
 
+    /* New: ensure real photo shows and has spacing */
+    .participant-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 12px; /* give breathing room from name/email */
+        flex-shrink: 0;
+        background: #f3f4f6; /* subtle bg while loading */
+    }
+
     .form-check-input:checked+.form-check-label {
         color: #6366f1;
     }
@@ -172,6 +174,9 @@
         const deselectAllBtn = document.getElementById('deselectAll');
         const selectedSummary = document.getElementById('selectedSummary');
         const selectedCount = document.getElementById('selectedCount');
+        const participantsForm = document.getElementById('participantsForm');
+        const btnBackToModule = document.getElementById('btnBackToModule');
+        const btnSaveAndContinuePublish = document.getElementById('btnSaveAndContinuePublish');
 
         // Search functionality
         searchInput.addEventListener('input', function() {
@@ -246,118 +251,63 @@
             }
         });
 
-        // Handle form submission
-        const participantsForm = document.getElementById('participantsForm');
-        if (participantsForm) {
-            participantsForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const submitButton = this.querySelector('button[type="submit"]');
-                const originalText = submitButton.innerHTML;
-                
-                // Show loading state
-                submitButton.disabled = true;
-                submitButton.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i> Menyimpan...';
-                
-                // Get selected participants
-                const selectedParticipants = [];
-                const checkedBoxes = document.querySelectorAll('.participant-checkbox:checked');
-                checkedBoxes.forEach(checkbox => {
-                    selectedParticipants.push(checkbox.value);
-                });
-                
-                // Prepare form data
-                const formData = new FormData();
-                formData.append('_token', document.querySelector('input[name="_token"]').value);
-                formData.append('course_id', document.querySelector('input[name="course_id"]').value);
-                
-                // Add participants array
-                selectedParticipants.forEach(participantId => {
-                    formData.append('participants[]', participantId);
-                });
-                
-                console.log('Submitting participants:', selectedParticipants);
-                console.log('Form action:', this.action);
-                console.log('Course ID:', document.querySelector('input[name="course_id"]').value);
-                
-                // Submit via AJAX
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    console.log('Response headers:', response.headers);
-                    
-                    if (!response.ok) {
-                        return response.text().then(text => {
-                            console.error('Error response:', text);
-                            throw new Error(`HTTP error! status: ${response.status}, message: ${text}`);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Success:', data);
-                    
-                    // Show success message
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Berhasil!',
-                            text: data.message || 'Peserta kursus berhasil diperbarui.',
-                            showConfirmButton: false,
-                            timer: 1500
-                        }).then(() => {
-                            // Reload page to show updated data
-                            window.location.reload();
-                        });
-                    } else {
-                        alert(data.message || 'Peserta kursus berhasil diperbarui.');
-                        window.location.reload();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    
-                    // Show error message with option to try normal submit
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Terjadi Kesalahan AJAX',
-                            text: 'Gagal memperbarui peserta kursus via AJAX. Coba submit form biasa?',
-                            showCancelButton: true,
-                            confirmButtonText: 'Ya, Coba Submit Biasa',
-                            cancelButtonText: 'Batal',
-                            confirmButtonColor: '#3085d6',
-                            cancelButtonColor: '#d33'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Try normal form submit as fallback
-                                const form = document.getElementById('participantsForm');
-                                form.removeEventListener('submit', arguments.callee);
-                                form.submit();
-                            }
-                        });
-                    } else {
-                        if (confirm('Gagal memperbarui peserta kursus via AJAX. Coba submit form biasa?')) {
-                            // Try normal form submit as fallback
-                            const form = document.getElementById('participantsForm');
-                            form.removeEventListener('submit', arguments.callee);
-                            form.submit();
-                        }
-                    }
-                })
-                .finally(() => {
-                    // Restore button state
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalText;
-                });
+        // Helper: submit via AJAX (promise)
+        function submitParticipantsViaAjax(){
+            return new Promise((resolve, reject) => {
+                if(!participantsForm) return reject(new Error('Form tidak ditemukan'));
+                const selected = [...document.querySelectorAll('.participant-checkbox:checked')].map(cb => cb.value);
+                const fd = new FormData();
+                fd.append('_token', document.querySelector('input[name="_token"]').value);
+                fd.append('course_id', document.querySelector('input[name="course_id"]').value);
+                selected.forEach(id => fd.append('participants[]', id));
+                fetch(participantsForm.action, { method:'POST', body: fd, headers:{ 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' } })
+                    .then(r => { if(!r.ok) return r.text().then(t=>{ throw new Error(t || 'Gagal simpan peserta'); }); return r.json().catch(()=>({})); })
+                    .then(data => resolve(data))
+                    .catch(err => reject(err));
             });
+        }
+
+        // Form submit: save then go publish
+        if(participantsForm){
+            participantsForm.addEventListener('submit', function(e){
+                e.preventDefault();
+                submitParticipantsViaAjax()
+                    .then(data => {
+                        if(window.Swal){ Swal.fire({ icon:'success', title:'Berhasil!', text:(data&&data.message)||'Peserta kursus berhasil diperbarui.', showConfirmButton:false, timer:1200 }).then(()=> navigateTo('publish')); }
+                        else { navigateTo('publish'); }
+                    })
+                    .catch(err => showAjaxError(err));
+            });
+        }
+
+        // Back and Save & Continue buttons (save first)
+        if(btnBackToModule){
+            btnBackToModule.addEventListener('click', function(){
+                setLoading(this, true);
+                submitParticipantsViaAjax().then(()=> navigateTo('module')).catch(err => showAjaxError(err)).finally(()=> setLoading(this,false));
+            });
+        }
+        if(btnSaveAndContinuePublish){
+            btnSaveAndContinuePublish.addEventListener('click', function(){
+                setLoading(this, true);
+                submitParticipantsViaAjax().then(()=> navigateTo('publish')).catch(err => showAjaxError(err)).finally(()=> setLoading(this,false));
+            });
+        }
+
+        function setLoading(btn, state){
+            if(!btn) return; if(state){ btn.dataset._text = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...'; } else { btn.disabled=false; btn.innerHTML = btn.dataset._text || btn.innerHTML; }
+        }
+        function showAjaxError(err){ console.error('Error:', err); if(window.Swal){ Swal.fire({ icon:'error', title:'Terjadi Kesalahan', text:'Gagal menyimpan perubahan peserta. Coba lagi.' }); } else { alert('Gagal menyimpan perubahan peserta. Coba lagi.'); } }
+        function navigateTo(step){
+            window.dispatchEvent(new CustomEvent('course:navigate', { detail: { to: step } }));
+            if(window.activateCoursePane){ window.activateCoursePane(step); return; }
+            const map = { details:'informasi-umum', module:'kurikulum', participants:'users', publish:'overview' };
+            const paneId = map[step] || step;
+            try{
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show','active'));
+                const target = document.getElementById(paneId);
+                if(target){ target.classList.add('show','active'); window.setCourseWizardStep && window.setCourseWizardStep(step); const hashMap = { 'informasi-umum':'#informasi-umum', 'kurikulum':'#kurikulum', 'users':'#users', 'overview':'#overview' }; history.replaceState(null,'',hashMap[paneId]||'#'); }
+            }catch(e){ console.warn('Fallback navigate failed', e); }
         }
     });
 </script>

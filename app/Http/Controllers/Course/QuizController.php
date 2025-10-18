@@ -70,7 +70,9 @@ class QuizController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Kuis berhasil dibuat',
-                'data' => $quiz
+                'data' => $quiz,
+                // Tambahkan URL redirect ke halaman kelola soal
+                'redirect_url' => route('quiz.manage', $quiz->id)
             ]);
         } catch (\Exception $e) {
             return response()->json([

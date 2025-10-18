@@ -82,8 +82,64 @@
 
         <div class="flex-align justify-content-end gap-8 mt-16">
             <a href="{{ route('course') }}" class="btn btn-outline-main rounded-pill py-9">Batal</a>
-            <button class="btn btn-main rounded-pill py-9" type="submit">Simpan Perubahan</button>
+            <button class="btn btn-main rounded-pill py-9" type="button" id="btnSaveAndContinueDetails">
+                Simpan & Lanjutkan ke Kurikulum
+            </button>
         </div>
     </form>
 </div>
 </div>
+
+<script>
+    (function(){
+        const form = document.getElementById('editCourseForm');
+        const btnNext = document.getElementById('btnSaveAndContinueDetails');
+
+        function ajaxSubmit(onSuccess){
+            const fd = new FormData(form);
+            const id = document.getElementById('courseid').value;
+            const submitter = btnNext;
+            const original = submitter.innerHTML;
+            submitter.disabled = true; submitter.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Menyimpan...';
+            fetch('/course/' + id, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(async (r) => {
+                    if(!r.ok){
+                        const txt = await r.text().catch(()=> '');
+                        throw new Error(txt || 'Request failed');
+                    }
+                    // Best-effort JSON parse (optional), ignore errors
+                    try { await r.clone().json(); } catch(e) {}
+                    return;
+                })
+                .then(() => {
+                    submitter.disabled = false; submitter.innerHTML = original;
+                    // Dispatch event and also directly activate pane as a fallback
+                    window.dispatchEvent(new CustomEvent('course:navigate', { detail: { to: 'module' } }));
+                    if (window.activateCoursePane) {
+                        window.activateCoursePane('kurikulum');
+                    } else {
+                        // Hard fallback: directly switch tab-pane classes and update wizard+hash
+                        try {
+                            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show','active'));
+                            const targetPane = document.getElementById('kurikulum');
+                            if (targetPane) {
+                                targetPane.classList.add('show','active');
+                                if (window.setCourseWizardStep) window.setCourseWizardStep('module');
+                                location.hash = '#kurikulum';
+                                document.querySelector('.tab-content')?.scrollIntoView({ behavior:'smooth', block:'start' });
+                            }
+                        } catch(e) { console.warn('Pane switch fallback failed', e); }
+                    }
+                })
+                .catch(err => {
+                    submitter.disabled=false; submitter.innerHTML = original;
+                    console.error('Save failed:', err);
+                    if(window.Swal){
+                        Swal.fire({ icon:'error', title:'Gagal menyimpan', text:'Silakan coba lagi.' });
+                    }
+                });
+        }
+
+        if(btnNext) btnNext.addEventListener('click', ()=>ajaxSubmit('next'));
+    })();
+</script>

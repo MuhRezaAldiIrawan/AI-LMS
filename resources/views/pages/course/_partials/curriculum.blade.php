@@ -1,4 +1,4 @@
-@section('css')
+@push('css')
     <style>
         .module-edit-mode .form-control {
             font-size: 1.25rem;
@@ -21,7 +21,7 @@
             transition: all 0.3s ease;
         }
     </style>
-@endsection
+@endpush
 
 <div class="row gy-4">
     <div class="col-lg-12">
@@ -223,6 +223,11 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="flex-align justify-content-end gap-8 mt-16">
+                    <button type="button" class="btn btn-outline-main rounded-pill py-9" id="btnBackToDetails">Kembali</button>
+                    <button type="button" class="btn btn-main rounded-pill py-9" id="btnContinueParticipants">Simpan & Lanjutkan</button>
+                </div>
             </div>
         </div>
     </div>
@@ -345,10 +350,68 @@
     </div>
 </div>
 
-@section('js')
+@push('js')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        // Set step wizard ke 'module' saat halaman kurikulum aktif
+        (function ready(fn){
+            if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', fn); }
+            else { fn(); }
+        })(function(){
+            // Pastikan step header aktif pada Kurikulum
+            if (window.setCourseWizardStep) { console.debug('[wizard] set step -> module'); window.setCourseWizardStep('module'); }
+            try { history.replaceState(null, '', '#kurikulum'); } catch(e) {}
+
+            const btnNext = document.getElementById('btnContinueParticipants');
+            const btnBack = document.getElementById('btnBackToDetails');
+            if(btnNext){
+                btnNext.addEventListener('click', function(){
+                    console.debug('[wizard] next -> participants');
+                    // 1) Broadcast event for host page
+                    window.dispatchEvent(new CustomEvent('course:navigate', { detail: { to: 'participants' } }));
+                    // 2) Direct helper (accepts step key or pane id)
+                    if (window.activateCoursePane) {
+                        window.activateCoursePane('participants');
+                    } else {
+                        // 3) Hard fallback: switch classes manually
+                        try {
+                            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show','active'));
+                            const targetPane = document.getElementById('users');
+                            if (targetPane) {
+                                targetPane.classList.add('show','active');
+                                window.setCourseWizardStep && window.setCourseWizardStep('participants');
+                                history.replaceState(null, '', '#users');
+                                document.querySelector('.tab-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        } catch(e) { console.warn('Pane switch fallback (next) failed', e); }
+                    }
+                });
+            }
+            if(btnBack){
+                btnBack.addEventListener('click', function(){
+                    console.debug('[wizard] back -> details');
+                    if (window.setCourseWizardStep) { window.setCourseWizardStep('details'); }
+                    window.dispatchEvent(new CustomEvent('course:navigate', { detail: { to: 'details' } }));
+                    if(window.activateCoursePane) {
+                        window.activateCoursePane('details');
+                    } else {
+                        // Hard fallback: switch to informasi-umum
+                        try {
+                            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show','active'));
+                            const targetPane = document.getElementById('informasi-umum');
+                            if (targetPane) {
+                                targetPane.classList.add('show','active');
+                                window.setCourseWizardStep && window.setCourseWizardStep('details');
+                                history.replaceState(null, '', '#informasi-umum');
+                                document.querySelector('.tab-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        } catch(e) { console.warn('Pane switch fallback (back) failed', e); }
+                    }
+                });
+            }
+        });
+
         $('#createModuleForm').on('submit', function(e) {
             e.preventDefault();
 
@@ -1120,6 +1183,21 @@
                 $('#quizModal').modal('hide');
 
                 const successText = isQuizEditMode ? 'Data Kuis berhasil diperbarui.' : 'Data Kuis berhasil disimpan.';
+                // Jika mode tambah, arahkan langsung ke halaman kelola soal kuis
+                if (!isQuizEditMode && response && response.redirect_url) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Kuis dibuat. Mengarahkan ke halaman kelola soal...',
+                        showConfirmButton: false,
+                        timer: 1000
+                    }).then(() => {
+                        window.location.href = response.redirect_url;
+                    });
+                    return;
+                }
+
+                // Default behavior (edit mode atau jika tidak ada redirect_url)
                 Swal.fire({
                     icon: 'success',
                     title: 'Berhasil!',
@@ -1172,4 +1250,4 @@
             isQuizEditMode = false;
         });
     </script>
-@endsection
+@endpush

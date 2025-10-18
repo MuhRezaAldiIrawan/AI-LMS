@@ -20,40 +20,22 @@
 @endsection
 
 @section('content')
+    @php
+        $isOwner = auth()->check() && (auth()->id() === $course->user_id || auth()->user()->hasRole('admin'));
+    @endphp
+    @if($isOwner)
+        @include('pages.course._partials.wizard-header', [
+            'title' => 'Create Course',
+            'activeStep' => 'details',
+            'course' => $course,
+        ])
+    @endif
+
     <div class="card overflow-hidden">
         <div class="card-body p-0">
-
             <div class="setting-profile px-24">
-                <div class="flex-between">
-                    <div class="d-flex align-items-end flex-wrap mb-32 gap-24">
-                    </div>
-                </div>
-                @php
-                    $isOwner = auth()->check() && (auth()->id() === $course->user_id || auth()->user()->hasRole('admin'));
-                @endphp
-                <ul class="nav common-tab style-two nav-pills mb-0" id="pills-tab" role="tablist">
-                    @if($isOwner)
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="informasi-umum-tab" data-bs-toggle="pill"
-                                data-bs-target="#informasi-umum" type="button" role="tab" aria-controls="informasi-umum"
-                                aria-selected="true">Informasi Umum</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="kurikulum-tab" data-bs-toggle="pill" data-bs-target="#kurikulum"
-                                type="button" role="tab" aria-controls="kurikulum" aria-selected="false">Kurikulum</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="users-tab" data-bs-toggle="pill" data-bs-target="#users" type="button"
-                                role="tab" aria-controls="users" aria-selected="false">Peserta & Akses</button>
-                        </li>
-                    @endif
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link {{ $isOwner ? '' : 'active' }}" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview"
-                            type="button" role="tab" aria-controls="overview" aria-selected="false">Overview</button>
-                    </li>
-                </ul>
+                <!-- Tab bar disembunyikan untuk menghindari double header; navigasi pakai tombol Save & Continue -->
             </div>
-
         </div>
     </div>
 
@@ -89,6 +71,7 @@
 @endsection
 
 @section('js')
+    @stack('js')
     <script src="{{ asset('assets/js/file-upload.js') }}"></script>
     <script src="{{ asset('assets/js/plyr.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -110,18 +93,70 @@
                 });
             }
 
-            // Activate tab based on URL hash
+            // Helper: activate pane by step key or pane id
+            window.activateCoursePane = function(target){
+                const mapStepToPane = { details: 'informasi-umum', module: 'kurikulum', participants: 'users', publish: 'overview' };
+                const paneId = mapStepToPane[target] || target; // allow passing pane id directly
+                const targetPane = document.getElementById(paneId);
+                if(!targetPane) return;
+                console.debug('[wizard] Activating pane:', paneId);
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show','active'));
+                targetPane.classList.add('show','active');
+                // set wizard step if step key provided
+                const mapPaneToStep = { 'informasi-umum':'details', 'kurikulum':'module', 'users':'participants', 'overview':'publish' };
+                const stepKey = mapPaneToStep[paneId] || (target in mapStepToPane ? target : 'details');
+                window.setCourseWizardStep && window.setCourseWizardStep(stepKey);
+                const hashMap = { 'informasi-umum':'#informasi-umum', 'kurikulum':'#kurikulum', 'users':'#users', 'overview':'#overview' };
+                history.replaceState(null, '', hashMap[paneId] || '#');
+                // Smooth scroll to top of tab content
+                try { document.querySelector('.tab-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch(e) {}
+            }
+
+            // Activate tab based on URL hash (works even without nav bar)
             const hash = window.location.hash;
             if (hash === '#overview') {
-                const tab = document.querySelector('#overview-tab');
-                if (tab) new bootstrap.Tab(tab).show();
+                window.activateCoursePane('overview');
             } else if (hash === '#kurikulum') {
-                const tab = document.querySelector('#kurikulum-tab');
-                if (tab) new bootstrap.Tab(tab).show();
+                window.activateCoursePane('kurikulum');
             } else if (hash === '#users') {
-                const tab = document.querySelector('#users-tab');
-                if (tab) new bootstrap.Tab(tab).show();
+                window.activateCoursePane('users');
+            } else if (hash === '#informasi-umum') {
+                window.activateCoursePane('informasi-umum');
+            } else {
+                // If no hash, use current active pane to set the step header correctly
+                const activePane = document.querySelector('.tab-pane.show.active');
+                if (activePane) window.activateCoursePane(activePane.id);
             }
+
+            // React to future hash changes (defensive)
+            window.addEventListener('hashchange', function(){
+                const h = window.location.hash;
+                if (h === '#overview') window.activateCoursePane('overview');
+                else if (h === '#kurikulum') window.activateCoursePane('kurikulum');
+                else if (h === '#users') window.activateCoursePane('users');
+                else if (h === '#informasi-umum') window.activateCoursePane('informasi-umum');
+            });
+
+            // Sync wizard header with active tab (owner view only)
+            const syncStep = () => {
+                // Determine active pane by visible tab-pane show/active
+                const pane = document.querySelector('.tab-pane.show.active');
+                if(!pane) return;
+                const paneId = pane.getAttribute('id');
+                if(paneId === 'informasi-umum') window.setCourseWizardStep && window.setCourseWizardStep('details');
+                else if(paneId === 'kurikulum') window.setCourseWizardStep && window.setCourseWizardStep('module');
+                else if(paneId === 'users') window.setCourseWizardStep && window.setCourseWizardStep('participants');
+                else if(paneId === 'overview') window.setCourseWizardStep && window.setCourseWizardStep('publish');
+            };
+            syncStep();
+
+            // Listen to custom events from Save & Continue buttons to switch panes and steps
+            window.addEventListener('course:navigate', function(e){
+                const to = e.detail && e.detail.to;
+                if(!to) return;
+                console.debug('[wizard] course:navigate to:', to);
+                window.activateCoursePane(to);
+            });
         });
 
         // Use delegated binding to avoid timing issues

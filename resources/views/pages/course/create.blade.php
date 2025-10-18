@@ -25,6 +25,12 @@
 @endsection
 
 @section('content')
+    @include('pages.course._partials.wizard-header', [
+        'title' => 'Create Course',
+        'activeStep' => 'details',
+        'course' => $course ?? null,
+    ])
+
     <div class="card">
         <div class="card-header border-bottom border-gray-100 flex-align gap-8">
             <h5 class="mb-0">Tambah Kursus</h5>
@@ -113,6 +119,7 @@
 @endsection
 
 @section('js')
+    @stack('js')
     <script src="{{ asset('assets/js/file-upload.js') }}"></script>
     <script src="{{ asset('assets/js/plyr.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

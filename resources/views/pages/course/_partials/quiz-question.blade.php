@@ -121,6 +121,11 @@
 @endsection
 
 @section('content')
+    @include('pages.course._partials.wizard-header', [
+        'title' => 'Create Course',
+        'activeStep' => 'module',
+        'course' => $quiz->module->course ?? null,
+    ])
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-24">
         <h6 class="fw-semibold mb-0">Kelola Kuis</h6>
         <ul class="d-flex align-items-center gap-2">
@@ -306,6 +311,7 @@
 @endsection
 
 @section('js')
+    @stack('js')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         let isEditMode = false;
