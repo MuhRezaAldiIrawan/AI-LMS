@@ -230,61 +230,6 @@
             }
         }, 0);
 
-        $('#createModuleForm').on('submit', function(e) {
-            e.preventDefault(); // cegah reload halaman
-
-            // Ambil data form
-            let formData = new FormData(this);
-            const courseid = {{ $course->id }};
-
-            formData.append('course_id', courseid);
-
-            $.ajax({
-                url: "{{ route('module.store') }}",
-                method: "POST",
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: 'Data Modul berhasil disimpan.',
-                        showConfirmButton: false,
-                        timer: 2000
-                    }).then(() => {
-                        window.location.href = response.redirect_url;
-                    });
-                },
-                error: function(xhr) {
-                    console.log(xhr)
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        let errorMessages = '';
-
-                        $.each(errors, function(key, value) {
-                            errorMessages += `• ${value[0]}<br>`;
-                        });
-
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Validasi Gagal',
-                            html: errorMessages,
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#d33'
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Terjadi Kesalahan',
-                            text: 'Silakan coba lagi nanti.',
-                            confirmButtonText: 'OK',
-                            confirmButtonColor: '#d33'
-                        });
-                    }
-
-                }
-            });
-        });
+        // Note: createModuleForm submission is handled inside the curriculum partial to avoid double binding
     </script>
 @endsection

@@ -250,16 +250,39 @@ class LessonController extends Controller
 
         $dataToUpdate = $validated;
 
+        // Capture original values to detect content changes
+        $originalContentType = $lesson->content_type;
+        $originalText = $lesson->content_text;
+        $originalVideoUrl = $lesson->video_url;
+        $originalAttachmentPath = $lesson->attachment_path;
+        $shouldReprocess = false;
+
         // Handle file upload if content_type is 'file' and new file is uploaded
         if ($validated['content_type'] === 'file' && $request->hasFile('attachment')) {
-            // Delete old file if exists
-            if ($lesson->attachment_path && Storage::disk('public')->exists($lesson->attachment_path)) {
-                Storage::disk('public')->delete($lesson->attachment_path);
-            }
-
             $file = $request->file('attachment');
-            $path = $file->store('lessons/attachments', 'public');
-            $dataToUpdate['attachment_path'] = $path;
+
+            // Compare hashes to determine if the uploaded document is actually new/different
+            $oldHash = null;
+            if ($originalAttachmentPath && Storage::disk('public')->exists($originalAttachmentPath)) {
+                $oldHash = @hash_file('sha256', Storage::disk('public')->path($originalAttachmentPath)) ?: null;
+            }
+            $newHash = @hash_file('sha256', $file->getRealPath());
+
+            if ($oldHash && $newHash && hash_equals($oldHash, $newHash)) {
+                // Same document content: keep existing file, do not replace, and do not reprocess (unless type changed)
+                $dataToUpdate['attachment_path'] = $originalAttachmentPath;
+                // No reprocess flag here; will still consider content_type change below
+            } else {
+                // Different document: replace file and mark for reprocessing
+                // Delete old file if exists
+                if ($originalAttachmentPath && Storage::disk('public')->exists($originalAttachmentPath)) {
+                    Storage::disk('public')->delete($originalAttachmentPath);
+                }
+
+                $path = $file->store('lessons/attachments', 'public');
+                $dataToUpdate['attachment_path'] = $path;
+                $shouldReprocess = true;
+            }
         }
 
         // Clear other content fields based on content type
@@ -277,12 +300,42 @@ class LessonController extends Controller
             $dataToUpdate['attachment_path'] = null;
         }
 
+        // Detect content changes to decide reprocessing
+        if ($validated['content_type'] !== $originalContentType) {
+            // Content type changed: always reprocess
+            $shouldReprocess = true;
+        } else {
+            if ($validated['content_type'] === 'text') {
+                // Compare text content (null-safe, trimmed)
+                $newText = $validated['content_text'] ?? null;
+                if (($newText !== null ? trim($newText) : null) !== ($originalText !== null ? trim($originalText) : null)) {
+                    $shouldReprocess = true;
+                }
+            } elseif ($validated['content_type'] === 'video') {
+                $newVideoUrl = $validated['video_url'] ?? null;
+                if ($newVideoUrl !== $originalVideoUrl) {
+                    $shouldReprocess = true;
+                }
+            } elseif ($validated['content_type'] === 'file') {
+                // If no new file uploaded above, but path changed somehow
+                if (($dataToUpdate['attachment_path'] ?? $originalAttachmentPath) !== $originalAttachmentPath) {
+                    $shouldReprocess = true;
+                }
+            }
+        }
+
         // Update the lesson
         $lesson->update($dataToUpdate);
 
+        // Dispatch reprocess job only if content actually changed
+        if ($shouldReprocess) {
+            ProcessLessonContent::dispatch($lesson);
+        }
+
         return response()->json([
             'success' => true,
-            'message' => 'Lesson updated successfully'
+            'message' => 'Lesson updated successfully',
+            'reprocessed' => $shouldReprocess,
         ]);
     }
 

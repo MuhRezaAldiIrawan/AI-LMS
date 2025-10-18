@@ -421,8 +421,16 @@
             }
         });
 
-        $('#createModuleForm').on('submit', function(e) {
+        // Avoid double-binding by removing previous handler, add guard and disable submit during request
+        $('#createModuleForm').off('submit').on('submit', function(e) {
             e.preventDefault();
+
+            const $form = $(this);
+            const $btn = $form.find('button[type="submit"]');
+            if ($form.data('submitting')) return; // guard against double click
+            $form.data('submitting', true);
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Menambahkan...');
 
             let formData = new FormData(this);
             formData.append('course_id', '{{ $course->id }}');
@@ -472,6 +480,10 @@
                         });
                     }
 
+                },
+                complete: function(){
+                    $form.data('submitting', false);
+                    $btn.prop('disabled', false).html(originalHtml);
                 }
             });
         });
