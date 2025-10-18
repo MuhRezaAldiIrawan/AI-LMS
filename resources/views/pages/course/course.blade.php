@@ -170,7 +170,7 @@
 
                     <div class="card-section mt-24 p-3">
                         <div class="card-body">
-                            <h4 class="mb-20">Course For You</h4>
+                            <h4 class="mb-20">Created Course</h4>
                             <div class="row g-20">
                                 @forelse ($otherCourses as $item)
                                     @include('pages.course._partials.course-list', ['course' => $item])

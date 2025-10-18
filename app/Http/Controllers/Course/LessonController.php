@@ -45,11 +45,11 @@ class LessonController extends Controller
 
         $dataToStore = $validated;
 
-        // Authorization: only course owner or admin can add lessons to the module
+    // Authorization: only course owner can add lessons to the module
         $module = Module::findOrFail($request->module_id);
         $course = $module->course;
         $user = Auth::user();
-        if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+    if (!$user || $course->user_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Anda tidak memiliki izin untuk menambah pelajaran pada kursus ini.'
@@ -228,10 +228,10 @@ class LessonController extends Controller
     {
         $lesson = Lesson::findOrFail($id);
 
-        // Authorization: only course owner or admin can update lessons
+    // Authorization: only course owner can update lessons
         $user = Auth::user();
         $course = $lesson->module->course;
-        if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+    if (!$user || $course->user_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Anda tidak memiliki izin untuk mengubah pelajaran ini.'
@@ -294,10 +294,10 @@ class LessonController extends Controller
         try {
             $lesson = Lesson::findOrFail($id);
 
-            // Authorization: only course owner or admin can delete lessons
+            // Authorization: only course owner can delete lessons
             $user = Auth::user();
             $course = $lesson->module->course;
-            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            if (!$user || $course->user_id !== $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk menghapus pelajaran ini.'

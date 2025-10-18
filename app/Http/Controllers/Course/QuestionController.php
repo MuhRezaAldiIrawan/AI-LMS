@@ -27,11 +27,11 @@ class QuestionController extends Controller
         ]);
 
         try {
-            // Authorization: only course owner or admin can add questions
+            // Authorization: only course owner can add questions
             $quiz = Quiz::with('module.course')->findOrFail($request->quiz_id);
             $course = $quiz->module->course;
             $user = Auth::user();
-            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            if (!$user || $course->user_id !== $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk menambah pertanyaan pada kuis ini.'
@@ -83,10 +83,10 @@ class QuestionController extends Controller
 
         try {
             $question = Question::with('quiz.module.course')->findOrFail($id);
-            // Authorization: only course owner or admin can update questions
+            // Authorization: only course owner can update questions
             $user = Auth::user();
             $course = $question->quiz->module->course;
-            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            if (!$user || $course->user_id !== $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk mengubah pertanyaan ini.'
@@ -132,10 +132,10 @@ class QuestionController extends Controller
         try {
             $question = Question::with('quiz.module.course')->findOrFail($id);
 
-            // Authorization: only course owner or admin can delete questions
+            // Authorization: only course owner can delete questions
             $user = Auth::user();
             $course = $question->quiz->module->course;
-            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            if (!$user || $course->user_id !== $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk menghapus pertanyaan ini.'

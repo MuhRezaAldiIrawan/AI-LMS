@@ -223,20 +223,17 @@
                         </span>
                     </div>
 
-                    <!-- Publish Course Button (owner/admin only) -->
+                    <!-- Action Buttons (owner/admin only) -->
                     @if($canManage)
-                        <div class="mt-16">
-                            @if($course->status !== 'published')
-                                <button type="button" class="btn btn-main rounded-pill py-8 w-100" id="publishCourseBtn"
-                                        data-course-id="{{ $course->id }}">
-                                    <i class="ph ph-rocket-launch me-1"></i> Publish Course
-                                </button>
-                            @else
-                                <button type="button" class="btn btn-outline-secondary rounded-pill py-8 w-100" id="unpublishCourseBtn"
-                                        data-course-id="{{ $course->id }}">
-                                    <i class="ph ph-archive me-1"></i> Unpublish Course
-                                </button>
-                            @endif
+                        <div class="mt-16 d-grid gap-2">
+                            <button type="button" class="btn btn-outline-main bg-main-100 border-main-100 text-main-600 rounded-pill py-8 w-100" id="overviewSaveDraftBtn"
+                                    data-course-id="{{ $course->id }}">
+                                <i class="ph ph-file-arrow-down me-1"></i> Save as Draft
+                            </button>
+                            <button type="button" class="btn btn-main rounded-pill py-8 w-100" id="overviewPublishBtn"
+                                    data-course-id="{{ $course->id }}" data-status="{{ $course->status }}">
+                                <i class="ph ph-rocket-launch me-1"></i> {{ $course->status === 'published' ? 'Update Course' : 'Publish Course' }}
+                            </button>
                         </div>
                     @endif
                 </div>
@@ -249,62 +246,59 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Publish Course Button
-    const publishBtn = document.getElementById('publishCourseBtn');
-    const unpublishBtn = document.getElementById('unpublishCourseBtn');
+    // Buttons in Overview card
+    const btnPublish = document.getElementById('overviewPublishBtn');
+    const btnDraft = document.getElementById('overviewSaveDraftBtn');
 
-    if (publishBtn) {
-        publishBtn.addEventListener('click', function() {
+    if (btnPublish) {
+        btnPublish.addEventListener('click', function() {
             const courseId = this.dataset.courseId;
+            const isPublished = (this.dataset.status === 'published');
 
             Swal.fire({
-                title: 'Publish Course?',
-                text: 'Apakah Anda yakin ingin mempublish kursus ini? Kursus akan tersedia untuk semua peserta.',
+                title: isPublished ? 'Update Course?' : 'Publish Course?',
+                text: isPublished ? 'Perbarui status dan informasi kursus?' : 'Apakah Anda yakin ingin mempublish kursus ini? Kursus akan tersedia untuk semua peserta.',
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Publish!',
+                confirmButtonText: isPublished ? 'Ya, Update' : 'Ya, Publish',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    publishCourse(courseId, true);
+                    submitPublishToggle(courseId, true, btnPublish);
                 }
             });
         });
     }
 
-    if (unpublishBtn) {
-        unpublishBtn.addEventListener('click', function() {
+    if (btnDraft) {
+        btnDraft.addEventListener('click', function() {
             const courseId = this.dataset.courseId;
 
             Swal.fire({
-                title: 'Unpublish Course?',
-                text: 'Apakah Anda yakin ingin meng-unpublish kursus ini? Kursus akan tidak tersedia untuk peserta baru.',
+                title: 'Simpan sebagai Draft?',
+                text: 'Kursus akan tidak tersedia untuk peserta baru sampai dipublish kembali.',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#f39c12',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Unpublish!',
+                confirmButtonText: 'Ya, Simpan Draft',
                 cancelButtonText: 'Batal'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    publishCourse(courseId, false);
+                    submitPublishToggle(courseId, false, btnDraft);
                 }
             });
         });
     }
 
-    function publishCourse(courseId, publish) {
-        const button = publish ? publishBtn : unpublishBtn;
+    function submitPublishToggle(courseId, publish, button){
+        if(!button) return;
         const originalHtml = button.innerHTML;
-
-        // Show loading state
         button.disabled = true;
-        button.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i> ' +
-                          (publish ? 'Publishing...' : 'Unpublishing...');
+        button.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i> ' + (publish ? 'Publishing...' : 'Saving...');
 
-        // Prepare form data
         const formData = new FormData();
         formData.append('_token', '{{ csrf_token() }}');
         formData.append('_method', 'PUT');
@@ -314,47 +308,23 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/course/publish/${courseId}`, {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
         .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: data.message || (publish ? 'Kursus berhasil dipublish.' : 'Kursus berhasil di-unpublish.'),
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    // Reload page to update UI
-                    window.location.reload();
-                });
-            } else {
-                throw new Error(data.message || 'Terjadi kesalahan');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
             Swal.fire({
-                icon: 'error',
-                title: 'Terjadi Kesalahan',
-                text: 'Gagal mengubah status kursus. Silakan coba lagi.',
-                confirmButtonText: 'OK',
-                confirmButtonColor: '#d33'
-            });
+                icon: 'success',
+                title: 'Berhasil!',
+                text: data.message || (publish ? 'Kursus berhasil dipublish.' : 'Kursus kembali ke Draft.'),
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => window.location.reload());
         })
-        .finally(() => {
-            // Restore button state
-            button.disabled = false;
-            button.innerHTML = originalHtml;
-        });
+        .catch(err => {
+            console.error(err);
+            Swal.fire({ icon:'error', title:'Terjadi Kesalahan', text:'Gagal mengubah status kursus. Silakan coba lagi.' });
+        })
+        .finally(() => { button.disabled = false; button.innerHTML = originalHtml; });
     }
 });
 </script>

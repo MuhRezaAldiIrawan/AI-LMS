@@ -23,21 +23,36 @@ class CourseController extends Controller
         $status = $request->query('status');
         $search = $request->query('search');
 
-        // Admin bisa lihat semua courses
+        // Admin: tampilkan seperti pengajar (bagian atas My Course, bawah Course For You)
         if (canAccess('admin')) {
-            $coursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz']);
+            // My Courses (yang dibuat oleh admin ini)
+            $myCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('user_id', $userId);
 
             if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
-                $coursesQuery->where('status', $status);
+                $myCoursesQuery->where('status', $status);
             }
 
             if ($search) {
-                $coursesQuery->where('title', 'like', '%' . $search . '%');
+                $myCoursesQuery->where('title', 'like', '%' . $search . '%');
             }
 
-            $allCourses = $coursesQuery->latest()->paginate(8, ['*'], 'all_courses_page');
+            // Other Courses (dibuat oleh orang lain)
+            $otherCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('user_id', '!=', $userId);
 
-            return view('pages.course.course', compact('allCourses'))
+            if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
+                $otherCoursesQuery->where('status', $status);
+            }
+
+            if ($search) {
+                $otherCoursesQuery->where('title', 'like', '%' . $search . '%');
+            }
+
+            $myCourses = $myCoursesQuery->latest()->paginate(4, ['*'], 'my_courses_page');
+            $otherCourses = $otherCoursesQuery->latest()->paginate(4, ['*'], 'other_courses_page');
+
+            return view('pages.course.course', compact('myCourses', 'otherCourses'))
                 ->with('userRole', 'admin');
         }
 
@@ -354,10 +369,10 @@ class CourseController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        // Authorization: only owner or admin can update
+    // Authorization: only owner can update
         $courseAuth = Course::findOrFail($id);
         $user = Auth::user();
-        if (!$user || (!($user->hasRole('admin')) && $courseAuth->user_id !== $user->id)) {
+    if (!$user || $courseAuth->user_id !== $user->id) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
@@ -372,6 +387,23 @@ class CourseController extends Controller
                 $course = $courseAuth; // already found above
                 $isPublished = $request->boolean('is_published');
                 $newStatus = $isPublished ? 'published' : 'draft';
+
+                // Prevent publish if requirements not met
+                if ($isPublished) {
+                    // Load relations used by validation
+                    $course->loadMissing('modules.lessons', 'enrolledUsers');
+                    $errors = $course->getPublishValidationErrors();
+                    if (!empty($errors)) {
+                        if ($request->expectsJson()) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Tidak dapat publish. Lengkapi data berikut:',
+                                'errors' => $errors,
+                            ], 422);
+                        }
+                        return redirect()->back()->withErrors($errors)->with('error', 'Tidak dapat publish. Lengkapi data kursus.');
+                    }
+                }
 
                 $course->update([
                     'status' => $newStatus
@@ -449,10 +481,10 @@ class CourseController extends Controller
 
     public function updateParticipants(Request $request, $course)
     {
-        // Authorization: only owner or admin can update participants
+    // Authorization: only owner can update participants
         $courseModel = Course::findOrFail($course);
         $user = Auth::user();
-        if (!$user || (!($user->hasRole('admin')) && $courseModel->user_id !== $user->id)) {
+    if (!$user || $courseModel->user_id !== $user->id) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,

@@ -354,14 +354,23 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        // Set step wizard ke 'module' saat halaman kurikulum aktif
+        // Only run "activate kurikulum" logic when the tab is explicitly requested
         (function ready(fn){
             if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', fn); }
             else { fn(); }
         })(function(){
-            // Pastikan step header aktif pada Kurikulum
-            if (window.setCourseWizardStep) { console.debug('[wizard] set step -> module'); window.setCourseWizardStep('module'); }
-            try { history.replaceState(null, '', '#kurikulum'); } catch(e) {}
+            const requestedByHash = (window.location.hash === '#kurikulum');
+            // Only respect session flag when user is reloading the same course page (post-save)
+            const samePageReferrer = document.referrer && new URL(document.referrer, window.location.origin).pathname === window.location.pathname;
+            const requestedBySession = samePageReferrer && (sessionStorage.getItem('activeTab') === 'kurikulum');
+            const pane = document.getElementById('kurikulum');
+            const isActive = pane && pane.classList.contains('show') && pane.classList.contains('active');
+
+            // If user arrived with #kurikulum or the pane is already active, sync the wizard + hash
+            if (requestedByHash || requestedBySession || isActive) {
+                window.setCourseWizardStep && window.setCourseWizardStep('module');
+                try { history.replaceState(null, '', '#kurikulum'); } catch(e) {}
+            }
 
             const btnNext = document.getElementById('btnContinueParticipants');
             const btnBack = document.getElementById('btnBackToDetails');
@@ -846,13 +855,16 @@
         $(document).ready(function() {
             const activeTab = sessionStorage.getItem('activeTab');
             const urlHash = window.location.hash;
+            const samePageReferrer = document.referrer && new URL(document.referrer, window.location.origin).pathname === window.location.pathname;
 
-            if (activeTab === 'kurikulum' || urlHash === '#kurikulum') {
+            if (urlHash === '#kurikulum' || (samePageReferrer && activeTab === 'kurikulum')) {
                 sessionStorage.removeItem('activeTab');
-
-                setTimeout(function() {
-                    $('#kurikulum-tab').click();
-                }, 200);
+                // Prefer the host page helper if available; otherwise, update hash
+                if (window.activateCoursePane) {
+                    window.activateCoursePane('kurikulum');
+                } else {
+                    try { history.replaceState(null, '', '#kurikulum'); } catch(e) {}
+                }
             }
         });
 

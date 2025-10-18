@@ -21,7 +21,8 @@
 
 @section('content')
     @php
-        $isOwner = auth()->check() && (auth()->id() === $course->user_id || auth()->user()->hasRole('admin'));
+        // Hanya pemilik kursus yang dianggap owner (admin tidak otomatis bisa mengelola)
+        $isOwner = auth()->check() && (auth()->id() === $course->user_id);
     @endphp
     @if($isOwner)
         @include('pages.course._partials.wizard-header', [

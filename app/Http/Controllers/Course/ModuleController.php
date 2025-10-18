@@ -32,10 +32,10 @@ class ModuleController extends Controller
     {
         $request->validate(['title' => 'required|string|max:255']);
 
-        // Authorization: only course owner or admin can create module
+    // Authorization: only course owner can create module
         $course = Course::findOrFail($request->course_id);
         $user = Auth::user();
-        if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+    if (!$user || $course->user_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Anda tidak memiliki izin untuk menambah modul pada kursus ini.'
@@ -77,10 +77,10 @@ class ModuleController extends Controller
         $request->validate(['title' => 'required|string|max:255']);
         $module = Module::findOrFail($id);
 
-        // Authorization: only course owner or admin can update module
+    // Authorization: only course owner can update module
         $user = Auth::user();
         $course = $module->course;
-        if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+    if (!$user || $course->user_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Anda tidak memiliki izin untuk mengubah modul ini.'
@@ -98,10 +98,10 @@ class ModuleController extends Controller
         try {
             $module = Module::findOrFail($id);
 
-            // Authorization: only course owner or admin can delete module
+            // Authorization: only course owner can delete module
             $user = Auth::user();
             $course = $module->course;
-            if (!$user || (!($user->hasRole('admin')) && $course->user_id !== $user->id)) {
+            if (!$user || $course->user_id !== $user->id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Anda tidak memiliki izin untuk menghapus modul ini.'
