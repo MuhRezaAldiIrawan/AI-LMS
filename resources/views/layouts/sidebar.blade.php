@@ -7,10 +7,9 @@
             class="ph ph-x"></i></button>
     <!-- sidebar close btn -->
 
-    <a href="index.htm
-        class="sidebar__logo text-center p-20 position-sticky inset-block-start-0 bg-white w-100
-        z-1 pb-10">
-        <img src="{{ asset('assets/images/bg/b-learninglogo.webp') }}" alt="Logo">
+    <a href="index.html" class="sidebar__logo text-center p-20 position-sticky inset-block-start-0 bg-white w-100
+        z-1 pb-10" style="padding-top: 20px;">
+        <img src="{{ asset('assets/images/logo/LMS-BOSOWA.png') }}" alt="Logo">
     </a>
 
     <div class="sidebar-menu-wrapper overflow-y-auto scroll-sm">

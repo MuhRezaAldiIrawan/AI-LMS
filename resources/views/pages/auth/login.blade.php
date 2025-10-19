@@ -8,7 +8,7 @@
         <div class="auth-right py-40 px-24 flex-center flex-column">
             <div class="auth-right__inner mx-auto w-100">
                 <a href="index.html" class="">
-                    <img src="assets/images/logo/b-learninglogo.webp" alt="">
+                    <img src="assets/images/logo/LMS-BOSOWA.png" alt="">
                 </a>
                 {{-- <h2 class="mb-8">Welcome to Back! &#128075;</h2> --}}
                 <p class="text-gray-600 text-15 mb-32" style="text-align: center">Silahkan Login Menggunakan Akun HRIS Anda</p>

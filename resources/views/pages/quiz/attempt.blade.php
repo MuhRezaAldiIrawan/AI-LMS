@@ -9,6 +9,10 @@
         min-height: calc(100vh - 40px);
     }
 
+    /* Ensure consistent gutters for custom g-16/g-20 classes */
+    .row.g-16 { --bs-gutter-x: 16px; --bs-gutter-y: 16px; }
+    .row.g-20 { --bs-gutter-x: 20px; --bs-gutter-y: 20px; }
+
     .quiz-timer {
         position: fixed;
         top: 20px;
@@ -54,6 +58,8 @@
         border-radius: 8px;
         transition: all 0.2s ease;
         cursor: pointer;
+        /* extra spacing inside each option */
+        margin-bottom: 0; /* spacing handled by row gutters */
     }
 
     .option-item:hover {

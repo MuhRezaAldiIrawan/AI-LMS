@@ -3,6 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Course;
+use App\Models\Module;
+use App\Models\Lesson;
+use App\Models\Certificate;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -11,21 +17,74 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        $user = auth()->user();
+    $user = Auth::user();
 
-        // Get completed courses count
+        // Default (karyawan) dashboard metrics – learner-centric
         $completedCoursesCount = $user->getCompletedCourses()->count();
-
-        // Get in progress courses count
         $inProgressCoursesCount = $user->getOnProgressCourses()->count();
-
-        // Get earned certificates count
         $earnedCertificatesCount = $user->certificates()->count();
-
-        // Get total study time (formatted)
         $studyTime = $user->getFormattedStudyTime();
 
-        // Get enrolled courses with progress (limit 5 for dashboard)
+        // For admin & instructor (pengajar): creator-centric metrics
+        $createdCoursesCount = null;
+        $assignedStudentsCount = null;
+        $graduatedStudentsCount = null;
+        $createdStudyTime = null; // HH:MM
+        $createdCourses = collect();
+
+        if (function_exists('isAdmin') && (isAdmin() || isPengajar())) {
+            // Courses owned by current user (or all, if admin)
+            $coursesQuery = isAdmin() ? Course::query() : Course::where('user_id', $user->id);
+
+            // Summary cards
+            $createdCoursesCount = (clone $coursesQuery)->count();
+
+            // Total assigned students (count of enrollments across these courses)
+            $courseIds = (clone $coursesQuery)->pluck('id');
+            if ($courseIds->isEmpty()) {
+                $assignedStudentsCount = 0;
+                $graduatedStudentsCount = 0;
+                $createdStudyTime = '00:00';
+            } else {
+                $assignedStudentsCount = DB::table('course_user')
+                    ->whereIn('course_id', $courseIds)
+                    ->count();
+
+                // Distinct graduates (unique users with certificates for these courses)
+                $graduatedStudentsCount = Certificate::whereIn('course_id', $courseIds)
+                    ->distinct('user_id')
+                    ->count('user_id');
+
+                // Sum total lesson minutes for all lessons created under these courses
+                $moduleIds = Module::whereIn('course_id', $courseIds)->pluck('id');
+                $totalMinutes = $moduleIds->isEmpty()
+                    ? 0
+                    : (int) Lesson::whereIn('module_id', $moduleIds)->sum('duration_in_minutes');
+                $createdStudyTime = $this->formatMinutesToHHMM($totalMinutes);
+            }
+
+            // Created courses list (limit 5 for dashboard)
+            $createdCourses = (clone $coursesQuery)
+                ->with(['category'])
+                ->withCount('enrolledUsers')
+                ->latest('updated_at')
+                ->limit(5)
+                ->get()
+                ->map(function ($course) {
+                    return [
+                        'id' => $course->id,
+                        'title' => $course->title,
+                        'category' => $course->category?->name ?? 'Uncategorized',
+                        'thumbnail' => $course->thumbnail ? $course->thumbnail : 'default-thumbnail.jpg',
+                        'participants' => $course->enrolled_users_count ?? 0,
+                        'created_at' => $course->created_at,
+                        'updated_at' => $course->updated_at,
+                        'status' => $course->status,
+                    ];
+                });
+        }
+
+        // Learner courses (karyawan) – enrolled courses with progress (limit 5)
         $enrolledCourses = $user->enrolledCourses()
             ->whereNotNull('enrolled_at')
             ->with(['modules.lessons', 'modules.quiz'])
@@ -45,12 +104,27 @@ class DashboardController extends Controller
             });
 
         return view('pages.dashboard.dashboard', compact(
+            // learner-centric
             'completedCoursesCount',
             'inProgressCoursesCount',
             'earnedCertificatesCount',
             'studyTime',
-            'enrolledCourses'
+            'enrolledCourses',
+            // creator-centric
+            'createdCoursesCount',
+            'assignedStudentsCount',
+            'graduatedStudentsCount',
+            'createdStudyTime',
+            'createdCourses'
         ));
+    }
+
+    private function formatMinutesToHHMM(int $minutes): string
+    {
+        if ($minutes <= 0) return '00:00';
+        $hours = intdiv($minutes, 60);
+        $mins = $minutes % 60;
+        return sprintf('%02d:%02d', $hours, $mins);
     }
 
     /**

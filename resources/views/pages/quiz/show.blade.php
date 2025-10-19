@@ -162,7 +162,7 @@
                             <div class="row g-16">
                                 @foreach($attempts as $attempt)
                                     <div class="col-md-6">
-                                        <div class="attempt-card border border-gray-200 rounded-12 p-16">
+                                        <div class="attempt-card border border-gray-200 rounded-12 p-16 mt-10">
                                             <div class="d-flex justify-content-between align-items-start mb-12">
                                                 <div>
                                                     <div class="fw-medium text-gray-900">Percobaan #{{ $loop->iteration }}</div>
