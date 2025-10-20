@@ -10,6 +10,7 @@ use App\Models\Certificate;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 
 class DashboardController extends Controller
 {
@@ -91,6 +92,72 @@ class DashboardController extends Controller
                         'status' => $course->status,
                     ];
                 });
+
+            // Recent admin activities (from activity_log or admin_activities if available)
+            $recentLogs = collect();
+            if (Schema::hasTable('activity_log')) {
+                $recentLogs = DB::table('activity_log')
+                    ->leftJoin('users', 'users.id', '=', 'activity_log.causer_id')
+                    ->orderByDesc('activity_log.created_at')
+                    ->limit(5)
+                    ->get([
+                        'activity_log.description',
+                        'activity_log.created_at',
+                        'users.name as causer_name',
+                    ])->map(function ($row) {
+                        return [
+                            'text' => ($row->causer_name ? ($row->causer_name . ' ') : '') . ($row->description ?? ''),
+                            'time' => $row->created_at,
+                            'causer_name' => $row->causer_name,
+                            'action' => null,
+                            'description' => $row->description,
+                        ];
+                    });
+            } elseif (Schema::hasTable('admin_activities')) {
+                $recentLogs = DB::table('admin_activities')
+                    ->leftJoin('users', 'users.id', '=', 'admin_activities.causer_id')
+                    ->orderByDesc('admin_activities.created_at')
+                    ->limit(5)
+                    ->get([
+                        'admin_activities.action',
+                        'admin_activities.description',
+                        'admin_activities.created_at',
+                        'users.name as causer_name',
+                    ])->map(function ($row) {
+                        $desc = $row->description ?: $row->action;
+                        return [
+                            'text' => ($row->causer_name ? ($row->causer_name . ' ') : '') . $desc,
+                            'time' => $row->created_at,
+                            'causer_name' => $row->causer_name,
+                            'action' => $row->action,
+                            'description' => $desc,
+                        ];
+                    });
+            }
+
+            // Online users (sessions table if exists; fallback to recent activity)
+            $onlineUserCount = 0;
+            $window = now()->subMinutes(5);
+            if (Schema::hasTable('sessions')) {
+                // sessions.last_activity is a UNIX timestamp
+                $onlineUserCount = DB::table('sessions')
+                    ->where('last_activity', '>=', $window->getTimestamp())
+                    ->count();
+            } elseif (Schema::hasTable('activity_log')) {
+                $onlineUserCount = DB::table('activity_log')
+                    ->where('created_at', '>=', $window)
+                    ->distinct('causer_id')
+                    ->count('causer_id');
+            } elseif (Schema::hasTable('admin_activities')) {
+                $onlineUserCount = DB::table('admin_activities')
+                    ->where('created_at', '>=', $window)
+                    ->distinct('causer_id')
+                    ->count('causer_id');
+            }
+
+            // System info
+            $appVersion = config('app.version') ?? env('APP_VERSION', 'v1.0.0');
+            $serverStatus = 'Online';
         } elseif (function_exists('isAdmin') && isPengajar()) {
             // Courses owned by current user (or all, if admin)
             $coursesQuery = Course::where('user_id', $user->id);
@@ -180,7 +247,12 @@ class DashboardController extends Controller
             'adminTotalUsers',
             'adminTotalCompletions',
             'adminTotalInstructors',
-            'recentCourses'
+            'recentCourses',
+            // admin sidebar data
+            'recentLogs',
+            'onlineUserCount',
+            'appVersion',
+            'serverStatus'
         ));
     }
 

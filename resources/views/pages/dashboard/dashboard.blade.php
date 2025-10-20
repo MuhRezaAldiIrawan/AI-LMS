@@ -542,188 +542,282 @@
                             <input type='file' id="coverImageUpload" accept=".png, .jpg, .jpeg">
                             <div class="avatar-preview">
                                 <div id="coverImagePreview"
-                                    style="background-image: url('assets/images/bg/Logo B-Learning-15.webp');">
+                                     style="background-image: url('{{ asset('assets/images/bg/Logo B-Learning-15.webp') }}');">
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="setting-profile px-24">
-                        <div class="flex-between">
-                            <div class="d-flex align-items-end flex-wrap mb-32 gap-24">
-                                <img src="{{ asset('storage/' . Auth::user()->profile_photo_path) }}" alt="{{ Auth::user()->name }}"
-                                    class="w-120 h-120 rounded-circle border border-white object-fit-cover"
-                                    onerror="this.src='{{ Auth::user()->getProfilePhotoUrlAttribute() }}'">
-                                <div>
-                                    <h4 class="mb-8">{{ Auth::user()->name}}</h4>
-                                    <div class="setting-profile__infos flex-align flex-wrap gap-16">
-                                        @if(Auth::user()->position)
-                                            <div class="flex-align gap-6">
-                                                <span class="text-gray-600 d-flex text-lg"><i class="ph ph-briefcase"></i></span>
-                                                <span class="text-gray-600 d-flex text-15">{{ Auth::user()->position }}</span>
-                                            </div>
-                                        @endif
-                                        @if(Auth::user()->division)
-                                            <div class="flex-align gap-6">
-                                                <span class="text-gray-600 d-flex text-lg"><i class="ph ph-buildings"></i></span>
-                                                <span class="text-gray-600 d-flex text-15">{{ Auth::user()->division }}</span>
-                                            </div>
-                                        @endif
-                                        @if(Auth::user()->location)
-                                            <div class="flex-align gap-6">
-                                                <span class="text-gray-600 d-flex text-lg"><i class="ph ph-map-pin"></i></span>
-                                                <span class="text-gray-600 d-flex text-15">{{ Auth::user()->location->name }}</span>
-                                            </div>
-                                        @endif
-                                        @if(Auth::user()->join_date)
-                                            <div class="flex-align gap-6">
-                                                <span class="text-gray-600 d-flex text-lg"><i class="ph ph-calendar-dots"></i></span>
-                                                <span class="text-gray-600 d-flex text-15">Join {{ \Carbon\Carbon::parse(Auth::user()->join_date)->format('F Y') }}</span>
-                                            </div>
-                                        @endif
-                                    </div>
+                        <div class="d-flex align-items-end flex-wrap mb-32 gap-24">
+                            <img src="{{ asset('storage/' . Auth::user()->profile_photo_path) }}" alt="{{ Auth::user()->name }}"
+                                 class="w-120 h-120 rounded-circle border border-white object-fit-cover"
+                                 onerror="this.src='{{ Auth::user()->getProfilePhotoUrlAttribute() }}'">
+                            <div>
+                                <h4 class="mb-8">{{ Auth::user()->name}}</h4>
+                                <div class="setting-profile__infos flex-align flex-wrap gap-16">
+                                    @if(Auth::user()->position)
+                                        <div class="flex-align gap-6">
+                                            <span class="text-gray-600 d-flex text-lg"><i class="ph ph-briefcase"></i></span>
+                                            <span class="text-gray-600 d-flex text-15">{{ Auth::user()->position }}</span>
+                                        </div>
+                                    @endif
+                                    @if(Auth::user()->division)
+                                        <div class="flex-align gap-6">
+                                            <span class="text-gray-600 d-flex text-lg"><i class="ph ph-buildings"></i></span>
+                                            <span class="text-gray-600 d-flex text-15">{{ Auth::user()->division }}</span>
+                                        </div>
+                                    @endif
+                                    @if(Auth::user()->location)
+                                        <div class="flex-align gap-6">
+                                            <span class="text-gray-600 d-flex text-lg"><i class="ph ph-map-pin"></i></span>
+                                            <span class="text-gray-600 d-flex text-15">{{ Auth::user()->location->name }}</span>
+                                        </div>
+                                    @endif
+                                    @if(Auth::user()->join_date)
+                                        <div class="flex-align gap-6">
+                                            <span class="text-gray-600 d-flex text-lg"><i class="ph ph-calendar-dots"></i></span>
+                                            <span class="text-gray-600 d-flex text-15">Join {{ \Carbon\Carbon::parse(Auth::user()->join_date)->format('F Y') }}</span>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
-
                     </div>
-
                 </div>
             </div>
 
-            <!-- Point Start -->
-            <div class="card mt-24">
-                <div class="card-header border-bottom border-gray-100 flex-between gap-8 flex-wrap">
-                    <h5 class="mb-0">My Learning Points</h5>
-                    <span class="badge bg-warning-600 text-white px-12 py-6 rounded-pill">
-                        <i class="ph-fill ph-trophy me-1"></i>
-                        {{ number_format(Auth::user()->getTotalPoints()) }} Points
-                    </span>
-                </div>
-                <div class="card-body">
-                    <!-- Total Points Display -->
-                    <div class="text-center mb-24">
-                        <div class="w-120 h-120 bg-warning-50 rounded-circle mx-auto flex-center mb-16">
-                            <i class="ph-fill ph-trophy text-64 text-warning-600"></i>
-                        </div>
-                        <h2 class="mb-8 text-warning-600">{{ number_format(Auth::user()->getTotalPoints()) }}</h2>
-                        <p class="text-gray-600 mb-0">Total Learning Points</p>
+            @if(function_exists('isAdmin') && isAdmin())
+                <!-- Widget 1: Shortcut Cepat -->
+                <div class="card mt-24">
+                    <div class="card-header border-bottom border-gray-100 flex-between gap-8 flex-wrap">
+                        <h5 class="mb-0">Shortcut Cepat</h5>
                     </div>
-
-                    <!-- Point Breakdown -->
-                    <div class="border-top border-gray-100 pt-20">
-                        <h6 class="mb-16 text-gray-900">Point Activities</h6>
-
+                    <div class="card-body">
                         @php
-                            $user = Auth::user();
-                            $lessonPoints = $user->pointLogs()->where('related_type', 'App\Models\Lesson')->sum('points_earned');
-                            $quizPoints = $user->pointLogs()->where('related_type', 'App\Models\Quiz')->sum('points_earned');
-                            $coursePoints = $user->pointLogs()->where('related_type', 'App\Models\Course')->sum('points_earned');
-                            $totalTransactions = $user->pointLogs()->count();
+                            // Users create (existing: users.create)
+                            $createUserUrl = \Illuminate\Support\Facades\Route::has('users.create')
+                                ? route('users.create')
+                                : (\Illuminate\Support\Facades\Route::has('admin.users.create')
+                                    ? route('admin.users.create')
+                                    : url('/users/create'));
+
+                            // Course create (existing: course.create)
+                            $createCourseUrl = \Illuminate\Support\Facades\Route::has('course.create')
+                                ? route('course.create')
+                                : (\Illuminate\Support\Facades\Route::has('admin.courses.create')
+                                    ? route('admin.courses.create')
+                                    : url('/course/create'));
+
+                            // Reports index (may not exist yet)
+                            $reportsRouteName = \Illuminate\Support\Facades\Route::has('admin.reports.index') ? 'admin.reports.index'
+                                : (\Illuminate\Support\Facades\Route::has('reports.index') ? 'reports.index' : null);
+                            $reportsUrl = $reportsRouteName ? route($reportsRouteName) : '#';
+                            $reportsDisabled = $reportsRouteName === null;
+                        @endphp
+                        <div class="d-grid gap-12">
+                            <a href="{{ $createUserUrl }}" class="btn btn-main w-100">
+                                <i class="ph ph-user-plus me-2"></i>
+                                + Buat Pengguna Baru
+                            </a>
+                            <a href="{{ $createCourseUrl }}" class="btn btn-success w-100">
+                                <i class="ph ph-book-open me-2"></i>
+                                + Buat Kursus Baru
+                            </a>
+                            <a href="{{ $reportsUrl }}" class="btn btn-outline-main w-100 {{ $reportsDisabled ? 'disabled' : '' }}" {{ $reportsDisabled ? 'aria-disabled=true tabindex=-1 title=\'Halaman laporan belum tersedia\'' : '' }}>
+                                <i class="ph ph-chart-line-up me-2"></i>
+                                Lihat Laporan
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Widget 2: Aktivitas Admin Terbaru -->
+                <div class="card mt-24">
+                    <div class="card-header border-bottom border-gray-100 flex-between gap-8 flex-wrap">
+                        <h5 class="mb-0">Aktivitas Admin Terbaru</h5>
+                    </div>
+                    <div class="card-body">
+                        @php
+                            $logs = ($recentLogs ?? collect());
+                            // Helper to decide icon/color based on action
+                            $resolveLogMeta = function($action) {
+                                $map = [
+                                    'user.created' => ['icon' => 'ph-user-plus', 'bg' => 'bg-main-50', 'fg' => 'text-main-600', 'badge' => 'User'],
+                                    'user.updated' => ['icon' => 'ph-pencil', 'bg' => 'bg-warning-50', 'fg' => 'text-warning-600', 'badge' => 'User'],
+                                    'user.deleted' => ['icon' => 'ph-trash', 'bg' => 'bg-danger-50', 'fg' => 'text-danger-600', 'badge' => 'User'],
+                                    'course.created' => ['icon' => 'ph-book-open', 'bg' => 'bg-main-50', 'fg' => 'text-main-600', 'badge' => 'Course'],
+                                    'course.updated' => ['icon' => 'ph-pencil-line', 'bg' => 'bg-warning-50', 'fg' => 'text-warning-600', 'badge' => 'Course'],
+                                    'course.published' => ['icon' => 'ph-megaphone', 'bg' => 'bg-success-50', 'fg' => 'text-success-600', 'badge' => 'Course'],
+                                    'course.unpublished' => ['icon' => 'ph-megaphone-slash', 'bg' => 'bg-gray-50', 'fg' => 'text-gray-600', 'badge' => 'Course'],
+                                    'course.participants_updated' => ['icon' => 'ph-users-three', 'bg' => 'bg-purple-50', 'fg' => 'text-purple-600', 'badge' => 'Course'],
+                                ];
+                                return $map[$action] ?? ['icon' => 'ph-activity', 'bg' => 'bg-gray-50', 'fg' => 'text-gray-700', 'badge' => 'Activity'];
+                            };
                         @endphp
 
-                        <div class="mb-12 flex-between">
-                            <div class="flex-align gap-8">
-                                <span class="w-32 h-32 bg-main-50 rounded-circle flex-center text-main-600">
-                                    <i class="ph-fill ph-book-open"></i>
-                                </span>
-                                <span class="text-gray-600 text-sm">Lessons Completed</span>
+                        @if($logs->count() > 0)
+                            <div class="position-relative ps-24">
+                                <span class="position-absolute start-8 top-0 bottom-0 w-2 bg-gray-100 rounded-pill"></span>
+                                <ul class="list-unstyled mb-0">
+                                    @foreach($logs as $log)
+                                        @php $meta = $resolveLogMeta($log['action'] ?? ''); @endphp
+                                        <li class="d-flex gap-12 align-items-start mb-16 position-relative">
+                                            <span class="position-absolute start-0 translate-middle-x w-10 h-10 rounded-circle bg-white border border-gray-200"></span>
+                                            <div class="flex-shrink-0 {{ $meta['bg'] }} rounded-12 w-36 h-36 d-flex align-items-center justify-content-center">
+                                                <i class="ph {{ $meta['icon'] }} {{ $meta['fg'] }} text-lg"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center gap-8 flex-wrap">
+                                                    @if(!empty($log['causer_name']))
+                                                        <span class="fw-semibold text-gray-900 text-14">{{ $log['causer_name'] }}</span>
+                                                    @endif
+                                                    <span class="badge rounded-pill px-8 py-4 text-11 {{ $meta['bg'] }} {{ $meta['fg'] }}">{{ $meta['badge'] }}</span>
+                                                    <span class="text-12 text-gray-500">{{ \Carbon\Carbon::parse($log['time'])->diffForHumans() }}</span>
+                                                </div>
+                                                <div class="text-14 text-gray-800 mt-4" style="word-break: break-word; overflow-wrap: anywhere;">
+                                                    {{ $log['description'] ?? $log['text'] }}
+                                                </div>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
                             </div>
-                            <span class="text-main-600 fw-bold">+{{ number_format($lessonPoints) }}</span>
-                        </div>
-
-                        <div class="mb-12 flex-between">
-                            <div class="flex-align gap-8">
-                                <span class="w-32 h-32 bg-success-50 rounded-circle flex-center text-success-600">
-                                    <i class="ph-fill ph-check-circle"></i>
-                                </span>
-                                <span class="text-gray-600 text-sm">Quizzes Passed</span>
+                        @else
+                            <div class="text-center py-16">
+                                <div class="w-56 h-56 bg-gray-50 rounded-circle mx-auto flex-center mb-10">
+                                    <i class="ph ph-activity text-28 text-gray-400"></i>
+                                </div>
+                                <div class="text-gray-600">Belum ada aktivitas.</div>
                             </div>
-                            <span class="text-success-600 fw-bold">+{{ number_format($quizPoints) }}</span>
-                        </div>
-
-                        <div class="mb-12 flex-between">
-                            <div class="flex-align gap-8">
-                                <span class="w-32 h-32 bg-warning-50 rounded-circle flex-center text-warning-600">
-                                    <i class="ph-fill ph-certificate"></i>
-                                </span>
-                                <span class="text-gray-600 text-sm">Courses Completed</span>
-                            </div>
-                            <span class="text-warning-600 fw-bold">+{{ number_format($coursePoints) }}</span>
-                        </div>
-
-                        <div class="border-top border-gray-100 mt-16 pt-16">
-                            <div class="flex-between">
-                                <span class="text-gray-900 fw-semibold">Total Transactions</span>
-                                <span class="badge bg-primary-50 text-primary-600 px-12 py-4 rounded-pill">
-                                    {{ $totalTransactions }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Point Earning Info -->
-                    <div class="bg-main-50 rounded-8 p-16 mt-20">
-                        <h6 class="text-sm mb-12 text-gray-900">
-                            <i class="ph-fill ph-info text-main-600 me-2"></i>
-                            How to Earn Points
-                        </h6>
-                        <ul class="list-unstyled mb-0 text-13 text-gray-600">
-                            <li class="mb-8">
-                                <i class="ph-fill ph-check-circle text-success-600 me-2"></i>
-                                Complete 1 Lesson = <strong>5 points</strong>
-                            </li>
-                            <li class="mb-8">
-                                <i class="ph-fill ph-check-circle text-success-600 me-2"></i>
-                                Pass 1 Quiz = <strong>10 points</strong>
-                            </li>
-                            <li class="mb-0">
-                                <i class="ph-fill ph-check-circle text-success-600 me-2"></i>
-                                Complete Course = <strong>20 points</strong>
-                            </li>
-                        </ul>
+                        @endif
                     </div>
                 </div>
-            </div>
-            <!-- Point End -->
 
-            <!-- IDP Start -->
-            <div class="card mt-24">
-                <div class="card-header border-bottom border-gray-100 flex-between gap-8 flex-wrap">
-                    <h5 class="mb-0">My IDP</h5>
-                    <div class="dropdown flex-shrink-0">
-                        <button class="text-gray-400 text-xl d-flex rounded-4" type="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <i class="ph-fill ph-dots-three-outline"></i>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu--md border-0 bg-transparent p-0">
-                            <div class="card border border-gray-100 rounded-12 box-shadow-custom">
-                                <div class="card-body p-12">
-                                    <div class="max-h-200 overflow-y-auto scroll-sm pe-8">
-                                        <ul>
-                                            <li class="mb-0">
-                                                <a href="students.html"
-                                                    class="py-6 text-15 px-8 hover-bg-gray-50 text-gray-300 w-100 rounded-8 fw-normal text-xs d-block text-start">
-                                                    <span class="text"> <i class="ph ph-user me-4"></i>
-                                                        View Profile</span>
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
+                <!-- Widget 3: Ringkasan Sistem -->
+                <div class="card mt-24">
+                    <div class="card-header border-bottom border-gray-100 flex-between gap-8 flex-wrap">
+                        <h5 class="mb-0">Ringkasan Sistem</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-10">
+                            <span class="text-gray-600">Online Users</span>
+                            <span class="fw-semibold">{{ $onlineUserCount ?? 0 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-10">
+                            <span class="text-gray-600">Versi Aplikasi</span>
+                            <span class="fw-semibold">{{ $appVersion ?? 'v1.0.0' }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-gray-600">Status Server</span>
+                            @php $status = ($serverStatus ?? 'Online'); @endphp
+                            <span class="fw-semibold {{ strtolower($status) === 'online' ? 'text-success' : 'text-danger' }}">{{ $status }}</span>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <!-- Non-admin sidebar (tetap seperti sebelumnya: Points & IDP) -->
+                <!-- Point Start -->
+                <div class="card mt-24">
+                    <div class="card-header border-bottom border-gray-100 flex-between gap-8 flex-wrap">
+                        <h5 class="mb-0">My Learning Points</h5>
+                        <span class="badge bg-warning-600 text-white px-12 py-6 rounded-pill">
+                            <i class="ph-fill ph-trophy me-1"></i>
+                            {{ number_format(Auth::user()->getTotalPoints()) }} Points
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <!-- Total Points Display -->
+                        <div class="text-center mb-24">
+                            <div class="w-120 h-120 bg-warning-50 rounded-circle mx-auto flex-center mb-16">
+                                <i class="ph-fill ph-trophy text-64 text-warning-600"></i>
+                            </div>
+                            <h2 class="mb-8 text-warning-600">{{ number_format(Auth::user()->getTotalPoints()) }}</h2>
+                            <p class="text-gray-600 mb-0">Total Learning Points</p>
+                        </div>
+                        @php
+                            $user = Auth::user();
+                            $lessonPoints = $user->pointLogs()->where('related_type', 'App\\Models\\Lesson')->sum('points_earned');
+                            $quizPoints = $user->pointLogs()->where('related_type', 'App\\Models\\Quiz')->sum('points_earned');
+                            $coursePoints = $user->pointLogs()->where('related_type', 'App\\Models\\Course')->sum('points_earned');
+                            $totalTransactions = $user->pointLogs()->count();
+                        @endphp
+                        <div class="border-top border-gray-100 pt-20">
+                            <h6 class="mb-16 text-gray-900">Point Activities</h6>
+                            <div class="mb-12 flex-between">
+                                <div class="flex-align gap-8">
+                                    <span class="w-32 h-32 bg-main-50 rounded-circle flex-center text-main-600">
+                                        <i class="ph-fill ph-book-open"></i>
+                                    </span>
+                                    <span class="text-gray-600 text-sm">Lessons Completed</span>
+                                </div>
+                                <span class="text-main-600 fw-bold">+{{ number_format($lessonPoints) }}</span>
+                            </div>
+                            <div class="mb-12 flex-between">
+                                <div class="flex-align gap-8">
+                                    <span class="w-32 h-32 bg-success-50 rounded-circle flex-center text-success-600">
+                                        <i class="ph-fill ph-check-circle"></i>
+                                    </span>
+                                    <span class="text-gray-600 text-sm">Quizzes Passed</span>
+                                </div>
+                                <span class="text-success-600 fw-bold">+{{ number_format($quizPoints) }}</span>
+                            </div>
+                            <div class="mb-12 flex-between">
+                                <div class="flex-align gap-8">
+                                    <span class="w-32 h-32 bg-warning-50 rounded-circle flex-center text-warning-600">
+                                        <i class="ph-fill ph-certificate"></i>
+                                    </span>
+                                    <span class="text-gray-600 text-sm">Courses Completed</span>
+                                </div>
+                                <span class="text-warning-600 fw-bold">+{{ number_format($coursePoints) }}</span>
+                            </div>
+                            <div class="border-top border-gray-100 mt-16 pt-16">
+                                <div class="flex-between">
+                                    <span class="text-gray-900 fw-semibold">Total Transactions</span>
+                                    <span class="badge bg-primary-50 text-primary-600 px-12 py-4 rounded-pill">
+                                        {{ $totalTransactions }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="flex-center">
-                        <div id="activityDonutChart" class="w-auto d-inline-block"></div>
-                    </div>
-                    <h2 style="text-align: center">IDP Needs Not Available</h2>
+                <!-- Point End -->
 
+                <!-- IDP Start -->
+                <div class="card mt-24">
+                    <div class="card-header border-bottom border-gray-100 flex-between gap-8 flex-wrap">
+                        <h5 class="mb-0">My IDP</h5>
+                        <div class="dropdown flex-shrink-0">
+                            <button class="text-gray-400 text-xl d-flex rounded-4" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ph-fill ph-dots-three-outline"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu--md border-0 bg-transparent p-0">
+                                <div class="card border border-gray-100 rounded-12 box-shadow-custom">
+                                    <div class="card-body p-12">
+                                        <div class="max-h-200 overflow-y-auto scroll-sm pe-8">
+                                            <ul>
+                                                <li class="mb-0">
+                                                    <a href="students.html" class="py-6 text-15 px-8 hover-bg-gray-50 text-gray-300 w-100 rounded-8 fw-normal text-xs d-block text-start">
+                                                        <span class="text"> <i class="ph ph-user me-4"></i> View Profile</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="flex-center">
+                            <div id="activityDonutChart" class="w-auto d-inline-block"></div>
+                        </div>
+                        <h2 style="text-align: center">IDP Needs Not Available</h2>
+                    </div>
                 </div>
-            </div>
-            <!-- IDP End -->
+                <!-- IDP End -->
+            @endif
 
 
 

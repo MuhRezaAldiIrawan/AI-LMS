@@ -16,6 +16,7 @@ use App\Http\Controllers\AiAssistantController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\UserRewardController;
+use App\Http\Controllers\ReportsController;
 
 Route::get('/', [AuthController::class, 'index']);
 
@@ -37,6 +38,9 @@ Route::middleware('auth')->group(function () {
 
     // Admin only routes - hanya admin yang bisa akses
     Route::middleware('admin')->group(function () {
+        // Reports
+        Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
+
         // User Management
         Route::controller(UsersController::class)->group(function(){
             Route::get('users', 'index')->name('users');

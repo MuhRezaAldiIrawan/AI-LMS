@@ -27,7 +27,7 @@ if (!function_exists('canAccess')) {
      */
     function canAccess($roles)
     {
-        if (!auth()->check()) {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
             return false;
         }
 
@@ -35,7 +35,7 @@ if (!function_exists('canAccess')) {
             $roles = [$roles];
         }
 
-        $user = auth()->user();
+    $user = \Illuminate\Support\Facades\Auth::user();
 
         foreach ($roles as $role) {
             if ($user->hasRole($role)) {
@@ -103,11 +103,11 @@ if (!function_exists('getUserRole')) {
      */
     function getUserRole()
     {
-        if (!auth()->check()) {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
             return null;
         }
 
-        $user = auth()->user();
+        $user = \Illuminate\Support\Facades\Auth::user();
 
         if ($user->hasRole('admin')) {
             return 'admin';
@@ -140,6 +140,49 @@ if (!function_exists('getUserRoleDisplay')) {
                 return 'Karyawan';
             default:
                 return 'User';
+        }
+    }
+}
+
+if (!function_exists('log_admin_activity')) {
+    /**
+     * Log an admin activity to admin_activities table.
+     *
+     * @param string $action          A short action key, e.g., 'user.created'
+     * @param string|null $description Human readable description
+     * @param string|null $subjectType Fully qualified class name of subject (e.g., App\Models\User::class)
+     * @param int|null $subjectId      Subject primary key
+     * @param array $properties        Additional payload
+     * @return void
+     */
+    function log_admin_activity(string $action, ?string $description = null, ?string $subjectType = null, ?int $subjectId = null, array $properties = []): void
+    {
+        try {
+            // Ensure table exists
+            if (!\Illuminate\Support\Facades\Schema::hasTable('admin_activities')) {
+                return;
+            }
+
+            $userId = \Illuminate\Support\Facades\Auth::check() ? (int) \Illuminate\Support\Facades\Auth::id() : null;
+
+            $data = [
+                'causer_id' => $userId,
+                'action' => $action,
+                'description' => $description,
+                'subject_type' => $subjectType,
+                'subject_id' => $subjectId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            if (\Illuminate\Support\Facades\Schema::hasColumn('admin_activities', 'properties')) {
+                $data['properties'] = empty($properties) ? null : json_encode($properties);
+            }
+
+            \Illuminate\Support\Facades\DB::table('admin_activities')->insert($data);
+        } catch (\Throwable $e) {
+            // Silent fail; optionally log to laravel log
+            \Illuminate\Support\Facades\Log::debug('log_admin_activity failed: ' . $e->getMessage());
         }
     }
 }

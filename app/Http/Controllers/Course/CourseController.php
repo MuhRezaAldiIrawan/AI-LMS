@@ -235,6 +235,11 @@ class CourseController extends Controller
 
         $course = Course::create($dataToStore);
 
+        // Log admin/pengajar activity
+        if (function_exists('log_admin_activity')) {
+            \call_user_func('log_admin_activity', 'course.created', 'Membuat kursus baru: ' . $course->title, \App\Models\Course::class, $course->id);
+        }
+
         // If AJAX, return redirect URL to course detail with Kurikulum tab
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -469,6 +474,13 @@ class CourseController extends Controller
                     'status' => $newStatus
                 ]);
 
+                // Log publish/unpublish action
+                if (function_exists('log_admin_activity')) {
+                    $action = $isPublished ? 'course.published' : 'course.unpublished';
+                    $desc = ($isPublished ? 'Mempublish' : 'Meng-unpublish') . ' kursus: ' . $course->title;
+                    \call_user_func('log_admin_activity', $action, $desc, \App\Models\Course::class, $course->id);
+                }
+
                 if ($request->expectsJson()) {
                     return response()->json([
                         'success' => true,
@@ -518,6 +530,13 @@ class CourseController extends Controller
         }
 
     Course::where('id', $id)->update($dataToStore);
+
+        // Log course updated
+        if (function_exists('log_admin_activity')) {
+            $courseUpdated = Course::find($id);
+            $title = $courseUpdated ? $courseUpdated->title : ('ID ' . $id);
+            \call_user_func('log_admin_activity', 'course.updated', 'Memperbarui kursus: ' . $title, \App\Models\Course::class, (int) $id);
+        }
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -581,6 +600,13 @@ class CourseController extends Controller
             }
 
             $courseModel->enrolledUsers()->sync($validIds);
+
+            // Log participant updates
+            if (function_exists('log_admin_activity')) {
+                \call_user_func('log_admin_activity', 'course.participants_updated', 'Memperbarui peserta untuk kursus: ' . $courseModel->title, \App\Models\Course::class, $courseModel->id, [
+                    'count' => count($validIds)
+                ]);
+            }
 
             if ($request->expectsJson()) {
                 return response()->json([

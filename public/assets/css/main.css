@@ -9165,8 +9165,9 @@ button:focus {
     margin-inline-start: 252px;
     min-height: 100vh;
     display: flex;
-    flex-wrap: wrap;
-    flex-flow: column;
+    /* Ensure a true vertical layout without wrapping so footer stays below body */
+    flex-direction: column;
+    flex-wrap: nowrap;
     transition: 0.2s linear;
     background-color: var(--main-50);
 }
@@ -9184,6 +9185,8 @@ button:focus {
 .dashboard-body {
     padding-block-start: 24px;
     padding-block-end: 24px;
+    /* Allow body to take available vertical space so footer pushes to the bottom */
+    flex: 1 1 auto;
 }
 
 .top-navbar, .dashboard-body {
@@ -9212,7 +9215,9 @@ button:focus {
 /* ===================== Dashboard Main wrapper css End ========================= */
 /* ========================== Dashboard Footer Css Start ================================== */
 .dashboard-footer {
+    /* Keep footer at the end of the column and prevent shrinking */
     margin-top: auto;
+    flex-shrink: 0;
     padding: 20px;
     border-radius: 16px 16px 0 0;
     background-color: hsl(var(--white));

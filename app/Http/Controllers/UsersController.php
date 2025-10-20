@@ -9,6 +9,8 @@ use Spatie\Permission\Models\Role;
 use App\Models\Location;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use function log_admin_activity;
 
 
 class UsersController extends Controller
@@ -96,6 +98,11 @@ class UsersController extends Controller
         $user = User::create($userData);
         $user->assignRole($request->role);
 
+        // Log admin activity
+        if (function_exists('log_admin_activity')) {
+            \call_user_func('log_admin_activity', 'user.created', 'Membuat pengguna baru: ' . $user->name, User::class, $user->id);
+        }
+
         return redirect()->route('users');
     }
 
@@ -143,6 +150,11 @@ class UsersController extends Controller
 
         $user->save();
 
+        // Log admin activity
+        if (function_exists('log_admin_activity')) {
+            \call_user_func('log_admin_activity', 'user.updated', 'Memperbarui pengguna: ' . $user->name, User::class, $user->id);
+        }
+
         return response()->json(['message' => 'User updated successfully']);
     }
 
@@ -157,6 +169,11 @@ class UsersController extends Controller
 
             $pengguna->delete();
 
+            // Log admin activity
+            if (function_exists('log_admin_activity')) {
+                \call_user_func('log_admin_activity', 'user.deleted', 'Menghapus pengguna: ' . $pengguna->name, User::class, (int) $id);
+            }
+
             return response()->json(['success' => true, 'message' => 'Data berhasil dihapus.']);
         } catch (\Throwable $th) {
             return response()->json([
@@ -168,7 +185,7 @@ class UsersController extends Controller
 
     public function profile()
     {
-        $user = auth()->user();
+    $user = Auth::user();
         $lokasi = Location::orderBy('name')->get();
         return view('pages.userprofile.userprofile', compact('user', 'lokasi'));
     }
