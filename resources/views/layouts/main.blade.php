@@ -39,6 +39,9 @@
         .sidebar-divider:not(:empty)::after {
             margin-left: .75em;
         }
+
+            /* Sidebar submenu polish */
+            /* No extra submenu indentation needed anymore */
     </style>
 
     @yield('css')
@@ -86,6 +89,8 @@
     <script src="{{ asset('assets/js/phosphor-icon.js') }}"></script>
 
     @yield('js')
+
+    
 
     <script src="{{ asset('assets/js/main.js') }}"></script>
 

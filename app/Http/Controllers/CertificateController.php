@@ -155,4 +155,33 @@ class CertificateController extends Controller
 
         return redirect()->back()->with('error', 'Failed to generate certificate. Make sure the course is completed.');
     }
+
+    /**
+     * Landing page setelah menyelesaikan kursus (tampilan selamat + tombol download/preview)
+     */
+    public function congrats($courseId)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $course = Course::with(['author', 'category'])->findOrFail($courseId);
+
+        // Pastikan user menyelesaikan kursus
+        if (!$course->isCompletedByUser($user)) {
+            // Arahkan kembali ke ringkasan kursus (mode pembelajar)
+            return redirect()->to(route('course.show', $course->id) . '?mode=learn')
+                ->with('info', 'Selesaikan seluruh materi untuk mendapatkan sertifikat.');
+        }
+
+        // Ambil / siapkan sertifikat
+        $certificate = $user->getCertificateForCourse($course->id);
+        if (!$certificate) {
+            // Coba generate jika belum ada (bergantung pada service yang ada)
+            $certificate = $this->certificateService->generateCertificate($user, $course);
+        }
+
+        return view('pages.certificate.congrats', compact('course', 'certificate'));
+    }
 }

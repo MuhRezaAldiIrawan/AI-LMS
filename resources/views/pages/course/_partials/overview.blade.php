@@ -225,12 +225,11 @@
 
                     <!-- Action Buttons (owner/admin only) -->
                     @if($canManage)
-                        <div class="mt-16 d-grid gap-2">
-                            <button type="button" class="btn btn-outline-main bg-main-100 border-main-100 text-main-600 rounded-pill py-8 w-100" id="overviewSaveDraftBtn"
-                                    data-course-id="{{ $course->id }}">
-                                <i class="ph ph-file-arrow-down me-1"></i> Save as Draft
+                        <div class="mt-16 d-flex gap-8">
+                            <button type="button" class="btn btn-outline-main rounded-pill py-8 flex-fill" id="overviewBackToParticipantsBtn">
+                                <i class="ph ph-arrow-left me-1"></i> Kembali Assign
                             </button>
-                            <button type="button" class="btn btn-main rounded-pill py-8 w-100" id="overviewPublishBtn"
+                            <button type="button" class="btn btn-main rounded-pill py-8 flex-fill" id="overviewPublishBtn"
                                     data-course-id="{{ $course->id }}" data-status="{{ $course->status }}">
                                 <i class="ph ph-rocket-launch me-1"></i> {{ $course->status === 'published' ? 'Update Course' : 'Publish Course' }}
                             </button>
@@ -249,6 +248,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Buttons in Overview card
     const btnPublish = document.getElementById('overviewPublishBtn');
     const btnDraft = document.getElementById('overviewSaveDraftBtn');
+    const btnBack = document.getElementById('overviewBackToParticipantsBtn');
 
     if (btnPublish) {
         btnPublish.addEventListener('click', function() {
@@ -272,24 +272,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (btnDraft) {
-        btnDraft.addEventListener('click', function() {
-            const courseId = this.dataset.courseId;
+    // Note: tombol Save as Draft di sidebar dihilangkan (sudah ada di header)
 
-            Swal.fire({
-                title: 'Simpan sebagai Draft?',
-                text: 'Kursus akan tidak tersedia untuk peserta baru sampai dipublish kembali.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#f39c12',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Simpan Draft',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    submitPublishToggle(courseId, false, btnDraft);
-                }
-            });
+    // Back to Assign Participants (Kelola Peserta)
+    if (btnBack) {
+        btnBack.addEventListener('click', function(){
+            // gunakan helper wizard yang sudah ada
+            if (window.activateCoursePane) {
+                window.activateCoursePane('participants');
+            } else {
+                // fallback: ganti hash agar listener hashchange di show.blade memindah tab
+                location.hash = '#users';
+            }
+            // juga sinkronkan step indikator jika tersedia
+            window.setCourseWizardStep && window.setCourseWizardStep('participants');
         });
     }
 

@@ -93,8 +93,8 @@
     <div class="card">
         <div class="card-body">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-24 gap-3">
-                {{-- Tabs filter hanya untuk Admin & Pengajar agar tampilan Karyawan lebih sederhana --}}
-                @unless(isKaryawan())
+                {{-- Tabs filter untuk Admin & Pengajar (kecuali ketika Pengajar dalam learnerMode) --}}
+                @if(!(isKaryawan() || (isset($learnerMode) && $learnerMode)))
                     <ul class="nav nav-pills gap-10 mb-0 p-1 bg-light rounded-3 shadow-sm" id="redeemTabs" role="tablist"
                         style="--bs-nav-pills-link-active-bg: #4f46e5;">
                         <li class="nav-item" role="presentation">
@@ -110,7 +110,7 @@
                                 type="button">Published</button>
                         </li>
                     </ul>
-                @endunless
+                @endif
 
                 <div class="d-flex align-items-center gap-10">
                     <div class="position-relative">
@@ -119,8 +119,8 @@
                             class="ph ph-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                     </div>
 
-                    {{-- Tombol Tambah Kursus - Hanya untuk Admin & Pengajar --}}
-                    @if(canManageCourses())
+                    {{-- Tombol Tambah Kursus - Hanya untuk Admin & Pengajar (kecuali learnerMode Pengajar) --}}
+                    @if(canManageCourses() && !(isset($learnerMode) && $learnerMode))
                         <a href="{{ route('course.create') }}" class="btn btn-primary d-flex align-items-center gap-2"
                             style="border-radius: 30px">
                             <i class="ph ph-plus-circle text-lg"></i> Tambah Kursus
@@ -252,7 +252,9 @@
     $(document).ready(function() {
         let statusFilter = 'all'; // draft/published for admin/pengajar, or progress filter for karyawan
         let searchQuery = '';
-        const isKaryawan = {{ isKaryawan() ? 'true' : 'false' }};
+        const isKaryawan = {{ (isKaryawan() || (isset($learnerMode) && $learnerMode)) ? 'true' : 'false' }};
+        const isLearnerMode = {{ (isset($learnerMode) && $learnerMode) ? 'true' : 'false' }};
+        const baseListUrl = isLearnerMode ? "{{ route('course.my') }}" : "{{ route('course') }}";
 
         // Use event delegation for filter tabs
         $(document).on('click', '.filter-tab', function() {
@@ -291,7 +293,7 @@
 
         function loadCourses(page = 1) {
             $.ajax({
-                url: "{{ route('course') }}",
+                url: baseListUrl,
                 type: "GET",
                 data: {
                     status: statusFilter,

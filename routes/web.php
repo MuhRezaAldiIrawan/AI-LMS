@@ -112,6 +112,9 @@ Route::middleware('auth')->group(function () {
     Route::controller(CourseController::class)->group(function(){
         Route::get('course', 'index')->name('course');
 
+        // Pengajar: Kursus Saya (mode pembelajar seperti karyawan)
+        Route::middleware('role:pengajar')->get('my-courses', 'myCourses')->name('course.my');
+
         // Allow either admin OR pengajar (Spatie role middleware uses | as OR)
         Route::middleware('role:admin|pengajar')->group(function() {
             Route::get('course/create', 'create')->name('course.create');
@@ -199,6 +202,9 @@ Route::middleware('auth')->group(function () {
             Route::post('certificate/generate', 'generate')->name('certificate.generate');
             Route::post('certificate/{id}/regenerate', 'regenerate')->name('certificate.regenerate');
         });
+
+        // Certificate landing (congrats) page for completed course (auth required)
+        Route::get('course/{courseId}/certificate', 'congrats')->name('certificate.congrats');
     });
 
     // Public certificate verification (no auth required, moved outside auth middleware)

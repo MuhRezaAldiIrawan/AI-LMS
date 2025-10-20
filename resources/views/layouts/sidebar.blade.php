@@ -63,12 +63,34 @@
                     <span>Learning</span>
                 </li>
 
-                <li class="sidebar-menu__item {{ setActive(['course*']) }}">
-                    <a href="{{ route('course') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-books"></i></span>
-                        <span class="text">Kursus</span>
-                    </a>
-                </li>
+                @if(canAccess(['pengajar']))
+                    @php
+                        $isLearnerCourseShow = request()->routeIs('course.show') && request()->query('mode') === 'learn';
+                        $isLearningRoute = request()->routeIs('lesson.*') || request()->routeIs('quiz.*');
+                        $isCreateActive = request()->routeIs('course') || request()->routeIs('course.create') || (request()->routeIs('course.show') && !$isLearnerCourseShow);
+                        // Aktifkan "Kursus Saya" saat pengajar sedang belajar (course.show?mode=learn, lesson.*, quiz.*)
+                        $isMyCourseActive = request()->routeIs('course.my') || $isLearnerCourseShow || $isLearningRoute;
+                    @endphp
+                    <li class="sidebar-menu__item {{ $isCreateActive ? 'activePage' : '' }}">
+                        <a href="{{ route('course') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-books"></i></span>
+                            <span class="text">Buat Kursus</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu__item {{ $isMyCourseActive ? 'activePage' : '' }}">
+                        <a href="{{ route('course.my') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-graduation-cap"></i></span>
+                            <span class="text">Kursus Saya</span>
+                        </a>
+                    </li>
+                @else
+                    <li class="sidebar-menu__item {{ setActive(['course*']) }}">
+                        <a href="{{ route('course') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-books"></i></span>
+                            <span class="text">Kursus</span>
+                        </a>
+                    </li>
+                @endif
 
                 {{-- AI Assistant - Karyawan, Pengajar, Admin --}}
                 @if(canAccess(['admin', 'karyawan', 'pengajar']))
@@ -102,13 +124,6 @@
                             <span class="text">Rewards Management</span>
                         </a>
                     </li>
-                    <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
-                        <a href="{{ route('redeemtion') }}" class="sidebar-menu__link">
-                            <span class="icon"><i class="ph ph-swap"></i></span>
-                            <span class="text">Penukaran Reward</span>
-                        </a>
-                    </li>
-                @elseif(canAccess(['pengajar']))
                     <li class="sidebar-menu__item {{ setActive(['redeemtion*']) }}">
                         <a href="{{ route('redeemtion') }}" class="sidebar-menu__link">
                             <span class="icon"><i class="ph ph-swap"></i></span>

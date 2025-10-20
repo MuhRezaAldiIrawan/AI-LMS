@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\Module;
 use App\Models\Lesson;
 use App\Models\Certificate;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -32,9 +33,67 @@ class DashboardController extends Controller
         $createdStudyTime = null; // HH:MM
         $createdCourses = collect();
 
-        if (function_exists('isAdmin') && (isAdmin() || isPengajar())) {
+        // Admin-wide aggregate metrics (system-level)
+        $adminTotalCourses = null;
+        $adminTotalUsers = null; // exclude admins
+        $adminTotalCompletions = null; // count of course completions (course_user.completed_at)
+        $adminTotalInstructors = null; // users with role pengajar/instruktur
+        $recentCourses = collect(); // latest course activities
+
+        if (function_exists('isAdmin') && isAdmin()) {
+            // ADMIN VIEW: system-wide aggregates
+            $adminTotalCourses = Course::count();
+
+            // All users except those with role 'admin'
+            try {
+                $adminTotalUsers = User::withoutRole('admin')->count();
+            } catch (\Throwable $e) {
+                // Fallback if spatie helpers unavailable for any reason
+                $adminRoleUserIds = DB::table('model_has_roles')
+                    ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                    ->where('roles.name', 'admin')
+                    ->pluck('model_id');
+                $adminTotalUsers = User::whereNotIn('id', $adminRoleUserIds)->count();
+            }
+
+            // Total times courses were completed by anyone
+            $adminTotalCompletions = DB::table('course_user')->whereNotNull('completed_at')->count();
+
+            // Total instructors (pengajar/instruktur)
+            try {
+                $adminTotalInstructors = User::role(['pengajar', 'instruktur'])->distinct()->count();
+            } catch (\Throwable $e) {
+                $instructorRoleUserIds = DB::table('model_has_roles')
+                    ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                    ->whereIn('roles.name', ['pengajar', 'instruktur'])
+                    ->distinct()
+                    ->pluck('model_id');
+                $adminTotalInstructors = User::whereIn('id', $instructorRoleUserIds)->count();
+            }
+
+            // Recent course activities: latest created/updated courses
+            $recentCourses = Course::with(['category','author'])
+                ->withCount('enrolledUsers')
+                ->orderByDesc('updated_at')
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get()
+                ->map(function ($course) {
+                    return [
+                        'id' => $course->id,
+                        'title' => $course->title,
+                        'category' => $course->category?->name ?? 'Uncategorized',
+                        'author' => $course->author?->name ?? 'Unknown',
+                        'thumbnail' => $course->thumbnail ? $course->thumbnail : 'default-thumbnail.jpg',
+                        'participants' => $course->enrolled_users_count ?? 0,
+                        'created_at' => $course->created_at,
+                        'updated_at' => $course->updated_at,
+                        'status' => $course->status,
+                    ];
+                });
+        } elseif (function_exists('isAdmin') && isPengajar()) {
             // Courses owned by current user (or all, if admin)
-            $coursesQuery = isAdmin() ? Course::query() : Course::where('user_id', $user->id);
+            $coursesQuery = Course::where('user_id', $user->id);
 
             // Summary cards
             $createdCoursesCount = (clone $coursesQuery)->count();
@@ -115,7 +174,13 @@ class DashboardController extends Controller
             'assignedStudentsCount',
             'graduatedStudentsCount',
             'createdStudyTime',
-            'createdCourses'
+            'createdCourses',
+            // admin aggregates
+            'adminTotalCourses',
+            'adminTotalUsers',
+            'adminTotalCompletions',
+            'adminTotalInstructors',
+            'recentCourses'
         ));
     }
 

@@ -142,6 +142,59 @@ class CourseController extends Controller
     }
 
     /**
+     * Kursus Saya untuk Pengajar dalam mode pembelajar (mirip karyawan)
+     */
+    public function myCourses(Request $request)
+    {
+        if (!canAccess('pengajar')) {
+            return redirect()->route('course');
+        }
+
+        $userId = Auth::id();
+        $status = $request->query('status'); // all | on_progress | completed
+        $search = $request->query('search');
+
+        // Enrolled courses (published) dengan filter progress
+        $enrolledQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+            ->where('status', 'published')
+            ->whereHas('enrolledUsers', function ($q) use ($userId, $status) {
+                $q->where('user_id', $userId)
+                  ->whereNotNull('enrolled_at');
+
+                if ($status === 'on_progress') {
+                    $q->whereNull('completed_at');
+                } elseif ($status === 'completed') {
+                    $q->whereNotNull('completed_at');
+                }
+            });
+
+        if ($search) {
+            $enrolledQuery->where('title', 'like', '%' . $search . '%');
+        }
+
+        $enrolledCourses = $enrolledQuery->latest()->paginate(6, ['*'], 'enrolled_courses_page');
+
+        // Assigned but not enrolled
+        $assignedQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+            ->where('status', 'published')
+            ->whereHas('enrolledUsers', function ($q) use ($userId) {
+                $q->where('user_id', $userId)
+                  ->whereNull('enrolled_at');
+            });
+
+        if ($search) {
+            $assignedQuery->where('title', 'like', '%' . $search . '%');
+        }
+
+        $assignedCourses = $assignedQuery->latest()->paginate(6, ['*'], 'assigned_courses_page');
+
+        // Reuse course view with learner-style sections
+        return view('pages.course.course', compact('enrolledCourses', 'assignedCourses'))
+            ->with('userRole', 'pengajar')
+            ->with('learnerMode', true);
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
@@ -220,7 +273,10 @@ class CourseController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        if ($user->hasRole('karyawan')) {
+        // Paksa mode pembelajar jika query string ?mode=learn
+        $forceLearner = $request->query('mode') === 'learn';
+        // Tampilkan tampilan pembelajar (employee) untuk Karyawan atau ketika dipaksa learnerMode
+        if ($user->hasRole('karyawan') || $forceLearner) {
             // Load completed lessons untuk menghitung progress dengan efisien
             $user->load(['completedLessons', 'quizAttempts' => function($query) use ($course) {
                 // Load quiz attempts hanya untuk quiz di course ini
@@ -238,7 +294,11 @@ class CourseController extends Controller
 
         $categories = Category::all();
         $courseType = CourseType::all();
-        $users = User::all();
+        // Hanya tampilkan user dengan role karyawan pada langkah Kelola Peserta
+        // Gunakan pagination agar daftar tetap ringan dan method links() tersedia di view
+        $users = User::role('karyawan')
+            ->orderBy('name')
+            ->paginate(20);
 
         $accessDenied = $request->get('access_denied', false);
         $userRole = $request->get('user_role');
@@ -259,8 +319,8 @@ class CourseController extends Controller
                 ->with('accessDenied', true);
         }
 
-
-        $isOwner = $course->user_id === $user->id;
+        // Honor learner mode (e.g., Pengajar visiting as learner) untuk menentukan owner UI
+        $isOwner = !$forceLearner && ($course->user_id === $user->id);
 
         $isEnrolled = $user->isEnrolledIn($course);
 
@@ -502,14 +562,32 @@ class CourseController extends Controller
         try {
             $participantIds = $request->input('participants', []);
 
-            $courseModel->enrolledUsers()->sync($participantIds);
+            // Validasi tambahan di sisi server: hanya ijinkan user dengan role karyawan
+            $validIds = User::role('karyawan')
+                ->whereIn('id', $participantIds)
+                ->pluck('id')
+                ->toArray();
+
+            // Jika ada ID yang bukan karyawan, beri respon error agar jelas bagi klien
+            if (count($validIds) !== count($participantIds)) {
+                $message = 'Hanya pengguna berperan karyawan yang dapat ditambahkan sebagai peserta.';
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message
+                    ], 422);
+                }
+                return redirect()->back()->withErrors(['participants' => $message]);
+            }
+
+            $courseModel->enrolledUsers()->sync($validIds);
 
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Peserta kursus berhasil diperbarui.',
                     'data' => [
-                        'enrolled_count' => count($participantIds),
+                        'enrolled_count' => count($validIds),
                         'course_id' => $courseModel->id
                     ]
                 ]);

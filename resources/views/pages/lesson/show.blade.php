@@ -564,6 +564,8 @@
     $user = Auth::user();
     $rightProgress = method_exists($course, 'getCompletionPercentage') && $user ? $course->getCompletionPercentage($user) : ($completionPercentage ?? 0);
     $courseModules = isset($courseModules) ? $courseModules : $course->modules;
+    // Sertifikat jika kursus sudah 100%
+    $certificate = ($rightProgress >= 100 && $user) ? $user->getCertificateForCourse($course->id) : null;
 @endphp
 <div class="row gy-4">
     <!-- Main Content Area -->
@@ -574,7 +576,7 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-0">
                             <li class="breadcrumb-item">
-                                <a href="{{ route('course.show', $course->id) }}" class="text-gray-200 fw-normal text-15 hover-text-main-600 text-decoration-none">
+                                <a href="{{ route('course.show', $course->id) . '?mode=learn' }}" class="text-gray-200 fw-normal text-15 hover-text-main-600 text-decoration-none">
                                     <i class="ph ph-arrow-left me-1"></i> {{ $course->title }}
                                 </a>
                             </li>
@@ -787,9 +789,15 @@
                             <i class="ph ph-exam me-1"></i> Kerjakan Quiz
                         </a>
                     @else
-                        <button type="button" class="btn btn-success rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
-                            Tandai Selesai
-                        </button>
+                        @if($rightProgress >= 100)
+                            <a href="{{ route('certificate.congrats', $course->id) }}" class="btn btn-primary rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                                Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                            </a>
+                        @else
+                            <button type="button" class="btn btn-success rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                                Tandai Selesai
+                            </button>
+                        @endif
                     @endif
                 </div>
 
@@ -877,7 +885,7 @@
                             <li class="course-list__item flex-align gap-8 mb-16 active">
                                 <span class="circle flex-shrink-0 text-32 d-flex text-main-600"><i class="ph-fill ph-check-circle"></i></span>
                                 <div class="w-100">
-                                    <a href="{{ route('course.show', $course->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                    <a href="{{ route('course.show', $course->id) . '?mode=learn' }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
                                         Buka Ringkasan Kursus
                                         <span class="text-gray-300 fw-normal d-block">Lihat deskripsi, pengajar, dan daftar modul</span>
                                     </a>
@@ -970,6 +978,41 @@
                 @endforelse
             </div>
         </div>
+    @if($rightProgress >= 100)
+            @php $certificate = $certificate ?? ($user ? $user->getCertificateForCourse($course->id) : null); @endphp
+            <div class="card mt-24">
+                <div class="card-body">
+                    <h4 class="mb-20">Sertifikat</h4>
+                    @if($certificate)
+                        <div class="p-12 rounded-12 mb-16" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 1px solid #0ea5e9;">
+                            <div class="d-flex align-items-start gap-12">
+                                <i class="ph ph-certificate text-primary" style="font-size: 32px;"></i>
+                                <div>
+                                    <div class="fw-bold text-dark mb-4">Selamat! Sertifikat Anda siap.</div>
+                                    <div class="text-13 text-dark">
+                                        <div><strong>No.:</strong> {{ $certificate->certificate_number }}</div>
+                                        <div><strong>Terbit:</strong> {{ $certificate->issued_date->format('d F Y') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-10">
+                            <a href="{{ route('certificate.download', $certificate->id) }}" class="btn btn-primary btn-sm rounded-pill py-8 px-16">
+                                <i class="ph ph-download me-2"></i>Download
+                            </a>
+                            <a href="{{ route('certificate.preview', $certificate->id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-preview btn-sm rounded-pill py-8 px-16">
+                                <i class="ph ph-eye me-2"></i>Preview
+                            </a>
+                        </div>
+                    @else
+                        <div class="alert alert-warning border-warning rounded-12 p-12 mb-0">
+                            <i class="ph ph-hourglass text-warning me-2"></i>
+                            Sertifikat sedang diproses, silakan refresh beberapa saat lagi.
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 

@@ -2,11 +2,16 @@
     <div class="mentor-card rounded-8 card border border-gray-100">
         <div class="card-body p-8">
             @php
+                // Mode belajar pakai flag global dari view parent (karyawan atau pengajar-learnerMode)
+                $learnerMode = isset($learnerMode) && $learnerMode;
                 // Hanya pemilik (owner) yang boleh mengelola; admin non-owner hanya bisa lihat overview
-                $canManage = auth()->check() && auth()->id() === $course->user_id;
+                $canManage = !$learnerMode && auth()->check() && auth()->id() === $course->user_id;
                 // Direct owner to Course Details tab explicitly
                 $manageUrl = route('course.show', $course->id) . '#informasi-umum';
-                $overviewUrl = route('course.show', $course->id) . '#overview';
+                // In learner mode, force view as learner with query param (no #overview)
+                $overviewUrl = $learnerMode
+                    ? route('course.show', $course->id) . '?mode=learn'
+                    : route('course.show', $course->id) . '#overview';
             @endphp
             <a href="{{ $canManage ? $manageUrl : $overviewUrl }}"
                 class="bg-main-100 rounded-8 overflow-hidden text-center mb-8 h-164 flex-center p-8">
@@ -67,7 +72,7 @@
 
                 <a href="{{ $canManage ? $manageUrl : $overviewUrl }}"
                     class="btn btn-outline-main rounded-pill py-9 w-100 mt-24">
-                    {{ $canManage ? 'Kelola Kursus' : 'Lihat Overview' }}
+                    {{ $canManage ? 'Kelola Kursus' : 'Lihat Kursus' }}
                 </a>
             </div>
         </div>

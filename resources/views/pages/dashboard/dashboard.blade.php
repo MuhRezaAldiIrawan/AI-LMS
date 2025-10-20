@@ -28,8 +28,62 @@
 
             <!-- Widgets Start -->
             <div class="row gy-4 mt-10">
-                @if(function_exists('isAdmin') && (isAdmin() || isPengajar()))
-                    <!-- Admin/Pengajar Widgets: Creator-centric -->
+                @if(function_exists('isAdmin') && isAdmin())
+                    <!-- Admin Widgets: System-wide aggregates -->
+                    <div class="col-xxl-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="mb-2">{{ $adminTotalCourses ?? 0 }}</h4>
+                                <span class="text-gray-600">Total Kursus</span>
+                                <div class="flex-between gap-8 mt-16">
+                                    <span class="flex-shrink-0 w-48 h-48 flex-center rounded-circle bg-main-600 text-white text-2xl">
+                                        <i class="ph-fill ph-book-open"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="mb-2">{{ $adminTotalUsers ?? 0 }}</h4>
+                                <span class="text-gray-600">Total Pengguna</span>
+                                <div class="flex-between gap-8 mt-16">
+                                    <span class="flex-shrink-0 w-48 h-48 flex-center rounded-circle bg-main-two-600 text-white text-2xl">
+                                        <i class="ph-fill ph-users-three"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="mb-2">{{ $adminTotalCompletions ?? 0 }}</h4>
+                                <span class="text-gray-600">Total Penyelesaian</span>
+                                <div class="flex-between gap-8 mt-16">
+                                    <span class="flex-shrink-0 w-48 h-48 flex-center rounded-circle bg-purple-600 text-white text-2xl">
+                                        <i class="ph-fill ph-graduation-cap"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xxl-3 col-sm-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h4 class="mb-2">{{ $adminTotalInstructors ?? 0 }}</h4>
+                                <span class="text-gray-600">Total Pengajar</span>
+                                <div class="flex-between gap-8 mt-16">
+                                    <span class="flex-shrink-0 w-48 h-48 flex-center rounded-circle bg-warning-600 text-white text-2xl">
+                                        <i class="ph-fill ph-chalkboard-teacher"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @elseif(function_exists('isAdmin') && isPengajar())
+                    <!-- Pengajar Widgets: Creator-centric -->
                     <div class="col-xxl-3 col-sm-6">
                         <div class="card">
                             <div class="card-body">
@@ -137,7 +191,9 @@
             <div class="card mt-24 overflow-hidden">
                 <div class="card-header">
                     <div class="mb-0 flex-between flex-wrap gap-8">
-                        @if(function_exists('isAdmin') && (isAdmin() || isPengajar()))
+                        @if(function_exists('isAdmin') && isAdmin())
+                            <h4 class="mb-0">Aktivitas Kursus Terbaru</h4>
+                        @elseif(function_exists('isAdmin') && isPengajar())
                             <h4 class="mb-0">Created Courses</h4>
                         @else
                             <h4 class="mb-0">My Courses</h4>
@@ -147,7 +203,109 @@
                     </div>
                 </div>
                 <div class="card-body px-16 py-0">
-                    @if(function_exists('isAdmin') && (isAdmin() || isPengajar()))
+                    @if(function_exists('isAdmin') && isAdmin())
+                        @php $list = $recentCourses ?? collect(); @endphp
+                        @if($list->count() > 0)
+                            <!-- Admin: Recent Course Activities -->
+                            <div class="d-none d-lg-block">
+                                <table class="table style-two mb-0 mycourses-table" style="background-color: white; width: 100%; table-layout: fixed;">
+                                    <colgroup>
+                                        <col style="width: 360px">
+                                        <col style="width: 160px">
+                                        <col style="width: 160px">
+                                        <col style="width: 140px">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>Course Name</th>
+                                            <th class="text-center">Participants</th>
+                                            <th>Created / Updated</th>
+                                            <th class="text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($list as $course)
+                                            <tr>
+                                                <td class="align-middle" style="white-space: normal !important;">
+                                                    <div class="flex-align gap-8">
+                                                        <div class="w-40 h-40 rounded-circle bg-main-600 flex-center flex-shrink-0 overflow-hidden">
+                                                            <img src="{{ asset('storage' . '/' . $course['thumbnail']) }}" alt="{{ $course['title'] }}" class="w-100 h-100 object-fit-cover">
+                                                        </div>
+                                                        <div style="min-width: 0;">
+                                                            <h6 class="mb-0" title="{{ $course['title'] }}" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient: vertical; overflow:hidden; text-overflow: ellipsis; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">{{ $course['title'] }}</h6>
+                                                            <div class="table-list">
+                                                                <span class="text-13 text-gray-600">{{ $course['category'] }} | {{ $course['author'] }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="text-center align-middle">{{ number_format($course['participants']) }}</td>
+                                                <td class="align-middle">
+                                                    <div class="text-13 text-gray-600">
+                                                        Dibuat: {{ \Carbon\Carbon::parse($course['created_at'])->format('d M Y') }}
+                                                    </div>
+                                                    <div class="text-13 text-gray-600">
+                                                        Diperbarui: {{ \Carbon\Carbon::parse($course['updated_at'])->format('d M Y') }}
+                                                    </div>
+                                                </td>
+                                                <td class="text-center align-middle">
+                                                    @php $isDraft = ($course['status'] ?? 'draft') === 'draft'; @endphp
+                                                    @if($isDraft)
+                                                        <span class="text-13 py-2 px-8 bg-gray-50 text-gray-600 d-inline-flex align-items-center gap-8 rounded-pill">
+                                                            <span class="w-6 h-6 bg-gray-400 rounded-circle flex-shrink-0"></span>
+                                                            Draft
+                                                        </span>
+                                                    @else
+                                                        <span class="text-13 py-2 px-8 bg-success-50 text-success-600 d-inline-flex align-items-center gap-8 rounded-pill">
+                                                            <span class="w-6 h-6 bg-success-600 rounded-circle flex-shrink-0"></span>
+                                                            Publish
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Mobile list -->
+                            <div class="d-block d-lg-none">
+                                @foreach($list as $course)
+                                    <div class="p-16 border-bottom border-gray-100">
+                                        <div class="d-flex align-items-center gap-12">
+                                            <div class="w-48 h-48 rounded-12 bg-main-600 flex-center flex-shrink-0 overflow-hidden">
+                                                <img src="{{ asset('storage' . '/' . $course['thumbnail']) }}" alt="{{ $course['title'] }}" class="w-100 h-100 object-fit-cover">
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-4" title="{{ $course['title'] }}" style="display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient: vertical; overflow:hidden; text-overflow: ellipsis; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">{{ $course['title'] }}</h6>
+                                                <div class="text-13 text-gray-600 mb-8">{{ $course['category'] }} | {{ $course['author'] }}</div>
+                                                <div class="d-flex align-items-center justify-content-between">
+                                                    <span class="badge bg-main-50 text-main-600">{{ number_format($course['participants']) }} Peserta</span>
+                                                    @php $isDraft = ($course['status'] ?? 'draft') === 'draft'; @endphp
+                                                    @if($isDraft)
+                                                        <span class="text-13 py-2 px-8 bg-gray-50 text-gray-600 rounded-pill">Draft</span>
+                                                    @else
+                                                        <span class="text-13 py-2 px-8 bg-success-50 text-success-600 rounded-pill">Publish</span>
+                                                    @endif
+                                                </div>
+                                                <div class="text-12 text-gray-500 mt-8">
+                                                    Dibuat: {{ \Carbon\Carbon::parse($course['created_at'])->format('d M Y') }} • Diperbarui: {{ \Carbon\Carbon::parse($course['updated_at'])->format('d M Y') }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <div class="text-center py-40 px-24">
+                                <div class="w-80 h-80 bg-gray-50 rounded-circle mx-auto flex-center mb-16">
+                                    <i class="ph ph-books text-48 text-gray-400"></i>
+                                </div>
+                                <h5 class="text-gray-600 mb-8">Belum ada aktivitas kursus</h5>
+                                <p class="text-gray-500 mb-0">Kursus terbaru akan muncul di sini.</p>
+                            </div>
+                        @endif
+                    @elseif(function_exists('isAdmin') && isPengajar())
                         @php $list = $createdCourses ?? collect(); @endphp
                         @if($list->count() > 0)
                             <!-- Admin/Pengajar: Created courses table -->

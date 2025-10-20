@@ -70,6 +70,8 @@
     $courseModules = isset($courseModules) ? $courseModules : $course->modules;
     // Gunakan durasi dari field utama jika ada, fallback ke time_limit jika tidak tersedia
     $quizDuration = $quiz->duration_in_minutes ?? $quiz->time_limit ?? 0;
+    // Sertifikat jika course complete
+    $certificate = ($rightProgress >= 100 && $user) ? ($certificate ?? $user->getCertificateForCourse($course->id)) : null;
 @endphp
 <div class="row gy-4">
     <!-- Main Content -->
@@ -81,7 +83,7 @@
                     <nav aria-label="breadcrumb" class="mb-16">
                         <ol class="breadcrumb mb-0">
                             <li class="breadcrumb-item">
-                                <a href="{{ route('course.show', $course->id) }}" class="text-white text-decoration-none opacity-75">
+                                <a href="{{ route('course.show', $course->id) . '?mode=learn' }}" class="text-white text-decoration-none opacity-75">
                                     <i class="ph ph-arrow-left me-1"></i> {{ $course->title }}
                                 </a>
                             </li>
@@ -200,43 +202,52 @@
 
                     <!-- Start Quiz Section -->
                     <div>
-                        @if($canAttempt)
-                            @if($hasPassedQuiz)
-                                <div class="d-flex justify-content-end mt-12">
-                                    @if(isset($nextModuleFirstLesson))
-                                        <a href="{{ route('lesson.show', $nextModuleFirstLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20">
-                                            Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                        @if($rightProgress >= 100)
+                            <div class="d-flex justify-content-end mt-12">
+                                <div class="d-flex gap-8 flex-wrap">
+                                    <a href="{{ route('certificate.congrats', $course->id) }}" class="btn btn-primary rounded-pill py-10 px-20">
+                                        Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                                    </a>
+                                    @if($certificate)
+                                        <a href="{{ route('certificate.preview', $certificate->id) }}" target="_blank" class="btn btn-outline-success rounded-pill py-10 px-20">
+                                            <i class="ph ph-eye me-1"></i> Preview Sertifikat
                                         </a>
-                                    @elseif(isset($certificate) && $certificate && ($completionPercentage ?? 0) >= 100)
-                                        <div class="d-flex gap-8 flex-wrap">
-                                            <a href="{{ route('certificate.preview', $certificate->id) }}" target="_blank" class="btn btn-outline-success rounded-pill py-10 px-20">
-                                                <i class="ph ph-eye me-1"></i> Lihat Sertifikat
-                                            </a>
-                                            <a href="{{ route('certificate.download', $certificate->id) }}" class="btn btn-success rounded-pill py-10 px-20">
-                                                <i class="ph ph-certificate me-1"></i> Download Sertifikat
-                                            </a>
-                                        </div>
+                                        <a href="{{ route('certificate.download', $certificate->id) }}" class="btn btn-success rounded-pill py-10 px-20">
+                                            <i class="ph ph-certificate me-1"></i> Download Sertifikat
+                                        </a>
                                     @endif
                                 </div>
-                            @else
-                                    <div class="d-flex justify-content-center">
-                                        <button type="button" id="startQuizBtn" class="btn btn-warning btn-lg rounded-pill py-16 px-32 fw-bold">
-                                            <i class="ph ph-play-circle me-2" style="font-size: 20px;"></i>
-                                            {{ $attempts->count() > 0 ? 'Coba Lagi' : 'Mulai Kuis' }}
-                                        </button>
-                                    </div>
-                                    @if($remainingAttempts > 0)
-                                        <p class="text-gray-600 mt-12 mb-0 text-center">
-                                            Sisa percobaan: <strong>{{ $remainingAttempts }}</strong>
-                                        </p>
-                                    @endif
-                                @endif
-                        @else
-                            <div class="bg-gray-50 border border-gray-200 rounded-12 p-32">
-                                <i class="ph ph-lock text-gray-400" style="font-size: 48px;"></i>
-                                <h5 class="text-gray-600 mt-16 mb-8">Percobaan Habis</h5>
-                                <p class="text-gray-500 mb-0">Anda telah menggunakan semua kesempatan untuk quiz ini</p>
                             </div>
+                        @else
+                            @if($canAttempt)
+                                @if($hasPassedQuiz)
+                                    <div class="d-flex justify-content-end mt-12">
+                                        @if(isset($nextModuleFirstLesson))
+                                            <a href="{{ route('lesson.show', $nextModuleFirstLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20">
+                                                Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                                            </a>
+                                        @endif
+                                    </div>
+                                @else
+                                        <div class="d-flex justify-content-center">
+                                            <button type="button" id="startQuizBtn" class="btn btn-warning btn-lg rounded-pill py-16 px-32 fw-bold">
+                                                <i class="ph ph-play-circle me-2" style="font-size: 20px;"></i>
+                                                {{ $attempts->count() > 0 ? 'Coba Lagi' : 'Mulai Kuis' }}
+                                            </button>
+                                        </div>
+                                        @if($remainingAttempts > 0)
+                                            <p class="text-gray-600 mt-12 mb-0 text-center">
+                                                Sisa percobaan: <strong>{{ $remainingAttempts }}</strong>
+                                            </p>
+                                        @endif
+                                    @endif
+                            @else
+                                <div class="bg-gray-50 border border-gray-200 rounded-12 p-32">
+                                    <i class="ph ph-lock text-gray-400" style="font-size: 48px;"></i>
+                                    <h5 class="text-gray-600 mt-16 mb-8">Percobaan Habis</h5>
+                                    <p class="text-gray-500 mb-0">Anda telah menggunakan semua kesempatan untuk quiz ini</p>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -319,7 +330,7 @@
                             <li class="course-list__item flex-align gap-8 mb-16 active">
                                 <span class="circle flex-shrink-0 text-32 d-flex text-main-600"><i class="ph-fill ph-check-circle"></i></span>
                                 <div class="w-100">
-                                    <a href="{{ route('course.show', $course->id) }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
+                                    <a href="{{ route('course.show', $course->id) . '?mode=learn' }}" class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
                                         Buka Ringkasan Kursus
                                         <span class="text-gray-300 fw-normal d-block">Lihat deskripsi, pengajar, dan daftar modul</span>
                                     </a>
@@ -392,6 +403,43 @@
                 @endforelse
             </div>
         </div>
+
+        {{-- Certificate card when course is complete --}}
+    @if($rightProgress >= 100)
+            @php $certificate = $certificate ?? ($user ? $user->getCertificateForCourse($course->id) : null); @endphp
+            <div class="card mt-24">
+                <div class="card-body">
+                    <h4 class="mb-20">Sertifikat</h4>
+                    @if($certificate)
+                        <div class="p-12 rounded-12 mb-16" style="background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%); border: 1px solid #0ea5e9;">
+                            <div class="d-flex align-items-start gap-12">
+                                <i class="ph ph-certificate text-primary" style="font-size: 32px;"></i>
+                                <div>
+                                    <div class="fw-bold text-dark mb-4">Selamat! Sertifikat Anda siap.</div>
+                                    <div class="text-13 text-dark">
+                                        <div><strong>No.:</strong> {{ $certificate->certificate_number }}</div>
+                                        <div><strong>Terbit:</strong> {{ $certificate->issued_date->format('d F Y') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-10">
+                            <a href="{{ route('certificate.download', $certificate->id) }}" class="btn btn-primary btn-sm rounded-pill py-8 px-16">
+                                <i class="ph ph-download me-2"></i>Download
+                            </a>
+                            <a href="{{ route('certificate.preview', $certificate->id) }}" target="_blank" rel="noopener noreferrer" class="btn btn-preview btn-sm rounded-pill py-8 px-16">
+                                <i class="ph ph-eye me-2"></i>Preview
+                            </a>
+                        </div>
+                    @else
+                        <div class="alert alert-warning border-warning rounded-12 p-12 mb-0">
+                            <i class="ph ph-hourglass text-warning me-2"></i>
+                            Sertifikat sedang diproses, silakan refresh beberapa saat lagi.
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
     </div>
 </div>
 @endsection

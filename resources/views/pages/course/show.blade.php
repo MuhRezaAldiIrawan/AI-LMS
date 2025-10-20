@@ -21,8 +21,17 @@
 
 @section('content')
     @php
-        // Hanya pemilik kursus yang dianggap owner (admin tidak otomatis bisa mengelola)
-        $isOwner = auth()->check() && (auth()->id() === $course->user_id);
+        // Hormati nilai $isOwner dari controller jika sudah dikirim.
+        // Fallback: tentukan owner berdasarkan pemilik course.
+        if (!isset($isOwner)) {
+            $isOwner = auth()->check() && (auth()->id() === $course->user_id);
+        }
+
+        // Paksa mode pembelajar jika query ?mode=learn ada,
+        // sehingga pemilik tidak melihat tampilan manage/editor.
+        if (request()->query('mode') === 'learn') {
+            $isOwner = false;
+        }
     @endphp
     @if($isOwner)
         @include('pages.course._partials.wizard-header', [
