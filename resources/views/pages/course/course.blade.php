@@ -93,8 +93,8 @@
     <div class="card">
         <div class="card-body">
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-24 gap-3">
-                {{-- Tabs filter untuk Admin & Pengajar (kecuali ketika Pengajar dalam learnerMode) --}}
-                @if(!(isKaryawan() || (isset($learnerMode) && $learnerMode)))
+                {{-- Tabs filter untuk Pengajar saja (Admin: disembunyikan, karena hanya lihat published) --}}
+                @if(isPengajar() && !(isset($learnerMode) && $learnerMode))
                     <ul class="nav nav-pills gap-10 mb-0 p-1 bg-light rounded-3 shadow-sm" id="redeemTabs" role="tablist"
                         style="--bs-nav-pills-link-active-bg: #4f46e5;">
                         <li class="nav-item" role="presentation">
@@ -119,8 +119,8 @@
                             class="ph ph-magnifying-glass position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                     </div>
 
-                    {{-- Tombol Tambah Kursus - Hanya untuk Admin & Pengajar (kecuali learnerMode Pengajar) --}}
-                    @if(canManageCourses() && !(isset($learnerMode) && $learnerMode))
+                    {{-- Tombol Tambah Kursus - Hanya untuk Pengajar (Admin tidak bisa menambah) --}}
+                    @if(isPengajar() && !(isset($learnerMode) && $learnerMode))
                         <a href="{{ route('course.create') }}" class="btn btn-primary d-flex align-items-center gap-2"
                             style="border-radius: 30px">
                             <i class="ph ph-plus-circle text-lg"></i> Tambah Kursus
@@ -131,11 +131,11 @@
 
             {{-- Course Content Area - Wrapper untuk mencegah conflict dengan dropdown lain --}}
             <div id="courseContentArea">
-                {{-- Layout untuk Admin --}}
-                @if(isset($allCourses))
+                {{-- Layout untuk Admin: Hanya kursus Published --}}
+                @if(isset($allCourses) && (isset($userRole) && $userRole === 'admin'))
                     <div class="card-section mt-24 p-3">
                         <div class="card-body">
-                            <h4 class="mb-20">Semua Kursus</h4>
+                            <h4 class="mb-20">Published Courses</h4>
                             <div class="row g-20" id="courseContainer">
                                 @forelse ($allCourses as $item)
                                     @include('pages.course._partials.course-list', ['course' => $item])

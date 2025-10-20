@@ -780,23 +780,29 @@
                         <div></div>
                     @endif
 
-                    @if($nextLesson)
-                        <a href="{{ route('lesson.show', $nextLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
-                            Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
-                        </a>
-                    @elseif($moduleQuiz)
-                        <a href="{{ route('quiz.show', $moduleQuiz->id) }}" class="btn btn-warning rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
-                            <i class="ph ph-exam me-1"></i> Kerjakan Quiz
-                        </a>
+                    @php $isAdmin = function_exists('isAdmin') ? isAdmin() : (auth()->check() && auth()->user()->hasRole('admin')); @endphp
+                    @if($isAdmin)
+                        <!-- Admin: view-only, no progression buttons -->
+                        <span class="text-gray-500 text-14">Mode pratinjau (read-only)</span>
                     @else
-                        @if($rightProgress >= 100)
-                            <a href="{{ route('certificate.congrats', $course->id) }}" class="btn btn-primary rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                        @if($nextLesson)
+                            <a href="{{ route('lesson.show', $nextLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
                                 Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
                             </a>
+                        @elseif($moduleQuiz)
+                            <a href="{{ route('quiz.show', $moduleQuiz->id) }}" class="btn btn-warning rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                                <i class="ph ph-exam me-1"></i> Kerjakan Quiz
+                            </a>
                         @else
-                            <button type="button" class="btn btn-success rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
-                                Tandai Selesai
-                            </button>
+                            @if($rightProgress >= 100)
+                                <a href="{{ route('certificate.congrats', $course->id) }}" class="btn btn-primary rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                                    Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                                </a>
+                            @else
+                                <button type="button" class="btn btn-success rounded-pill py-10 px-20" id="nextLessonBtn" data-completed="{{ $isCompleted ? '1' : '0' }}">
+                                    Tandai Selesai
+                                </button>
+                            @endif
                         @endif
                     @endif
                 </div>

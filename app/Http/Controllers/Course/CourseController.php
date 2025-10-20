@@ -23,36 +23,18 @@ class CourseController extends Controller
         $status = $request->query('status');
         $search = $request->query('search');
 
-        // Admin: tampilkan seperti pengajar (bagian atas My Course, bawah Course For You)
+        // Admin: TAMPILKAN HANYA KURSUS PUBLISHED (satu bagian list)
         if (canAccess('admin')) {
-            // My Courses (yang dibuat oleh admin ini)
-            $myCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
-                ->where('user_id', $userId);
-
-            if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
-                $myCoursesQuery->where('status', $status);
-            }
+            $allCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
+                ->where('status', 'published');
 
             if ($search) {
-                $myCoursesQuery->where('title', 'like', '%' . $search . '%');
+                $allCoursesQuery->where('title', 'like', '%' . $search . '%');
             }
 
-            // Other Courses (dibuat oleh orang lain)
-            $otherCoursesQuery = Course::with(['author', 'category', 'courseType', 'enrolledUsers', 'modules.lessons', 'modules.quiz'])
-                ->where('user_id', '!=', $userId);
+            $allCourses = $allCoursesQuery->latest()->paginate(8, ['*'], 'all_courses_page');
 
-            if ($status && $status !== 'all' && in_array($status, ['draft', 'published'])) {
-                $otherCoursesQuery->where('status', $status);
-            }
-
-            if ($search) {
-                $otherCoursesQuery->where('title', 'like', '%' . $search . '%');
-            }
-
-            $myCourses = $myCoursesQuery->latest()->paginate(4, ['*'], 'my_courses_page');
-            $otherCourses = $otherCoursesQuery->latest()->paginate(4, ['*'], 'other_courses_page');
-
-            return view('pages.course.course', compact('myCourses', 'otherCourses'))
+            return view('pages.course.course', compact('allCourses'))
                 ->with('userRole', 'admin');
         }
 
@@ -277,6 +259,18 @@ class CourseController extends Controller
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
+
+        // Admin: tampilkan seperti overview/pembelajar saja (tanpa manage)
+        if ($user->hasRole('admin')) {
+            // Tampilkan halaman show dengan hanya overview aktif; isOwner = false
+            $categories = Category::all();
+            $courseType = CourseType::all();
+            $users = collect();
+            $isOwner = false;
+            $isEnrolled = $user->isEnrolledIn($course);
+            return view('pages.course.show', compact('course', 'categories', 'courseType', 'users', 'isOwner', 'isEnrolled'))
+                ->with('accessDenied', false);
+        }
 
         // Paksa mode pembelajar jika query string ?mode=learn
         $forceLearner = $request->query('mode') === 'learn';

@@ -209,7 +209,8 @@
                     <a href="{{ route('quiz.show', $quiz->id) }}" class="btn btn-primary rounded-pill py-12 px-32">
                         <i class="ph ph-arrow-left me-2"></i>Kembali ke Quiz
                     </a>
-                    @if($attempt->quiz->attempts()->where('user_id', auth()->id())->count() < $attempt->quiz->max_attempts)
+                    @php $isAdmin = function_exists('isAdmin') ? isAdmin() : (auth()->check() && auth()->user()->hasRole('admin')); @endphp
+                    @if(!$isAdmin && $attempt->quiz->attempts()->where('user_id', auth()->id())->count() < $attempt->quiz->max_attempts)
                         <a href="{{ route('quiz.attempt', $quiz->id) }}" class="btn btn-warning rounded-pill py-12 px-32">
                             <i class="ph ph-repeat me-2"></i>Coba Lagi
                         </a>

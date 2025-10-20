@@ -119,8 +119,8 @@ Route::middleware('auth')->group(function () {
         // Pengajar: Kursus Saya (mode pembelajar seperti karyawan)
         Route::middleware('role:pengajar')->get('my-courses', 'myCourses')->name('course.my');
 
-        // Allow either admin OR pengajar (Spatie role middleware uses | as OR)
-        Route::middleware('role:admin|pengajar')->group(function() {
+        // Hanya pengajar yang boleh membuat/mengelola kursus
+        Route::middleware('role:pengajar')->group(function() {
             Route::get('course/create', 'create')->name('course.create');
             Route::post('course', 'store')->name('course.store');
             Route::post('course/{id}', 'update')->name('course.update');
@@ -133,13 +133,15 @@ Route::middleware('auth')->group(function () {
         Route::middleware('course.access')->get('course/{id}', 'show')->name('course.show');
     });
 
-    Route::middleware('role:admin|pengajar')->controller(ModuleController::class)->group(function(){
+    // Hanya pengajar yang boleh kelola modul
+    Route::middleware('role:pengajar')->controller(ModuleController::class)->group(function(){
         Route::post('module', 'store')->name('module.store');
         Route::put('module/{id}', 'update')->name('module.update');
         Route::delete('module/{id}', 'destroy')->name('module.destroy');
     });
 
-    Route::middleware('role:admin|pengajar')->controller(LessonController::class)->group(function(){
+    // Hanya pengajar yang boleh kelola pelajaran
+    Route::middleware('role:pengajar')->controller(LessonController::class)->group(function(){
         Route::post('lesson', 'store')->name('lesson.store');
         Route::get('lesson/{id}/edit', 'edit')->name('lesson.edit');
         Route::put('lesson/{id}', 'update')->name('lesson.update');
@@ -151,7 +153,8 @@ Route::middleware('auth')->group(function () {
         Route::middleware('course.access')->post('lesson/{id}/complete', 'complete')->name('lesson.complete');
     });
 
-    Route::middleware('role:admin|pengajar')->controller(QuizController::class)->group(function(){
+    // Hanya pengajar yang boleh kelola kuis
+    Route::middleware('role:pengajar')->controller(QuizController::class)->group(function(){
         Route::post('quiz', 'store')->name('quiz.store');
         Route::get('quiz/{id}/edit', 'edit')->name('quiz.edit');
         Route::put('quiz/{id}', 'update')->name('quiz.update');
@@ -168,7 +171,8 @@ Route::middleware('auth')->group(function () {
     });
 
 
-    Route::middleware('role:admin|pengajar')->controller(QuestionController::class)->group(function(){
+    // Hanya pengajar yang boleh kelola soal kuis
+    Route::middleware('role:pengajar')->controller(QuestionController::class)->group(function(){
         Route::post('question', 'store')->name('question.store');
         Route::put('question/{id}', 'update')->name('question.update');
         Route::delete('question/{id}', 'destroy')->name('question.destroy');

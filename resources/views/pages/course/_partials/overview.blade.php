@@ -1,10 +1,3 @@
-{{-- No top-level @php variables to avoid scope issues with Livewire/Blade caching --}}
-<style>
-/* Force a clearly disabled look for non-owner overview items */
-.course-list .disabled-link { color: #9AA0A6 !important; cursor: not-allowed; text-decoration: none !important; }
-.course-list .disabled-link span { color: inherit !important; }
-.course-list .disabled-icon { color: #9AA0A6 !important; }
-</style>
 <div class="row gy-4" style="margin-top: 10px">
     <div class="col-md-8">
         <!-- Course Card Start -->
@@ -102,7 +95,15 @@
     </div>
 
     <div class="col-md-4">
-        @php($canManage = auth()->check() && (auth()->id() === $course->user_id || auth()->user()->hasRole('admin')))
+    @php
+        $isAdmin = function_exists('isAdmin') ? isAdmin() : (auth()->check() && auth()->user()->hasRole('admin'));
+        $isOwner = auth()->check() && (auth()->id() === $course->user_id);
+        $isEnrolled = auth()->check() ? auth()->user()->isEnrolledIn($course) : false;
+        // Admins can view all course contents (read-only). Owners and enrolled users can view too.
+        $canViewContent = $isAdmin || $isOwner || $isEnrolled;
+        // Manage remains owner-only here
+        $canManage = $isOwner;
+    @endphp
         <div class="card">
             <div class="card-body p-0">
                 @if($course->modules->count() > 0)
@@ -121,11 +122,11 @@
                                 <ul class="course-list p-16 pb-0">
                                     @foreach($module->lessons as $lessonIndex => $lesson)
                                         <li class="course-list__item flex-align gap-8 mb-16">
-                                            <span class="circle flex-shrink-0 text-32 d-flex {{ $canManage ? 'text-gray-100' : 'disabled-icon' }}">
-                                                <i class="ph {{ $canManage ? 'ph-circle' : 'ph-lock-simple' }}"></i>
+                                            <span class="circle flex-shrink-0 text-32 d-flex {{ $canViewContent ? 'text-gray-100' : 'disabled-icon' }}">
+                                                <i class="ph {{ $canViewContent ? 'ph-circle' : 'ph-lock-simple' }}"></i>
                                             </span>
                                             <div class="w-100">
-                                                @if($canManage)
+                                                @if($canViewContent)
                                                     <a href="{{ route('lesson.show', $lesson->id) }}"
                                                        class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
                                                         {{ $lessonIndex + 1 }}. {{ $lesson->title }}
@@ -142,11 +143,11 @@
                                     @endforeach
                                     @if($module->quiz)
                                         <li class="course-list__item flex-align gap-8 mb-16">
-                                            <span class="circle flex-shrink-0 text-32 d-flex {{ $canManage ? 'text-warning-600' : 'disabled-icon' }}">
-                                                <i class="ph {{ $canManage ? 'ph-question' : 'ph-lock-simple' }}"></i>
+                                            <span class="circle flex-shrink-0 text-32 d-flex {{ $canViewContent ? 'text-warning-600' : 'disabled-icon' }}">
+                                                <i class="ph {{ $canViewContent ? 'ph-question' : 'ph-lock-simple' }}"></i>
                                             </span>
                                             <div class="w-100">
-                                                @if($canManage)
+                                                @if($canViewContent)
                                                     <a href="{{ route('quiz.show', $module->quiz->id) }}"
                                                        class="text-gray-300 fw-medium d-block hover-text-main-600 d-lg-block">
                                                         Quiz: {{ $module->quiz->title }}

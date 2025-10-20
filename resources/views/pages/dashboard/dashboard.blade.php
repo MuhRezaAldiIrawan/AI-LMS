@@ -602,12 +602,8 @@
                                     ? route('admin.users.create')
                                     : url('/users/create'));
 
-                            // Course create (existing: course.create)
-                            $createCourseUrl = \Illuminate\Support\Facades\Route::has('course.create')
-                                ? route('course.create')
-                                : (\Illuminate\Support\Facades\Route::has('admin.courses.create')
-                                    ? route('admin.courses.create')
-                                    : url('/course/create'));
+                            // Course create shortcut di-nonaktifkan untuk Admin
+                            $createCourseUrl = null;
 
                             // Reports index (may not exist yet)
                             $reportsRouteName = \Illuminate\Support\Facades\Route::has('admin.reports.index') ? 'admin.reports.index'
@@ -620,10 +616,10 @@
                                 <i class="ph ph-user-plus me-2"></i>
                                 + Buat Pengguna Baru
                             </a>
-                            <a href="{{ $createCourseUrl }}" class="btn btn-success w-100">
+                            <button class="btn btn-success w-100" disabled title="Admin tidak dapat membuat kursus">
                                 <i class="ph ph-book-open me-2"></i>
                                 + Buat Kursus Baru
-                            </a>
+                            </button>
                             <a href="{{ $reportsUrl }}" class="btn btn-outline-main w-100 {{ $reportsDisabled ? 'disabled' : '' }}" {{ $reportsDisabled ? 'aria-disabled=true tabindex=-1 title=\'Halaman laporan belum tersedia\'' : '' }}>
                                 <i class="ph ph-chart-line-up me-2"></i>
                                 Lihat Laporan

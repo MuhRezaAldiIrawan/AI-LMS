@@ -27,6 +27,11 @@
             $isOwner = auth()->check() && (auth()->id() === $course->user_id);
         }
 
+        // Admin tidak mengelola kursus di UI ini -> tampilkan Overview saja
+        if (function_exists('isAdmin') && isAdmin()) {
+            $isOwner = false;
+        }
+
         // Paksa mode pembelajar jika query ?mode=learn ada,
         // sehingga pemilik tidak melihat tampilan manage/editor.
         if (request()->query('mode') === 'learn') {

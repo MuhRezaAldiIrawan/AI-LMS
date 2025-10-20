@@ -90,9 +90,15 @@ class LessonController extends Controller
         $user = Auth::user();
         $course = $lesson->module->course;
 
-        // Admin dan author course bisa akses tanpa enrollment
-        if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+        // Hanya pemilik kursus, admin (view-only), atau user yang sudah terdaftar yang bisa mengakses konten pelajaran
+        if (!$user) {
             abort(403, 'Anda belum terdaftar di kursus ini');
+        }
+        // Admin diizinkan melihat konten dalam mode read-only
+        if (!($user->hasRole('admin'))) {
+            if ($course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+                abort(403, 'Anda belum terdaftar di kursus ini');
+            }
         }
 
         // Get completion status
@@ -178,6 +184,11 @@ class LessonController extends Controller
     {
         $lesson = Lesson::findOrFail($id);
         $user = Auth::user();
+
+        // Admin tidak diperbolehkan melakukan aksi penyelesaian
+        if ($user && $user->hasRole('admin')) {
+            return response()->json(['success' => false, 'message' => 'Admin hanya dapat melihat konten (read-only).'], 403);
+        }
 
         // Check if user is enrolled
         if (!$user->isEnrolledIn($lesson->module->course)) {

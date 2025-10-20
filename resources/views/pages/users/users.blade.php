@@ -24,6 +24,20 @@
             color: white;
             transform: translateY(-1px);
         }
+
+        /* Avatar + Name cell */
+        .user-cell {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
     </style>
 @endsection
 
@@ -63,6 +77,7 @@
                 <thead>
                     <tr>
                         <th class="h6 text-center">No</th>
+                        <th class="h6 text-center">Foto</th>
                         <th class="h6 text-center">Nama</th>
                         <th class="h6 text-center">Email</th>
                         <th class="h6 text-center">Actions</th>
@@ -93,8 +108,28 @@
                         name: 'DT_RowIndex'
                     },
                     {
+                        data: 'profile_photo_url',
+                        name: 'profile_photo_url',
+                        orderable: false,
+                        searchable: false,
+                        render: function (data, type, row) {
+                            const photo = data || '';
+                            const safeName = row.name || '';
+                            // Fallback: first letter avatar if missing photo
+                            if (!photo) {
+                                const letter = (safeName || '?').substring(0,1).toUpperCase();
+                                return `<div class="d-flex justify-content-center"><div class="user-avatar" style="background:#e5e7eb; display:flex; align-items:center; justify-content:center; color:#6b7280; font-weight:600;">${letter}</div></div>`;
+                            }
+                            return `<div class="d-flex justify-content-center"><img src="${photo}" alt="${safeName}" class="user-avatar" /></div>`;
+                        }
+                    },
+                    {
                         data: 'name',
-                        name: 'name'
+                        name: 'name',
+                        render: function (data) {
+                            const safeName = data || '';
+                            return `<span>${safeName}</span>`;
+                        }
                     },
                     {
                         data: 'email',
@@ -112,6 +147,9 @@
                 ordering: true,
                 responsive: true,
                 pagingType: "simple_numbers",
+                columnDefs: [
+                    { targets: 1, width: 70 }, // Foto column width
+                ],
                 language: {
                     paginate: {
                         previous: "<",

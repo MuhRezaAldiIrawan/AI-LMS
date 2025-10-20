@@ -4,12 +4,14 @@
             @php
                 // Mode belajar pakai flag global dari view parent (karyawan atau pengajar-learnerMode)
                 $learnerMode = isset($learnerMode) && $learnerMode;
-                // Hanya pemilik (owner) yang boleh mengelola; admin non-owner hanya bisa lihat overview
-                $canManage = !$learnerMode && auth()->check() && auth()->id() === $course->user_id;
+                // Hanya pemilik (owner) yang boleh mengelola; admin non-owner hanya lihat overview
+                $isOwner = auth()->check() && auth()->id() === $course->user_id;
+                $isAdmin = auth()->check() && auth()->user()->hasRole('admin');
+                $canManage = !$learnerMode && $isOwner && !$isAdmin;
                 // Direct owner to Course Details tab explicitly
                 $manageUrl = route('course.show', $course->id) . '#informasi-umum';
                 // In learner mode, force view as learner with query param (no #overview)
-                $overviewUrl = $learnerMode
+                $overviewUrl = ($learnerMode || $isAdmin)
                     ? route('course.show', $course->id) . '?mode=learn'
                     : route('course.show', $course->id) . '#overview';
             @endphp

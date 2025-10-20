@@ -27,15 +27,17 @@
                     </a>
                 </li>
 
-                <li class="sidebar-menu__item {{ setActive('points.*') }}">
-                    <a href="{{ route('points.index') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-trophy"></i></span>
-                        <span class="text">My Points</span>
-                        <span class="badge bg-warning-600 text-white rounded-pill ms-auto">
-                            {{ number_format(Auth::user()->getTotalPoints()) }}
-                        </span>
-                    </a>
-                </li>
+                @if(!isAdmin())
+                    <li class="sidebar-menu__item {{ setActive('points.*') }}">
+                        <a href="{{ route('points.index') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-trophy"></i></span>
+                            <span class="text">My Points</span>
+                            <span class="badge bg-warning-600 text-white rounded-pill ms-auto">
+                                {{ number_format(Auth::user()->getTotalPoints()) }}
+                            </span>
+                        </a>
+                    </li>
+                @endif
 
                 <li class="sidebar-menu__item {{ setActive('profile') }}">
                     <a href="{{ route('profile') }}" class="sidebar-menu__link">
@@ -108,13 +110,15 @@
                     <span>Rewards</span>
                 </li>
 
-                {{-- Reward Shop: Selalu tampil untuk semua role --}}
-                <li class="sidebar-menu__item {{ setActive(['rewards.shop']) }}">
-                    <a href="{{ route('rewards.shop') }}" class="sidebar-menu__link">
-                        <span class="icon"><i class="ph ph-shopping-bag"></i></span>
-                        <span class="text">Reward Shop</span>
-                    </a>
-                </li>
+                {{-- Reward Shop: tampil untuk karyawan & pengajar (disembunyikan untuk admin) --}}
+                @if(!isAdmin())
+                    <li class="sidebar-menu__item {{ setActive(['rewards.shop']) }}">
+                        <a href="{{ route('rewards.shop') }}" class="sidebar-menu__link">
+                            <span class="icon"><i class="ph ph-shopping-bag"></i></span>
+                            <span class="text">Reward Shop</span>
+                        </a>
+                    </li>
+                @endif
 
                 {{-- Admin: Management & Redemption --}}
                 @if(isAdmin())

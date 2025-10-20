@@ -219,34 +219,43 @@
                                 </div>
                             </div>
                         @else
-                            @if($canAttempt)
-                                @if($hasPassedQuiz)
-                                    <div class="d-flex justify-content-end mt-12">
-                                        @if(isset($nextModuleFirstLesson))
-                                            <a href="{{ route('lesson.show', $nextModuleFirstLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20">
-                                                Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
-                                            </a>
-                                        @endif
-                                    </div>
-                                @else
-                                        <div class="d-flex justify-content-center">
-                                            <button type="button" id="startQuizBtn" class="btn btn-warning btn-lg rounded-pill py-16 px-32 fw-bold">
-                                                <i class="ph ph-play-circle me-2" style="font-size: 20px;"></i>
-                                                {{ $attempts->count() > 0 ? 'Coba Lagi' : 'Mulai Kuis' }}
-                                            </button>
-                                        </div>
-                                        @if($remainingAttempts > 0)
-                                            <p class="text-gray-600 mt-12 mb-0 text-center">
-                                                Sisa percobaan: <strong>{{ $remainingAttempts }}</strong>
-                                            </p>
-                                        @endif
-                                    @endif
-                            @else
-                                <div class="bg-gray-50 border border-gray-200 rounded-12 p-32">
-                                    <i class="ph ph-lock text-gray-400" style="font-size: 48px;"></i>
-                                    <h5 class="text-gray-600 mt-16 mb-8">Percobaan Habis</h5>
-                                    <p class="text-gray-500 mb-0">Anda telah menggunakan semua kesempatan untuk quiz ini</p>
+                            @php $isAdmin = function_exists('isAdmin') ? isAdmin() : (auth()->check() && auth()->user()->hasRole('admin')); @endphp
+                            @if($isAdmin)
+                                <div class="bg-gray-50 border border-gray-200 rounded-12 p-16 text-center">
+                                    <i class="ph ph-eye text-gray-400" style="font-size: 36px;"></i>
+                                    <h6 class="text-gray-600 mt-8 mb-4">Mode pratinjau (read-only)</h6>
+                                    <p class="text-gray-500 mb-0">Admin dapat melihat detail kuis dan riwayat percobaan, namun tidak dapat memulai kuis.</p>
                                 </div>
+                            @else
+                                @if($canAttempt)
+                                    @if($hasPassedQuiz)
+                                        <div class="d-flex justify-content-end mt-12">
+                                            @if(isset($nextModuleFirstLesson))
+                                                <a href="{{ route('lesson.show', $nextModuleFirstLesson->id) }}" class="btn btn-primary rounded-pill py-10 px-20">
+                                                    Selanjutnya <i class="ph ph-arrow-right ms-1"></i>
+                                                </a>
+                                            @endif
+                                        </div>
+                                    @else
+                                            <div class="d-flex justify-content-center">
+                                                <button type="button" id="startQuizBtn" class="btn btn-warning btn-lg rounded-pill py-16 px-32 fw-bold">
+                                                    <i class="ph ph-play-circle me-2" style="font-size: 20px;"></i>
+                                                    {{ $attempts->count() > 0 ? 'Coba Lagi' : 'Mulai Kuis' }}
+                                                </button>
+                                            </div>
+                                            @if($remainingAttempts > 0)
+                                                <p class="text-gray-600 mt-12 mb-0 text-center">
+                                                    Sisa percobaan: <strong>{{ $remainingAttempts }}</strong>
+                                                </p>
+                                            @endif
+                                        @endif
+                                @else
+                                    <div class="bg-gray-50 border border-gray-200 rounded-12 p-32">
+                                        <i class="ph ph-lock text-gray-400" style="font-size: 48px;"></i>
+                                        <h5 class="text-gray-600 mt-16 mb-8">Percobaan Habis</h5>
+                                        <p class="text-gray-500 mb-0">Anda telah menggunakan semua kesempatan untuk quiz ini</p>
+                                    </div>
+                                @endif
                             @endif
                         @endif
                     </div>

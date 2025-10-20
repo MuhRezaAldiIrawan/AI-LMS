@@ -93,9 +93,14 @@ class QuizController extends Controller
         $user = Auth::user();
         $course = $quiz->module->course;
 
-        // Admin dan author course bisa akses tanpa enrollment
-        if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+        // Hanya pemilik kursus, admin (view-only), atau user yang terdaftar yang bisa mengakses kuis
+        if (!$user) {
             abort(403, 'Anda belum terdaftar di kursus ini');
+        }
+        if (!($user->hasRole('admin'))) {
+            if ($course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+                abort(403, 'Anda belum terdaftar di kursus ini');
+            }
         }
 
         // Get user's quiz attempts
@@ -159,8 +164,12 @@ class QuizController extends Controller
         $user = Auth::user();
         $course = $quiz->module->course;
 
-        // Admin dan author course bisa akses tanpa enrollment
-        if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+        // Admin tidak boleh attempt; hanya pemilik kursus atau user terdaftar
+        if ($user && $user->hasRole('admin')) {
+            return redirect()->route('quiz.show', $quiz->id)
+                ->with('error', 'Admin hanya dapat melihat konten (read-only).');
+        }
+        if ($course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
             abort(403, 'Anda belum terdaftar di kursus ini');
         }
 
@@ -199,6 +208,12 @@ class QuizController extends Controller
             ->where('user_id', $user->id)
             ->where('quiz_id', $quiz->id)
             ->firstOrFail();
+
+        // Admin tidak boleh submit attempt
+        if ($user && $user->hasRole('admin')) {
+            return redirect()->route('quiz.show', $quiz->id)
+                ->with('error', 'Admin hanya dapat melihat konten (read-only).');
+        }
 
         // Calculate score
         $answers = $request->input('answers', []);
@@ -385,8 +400,8 @@ class QuizController extends Controller
 
         // Check if user is enrolled
         $user = Auth::user();
-        // Admin dan author course bisa akses tanpa enrollment
-        if (!isAdmin() && $course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
+        // Hanya pemilik kursus atau user yang terdaftar yang bisa mengakses kuis
+        if ($course->user_id !== $user->id && !$user->isEnrolledIn($course)) {
             abort(403, 'Anda belum terdaftar di kursus ini');
         }
 
