@@ -82,7 +82,7 @@
                             </div>
                         </div>
                     </div>
-                @elseif(function_exists('isAdmin') && isPengajar())
+                @elseif(function_exists('isPengajar') && isPengajar())
                     <!-- Pengajar Widgets: Creator-centric -->
                     <div class="col-xxl-3 col-sm-6">
                         <div class="card">
@@ -193,7 +193,7 @@
                     <div class="mb-0 flex-between flex-wrap gap-8">
                         @if(function_exists('isAdmin') && isAdmin())
                             <h4 class="mb-0">Aktivitas Kursus Terbaru</h4>
-                        @elseif(function_exists('isAdmin') && isPengajar())
+                        @elseif(function_exists('isPengajar') && isPengajar())
                             <h4 class="mb-0">Created Courses</h4>
                         @else
                             <h4 class="mb-0">My Courses</h4>
@@ -305,7 +305,7 @@
                                 <p class="text-gray-500 mb-0">Kursus terbaru akan muncul di sini.</p>
                             </div>
                         @endif
-                    @elseif(function_exists('isAdmin') && isPengajar())
+                    @elseif(function_exists('isPengajar') && isPengajar())
                         @php $list = $createdCourses ?? collect(); @endphp
                         @if($list->count() > 0)
                             <!-- Admin/Pengajar: Created courses table -->

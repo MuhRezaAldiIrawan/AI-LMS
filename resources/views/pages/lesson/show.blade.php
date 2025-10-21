@@ -1223,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <i class="ph ${avatarIcon}"></i>
             </div>
             <div class="ai-message-content">
-                <div class="ai-message-bubble">${escapeHtml(text)}</div>
+                <div class="ai-message-bubble">${formatMarkdown(text)}</div>
                 <div class="ai-message-time">${time}</div>
             </div>
         `;
@@ -1259,10 +1259,47 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function escapeHtml(text) {
+    // Safe Markdown formatter: supports **bold**, `code`, basic lists, and line breaks
+    function formatMarkdown(message) {
         const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        div.textContent = message ?? '';
+        const safe = div.innerHTML;
+
+        const lines = safe.split(/\r?\n/);
+        let html = '';
+        let inUl = false, inOl = false;
+        const flush = () => { if (inUl) { html += '</ul>'; inUl = false; } if (inOl) { html += '</ol>'; inOl = false; } };
+
+        for (const raw of lines) {
+            const mBullet = /^\s*[\-*]\s+(.+)/.exec(raw);
+            const mNum = /^\s*(\d+)\.\s+(.+)/.exec(raw);
+            if (mBullet) {
+                if (inOl) { html += '</ol>'; inOl = false; }
+                if (!inUl) { html += '<ul>'; inUl = true; }
+                const content = mBullet[1]
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/`(.+?)`/g, '<code>$1</code>');
+                html += `<li>${content}</li>`;
+                continue;
+            }
+            if (mNum) {
+                if (inUl) { html += '</ul>'; inUl = false; }
+                if (!inOl) { html += '<ol>'; inOl = true; }
+                const content = mNum[2]
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/`(.+?)`/g, '<code>$1</code>');
+                html += `<li>${content}</li>`;
+                continue;
+            }
+            flush();
+            const line = raw
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(^|[^*])\*(?!\s)([^*]+?)\*(?!\*)/g, '$1<em>$2</em>')
+                .replace(/`(.+?)`/g, '<code>$1</code>');
+            html += line + '<br>';
+        }
+        flush();
+        return html;
     }
 
     // Next button marks lesson complete before navigation

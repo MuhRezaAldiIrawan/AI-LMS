@@ -40,6 +40,10 @@ class DashboardController extends Controller
         $adminTotalCompletions = null; // count of course completions (course_user.completed_at)
         $adminTotalInstructors = null; // users with role pengajar/instruktur
         $recentCourses = collect(); // latest course activities
+        $recentLogs = collect();
+        $onlineUserCount = 0;
+        $appVersion = config('app.version') ?? env('APP_VERSION', 'v1.0.0');
+        $serverStatus = 'Online';
 
         if (function_exists('isAdmin') && isAdmin()) {
             // ADMIN VIEW: system-wide aggregates
@@ -94,7 +98,6 @@ class DashboardController extends Controller
                 });
 
             // Recent admin activities (from activity_log or admin_activities if available)
-            $recentLogs = collect();
             if (Schema::hasTable('activity_log')) {
                 $recentLogs = DB::table('activity_log')
                     ->leftJoin('users', 'users.id', '=', 'activity_log.causer_id')
@@ -155,10 +158,10 @@ class DashboardController extends Controller
                     ->count('causer_id');
             }
 
-            // System info
-            $appVersion = config('app.version') ?? env('APP_VERSION', 'v1.0.0');
+            // System info (already has defaults, keep or override if needed)
+            $appVersion = config('app.version') ?? env('APP_VERSION', $appVersion);
             $serverStatus = 'Online';
-        } elseif (function_exists('isAdmin') && isPengajar()) {
+        } elseif (function_exists('isPengajar') && isPengajar()) {
             // Courses owned by current user (or all, if admin)
             $coursesQuery = Course::where('user_id', $user->id);
 

@@ -92,14 +92,18 @@ class LessonContentController extends Controller
             Log::info("API configurations loaded successfully.");
 
             Log::info("Splitting text into chunks...");
-            $chunks = array_filter(array_map('trim', preg_split('/(\r\n|\n|\r){2,}/', $textContent)));
+            $chunks = preg_split('/(\r\n|\n|\r){2,}/', $textContent);
+            $chunks = array_map('trim', $chunks);
+            $chunks = array_filter($chunks); // removes empty strings but preserves keys
+            $chunks = array_values($chunks); // reindex to avoid undefined [0]
             if (empty($chunks)) {
                 Log::warning("Content for lesson {$lesson->id} resulted in zero chunks after splitting.");
                 return;
             }
 
             Log::info("Processing " . count($chunks) . " chunks for lesson {$lesson->id}.");
-            Log::debug("First chunk preview: " . mb_substr($chunks[0], 0, 100) . "...");
+            $firstPreview = isset($chunks[0]) ? mb_substr($chunks[0], 0, 100) : '';
+            Log::debug("First chunk preview: " . $firstPreview . "...");
 
 
             // === PERBAIKAN #1: TAMBAHKAN TIMEOUT ===
@@ -208,23 +212,63 @@ class LessonContentController extends Controller
 
                 Log::info("PDF file detected. Extracting text via Document AI...");
                 $projectId = config('services.google.project_id');
-                $locationId = 'us';
+                $locationId = config('services.google.location_id', 'us');
                 $processorId = config('services.google.document_ai_processor_id');
 
                 if (!$projectId || !$processorId) {
                     throw new Exception('GOOGLE_PROJECT_ID atau GOOGLE_DOCUMENT_AI_PROCESSOR_ID belum diatur.');
                 }
 
-                $client = new DocumentProcessorServiceClient(['credentials' => config('services.google.credentials_path')]);
-                $name = $client->processorName((string)$projectId, (string)$locationId, (string)$processorId);
-                $rawDocument = new RawDocument(['content' => file_get_contents($fullPath), 'mime_type' => 'application/pdf']);
-                $request = (new ProcessRequest())->setName($name)->setRawDocument($rawDocument);
-                $response = $client->processDocument($request);
-                $extractedText = $response->getDocument()->getText();
-                $client->close();
+                // Prefer regional endpoint to match the processor's location to avoid timeouts
+                $apiEndpoint = sprintf('%s-documentai.googleapis.com', $locationId);
+                $clientOptions = [
+                    'credentials' => config('services.google.credentials_path'),
+                    'apiEndpoint' => $apiEndpoint,
+                ];
 
-                Log::info("Successfully extracted text from PDF via Document AI.");
-                return $extractedText;
+                try {
+                    $client = new DocumentProcessorServiceClient($clientOptions);
+                    $name = $client->processorName((string)$projectId, (string)$locationId, (string)$processorId);
+                    $rawDocument = new RawDocument([
+                        'content' => file_get_contents($fullPath),
+                        'mime_type' => 'application/pdf'
+                    ]);
+                    $request = (new ProcessRequest())
+                        ->setName($name)
+                        ->setRawDocument($rawDocument);
+
+                    // Reduce long retries and cap timeout so we can fail fast and fallback
+                    $callOptions = [
+                        'timeoutMillis' => 60000, // 60s per attempt
+                        'retrySettings' => [
+                            'totalTimeoutMillis' => 90000, // 90s total
+                        ],
+                    ];
+
+                    $response = $client->processDocument($request, $callOptions);
+                    $extractedText = $response->getDocument()->getText();
+                    $client->close();
+
+                    if (is_string($extractedText) && strlen(trim($extractedText)) > 0) {
+                        Log::info("Successfully extracted text from PDF via Document AI (endpoint: {$apiEndpoint}).");
+                        return $extractedText;
+                    }
+
+                    Log::warning('Document AI returned empty text. Will try local pdf-parse fallback.');
+                } catch (\Throwable $e) {
+                    Log::error("Document AI extraction failed: " . $e->getMessage());
+                    Log::info('Attempting local pdf-parse fallback...');
+                }
+
+                // Fallback: use local Node pdf-parse script
+                $fallbackText = $this->extractPdfTextLocally($fullPath);
+                if (is_string($fallbackText) && strlen(trim($fallbackText)) > 0) {
+                    Log::info('Local pdf-parse fallback succeeded.');
+                    return $fallbackText;
+                }
+
+                Log::warning('Local pdf-parse fallback produced no text.');
+                return null;
             } elseif (in_array($extension, ['mp4', 'mov', 'avi', 'mkv', 'webm'])) {
                 return $this->transcribeVideo($fullPath);
             }
@@ -256,6 +300,51 @@ class LessonContentController extends Controller
                 }
             }
             // ========================================================
+        }
+    }
+
+    /**
+     * Fallback PDF text extraction using local Node script (pdf-parse).
+     */
+    private function extractPdfTextLocally(string $absolutePdfPath): ?string
+    {
+        try {
+            // Verify Node and script exist
+            $scriptPath = base_path('scripts/extract-pdf-text.cjs');
+            if (!file_exists($scriptPath)) {
+                Log::warning('PDF fallback script not found at ' . $scriptPath);
+                return null;
+            }
+
+            // Create a temp output file
+            $outputPath = storage_path('app/pdf_text_' . uniqid() . '.txt');
+
+            $process = new Process([
+                // On Windows, rely on association: call `node` explicitly
+                'node',
+                $scriptPath,
+                $absolutePdfPath,
+                $outputPath
+            ], base_path());
+            $process->setTimeout(120);
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                Log::error('pdf-parse fallback process failed: ' . $process->getErrorOutput());
+                return null;
+            }
+
+            if (!file_exists($outputPath)) {
+                Log::warning('pdf-parse fallback did not produce an output file.');
+                return null;
+            }
+
+            $text = file_get_contents($outputPath);
+            @unlink($outputPath);
+            return is_string($text) ? $text : null;
+        } catch (\Throwable $e) {
+            Log::error('extractPdfTextLocally error: ' . $e->getMessage());
+            return null;
         }
     }
 

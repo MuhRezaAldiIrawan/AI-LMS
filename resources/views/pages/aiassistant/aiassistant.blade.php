@@ -80,7 +80,7 @@
                                     <i class="ph-fill ph-robot text-white text-20"></i>
                                 </div>
                                 <div class="chat-box-item__content">
-                                    <div class="chat-box-item__text">{!! nl2br(e($chat->message)) !!}</div>
+                                    <div class="chat-box-item__text js-md" data-raw="{{ e($chat->message) }}"></div>
                                     <span>{{ $chat->getFormattedTimeAttribute() }}</span>
                                 </div>
                             </div>
@@ -346,6 +346,16 @@
 
     .chat-box-item.right .chat-box-item__text code {
         background-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* List styling inside chat bubbles */
+    .chat-box-item__text ul,
+    .chat-box-item__text ol {
+        margin: 8px 0 8px 18px;
+        padding-left: 18px;
+    }
+    .chat-box-item__text li {
+        margin: 4px 0;
     }
 
     /* Responsive */
@@ -651,13 +661,60 @@
             return div.innerHTML;
         }
 
+        // Render a safe subset of Markdown (bold, inline code, basic lists, line breaks)
         function formatMessage(message) {
-            // Convert line breaks and basic formatting
-            return message
-                .replace(/\n/g, '<br>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/`(.*?)`/g, '<code>$1</code>');
+            // 1) Escape any HTML to prevent injection
+            const div = document.createElement('div');
+            div.textContent = message ?? '';
+            const safe = div.innerHTML;
+
+            // 2) Build lists and inline formatting line-by-line
+            const lines = safe.split(/\r?\n/);
+            let html = '';
+            let inUl = false;
+            let inOl = false;
+
+            const flushLists = () => {
+                if (inUl) { html += '</ul>'; inUl = false; }
+                if (inOl) { html += '</ol>'; inOl = false; }
+            };
+
+            for (let rawLine of lines) {
+                const liBullet = /^\s*[\-*]\s+(.+)/.exec(rawLine);
+                const liNumber = /^\s*(\d+)\.\s+(.+)/.exec(rawLine);
+
+                if (liBullet) {
+                    if (inOl) { html += '</ol>'; inOl = false; }
+                    if (!inUl) { html += '<ul>'; inUl = true; }
+                    const content = liBullet[1]
+                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/`(.+?)`/g, '<code>$1</code>');
+                    html += `<li>${content}</li>`;
+                    continue;
+                }
+
+                if (liNumber) {
+                    if (inUl) { html += '</ul>'; inUl = false; }
+                    if (!inOl) { html += '<ol>'; inOl = true; }
+                    const content = liNumber[2]
+                        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/`(.+?)`/g, '<code>$1</code>');
+                    html += `<li>${content}</li>`;
+                    continue;
+                }
+
+                // Normal line (no list)
+                flushLists();
+                const line = rawLine
+                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                    // keep single-asterisk emphasis minimal, but avoid matching bullets
+                    .replace(/(^|[^*])\*(?!\s)([^*]+?)\*(?!\*)/g, '$1<em>$2</em>')
+                    .replace(/`(.+?)`/g, '<code>$1</code>');
+                html += line + '<br>';
+            }
+
+            flushLists();
+            return html;
         }
 
         function getCsrfToken() {
@@ -669,6 +726,10 @@
 
         // Focus on input when page loads
         questionInput.focus();
+
+        // Render markdown for any preloaded AI history messages
+        document.querySelectorAll('.chat-box-item__text.js-md[data-raw]')
+            .forEach(el => { el.innerHTML = formatMessage(el.getAttribute('data-raw')); });
     });
     </script>
 @endsection
